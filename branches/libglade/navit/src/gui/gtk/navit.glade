@@ -85,7 +85,7 @@
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes">Cursor</property>
 	      <property name="use_underline">True</property>
-	      <property name="icon">cursor.png</property>
+	      <property name="icon">cursor.xpm</property>
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
@@ -103,7 +103,7 @@
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes">Orientation</property>
 	      <property name="use_underline">True</property>
-	      <property name="icon">orientation.png</property>
+	      <property name="icon">orientation.xpm</property>
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
@@ -121,7 +121,7 @@
 	      <property name="visible">True</property>
 	      <property name="label" translatable="yes">Destination</property>
 	      <property name="use_underline">True</property>
-	      <property name="icon">destination.png</property>
+	      <property name="icon">destination.xpm</property>
 	      <property name="visible_horizontal">True</property>
 	      <property name="visible_vertical">True</property>
 	      <property name="is_important">False</property>
