@@ -606,7 +606,7 @@ graphics_gtk_drawing_area_new(struct container *co, GtkWidget **widget)
 {
 	GtkWidget *draw;
 
-	draw=gtk_drawing_area_new();
+	draw=*widget;
 	struct graphics *this=graphics_new();
 	this->gra->widget=draw;
 	this->gra->colormap=gdk_colormap_new(gdk_visual_get_system(),FALSE);
@@ -619,7 +619,9 @@ graphics_gtk_drawing_area_new(struct container *co, GtkWidget **widget)
 	g_signal_connect(G_OBJECT(draw), "button_press_event", G_CALLBACK(button_press), co);
 	g_signal_connect(G_OBJECT(draw), "button_release_event", G_CALLBACK(button_release), co);
 	g_signal_connect(G_OBJECT(draw), "motion_notify_event", G_CALLBACK(motion_notify), co);
+#if 0
 	*widget=draw;
+#endif
 	return this;
 }
 

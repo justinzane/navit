@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include <gtk/gtk.h>
+#include <glade/glade.h>
 #include "coord.h"
 #include "route.h"
 #include "transform.h"
@@ -11,7 +12,6 @@
 #include "statusbar.h"
 
 struct statusbar_gui {
-	GtkWidget *hbox;
 	char mouse_text[128];
 	GtkWidget *mouse;
 	char gps_text[128];
@@ -83,7 +83,7 @@ statusbar_route_update(struct statusbar *this, struct route *route)
 }
 
 struct statusbar *
-gui_gtk_statusbar_new(GtkWidget **widget)
+gui_gtk_statusbar_new(GladeXML *window)
 {
 	struct statusbar *this=g_new0(struct statusbar, 1);
 	char *utf8;
@@ -93,23 +93,17 @@ gui_gtk_statusbar_new(GtkWidget **widget)
 	this->statusbar_mouse_update=statusbar_mouse_update;
 	this->statusbar_route_update=statusbar_route_update;
 	this->statusbar_gps_update=statusbar_gps_update;
+	this->gui->mouse=glade_xml_get_widget(window,"mouse");
+//	this->gui->mouse=gtk_label_new("M: 0000.0000N 00000.0000E");
+//	gtk_label_set_justify(GTK_LABEL(this->gui->mouse),  GTK_JUSTIFY_LEFT);
 
-	this->gui->hbox=gtk_hbox_new(FALSE, 1);
-	this->gui->mouse=gtk_label_new("M: 0000.0000N 00000.0000E");
-	gtk_label_set_justify(GTK_LABEL(this->gui->mouse),  GTK_JUSTIFY_LEFT);
 	utf8=g_locale_to_utf8("GPS 00/0 0000.0000N 00000.0000E 0000m 000°NO 000km/h",-1,NULL,NULL,NULL);
-	this->gui->gps=gtk_label_new(utf8);
-	g_free(utf8);
-	gtk_label_set_justify(GTK_LABEL(this->gui->gps),  GTK_JUSTIFY_LEFT);
-	this->gui->route=gtk_label_new("Route 0000km  0+00:00 ETA");
-	gtk_label_set_justify(GTK_LABEL(this->gui->route),  GTK_JUSTIFY_LEFT);
-	gtk_box_pack_start(GTK_BOX(this->gui->hbox), this->gui->mouse, FALSE, FALSE, 2);
-	gtk_box_pack_start(GTK_BOX(this->gui->hbox), gtk_vseparator_new(), TRUE, TRUE, 2);
-	gtk_box_pack_start(GTK_BOX(this->gui->hbox), this->gui->gps, TRUE, TRUE, 2);
-	gtk_box_pack_start(GTK_BOX(this->gui->hbox), gtk_vseparator_new(), TRUE, TRUE, 2);
-	gtk_box_pack_start(GTK_BOX(this->gui->hbox), this->gui->route, TRUE, TRUE, 2);
-
-	*widget=this->gui->hbox;
+	this->gui->gps=glade_xml_get_widget(window,"gps");
+//	gtk_label_new(utf8);
+//	g_free(utf8);
+//	gtk_label_set_justify(GTK_LABEL(this->gui->gps),  GTK_JUSTIFY_LEFT);
+	this->gui->route=glade_xml_get_widget(window,"route");
+//	gtk_label_new("Route 0000km  0+00:00 ETA");
 	return this;
 }
 
