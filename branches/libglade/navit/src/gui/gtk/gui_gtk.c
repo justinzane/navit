@@ -20,9 +20,28 @@ void on_Quit_clicked(GtkWidget *widget, gpointer user_data);
 void on_mainwindow_delete_event(GtkWidget *widget, gpointer user_data);
 
 
+static struct container *
+get_container(GtkWidget *widget)
+{
+	GtkWidget *map_widget;
+	GladeXML *xml=glade_get_widget_tree(widget);
+	map_widget = glade_xml_get_widget(xml,"map");
+	return g_object_get_data(G_OBJECT(map_widget), "navit_container");
+}
+
 void on_Zoom_in_clicked(GtkWidget *widget, gpointer user_data)
 {
+	unsigned long scale;
+	struct container *co;
+
 	g_print("Zoom in\n");
+
+	co=get_container(widget);
+        graphics_get_view(co, NULL, NULL, &scale);
+        scale/=2;
+        if (scale < 1)
+                scale=1;
+        graphics_set_view(co, NULL, NULL, &scale);
 }
 
 void on_Zoom_out_clicked(GtkWidget *widget, gpointer user_data)
@@ -113,6 +132,7 @@ gui_gtk_window(int x, int y, int scale)
 
 	map_widget = glade_xml_get_widget(window,"map");
 	co=container_new(&map_widget);
+	g_object_set_data(G_OBJECT(map_widget), "navit_container", co);
 	transform_setup(co->trans, x, y, scale, 0);
 
 	co->win=(struct window *) window;
