@@ -82,10 +82,14 @@ void  on_Orientation_toggled(GtkWidget *widget, gpointer user_data)
 
 void on_Destination_clicked(GtkWidget *widget, gpointer user_data)
 {
+	GtkWidget *dest;
 	struct container *co;
 
 	co=get_container(widget);
+	dest=glade_xml_get_widget(GLADE_XML(co->win),"destinationwindow");
+	gtk_widget_show_all(GTK_WIDGET(dest));
 	destination_address(co);
+	
 }
 
 void on_Quit_clicked(GtkWidget *widget, gpointer user_data)
