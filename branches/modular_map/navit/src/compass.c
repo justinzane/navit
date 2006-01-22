@@ -83,6 +83,7 @@ compass_draw(struct compass *comp, struct container *co)
 		handle(comp->gr,comp->white, &p, 20,0);
 	else
 		handle(comp->gr, comp->white, &p, 20, -*vehicle_dir);
+#if 0 /* FIXME */
 	dest=route_get_destination(co->route);
 	if (dest) {
 		pos=vehicle_pos_get(co->vehicle);	
@@ -107,6 +108,7 @@ compass_draw(struct compass *comp, struct container *co)
 
 		comp->gr->draw_text(comp->gr, comp->green, NULL, comp->font, buffer, &p, 0x10000, 0);
 	}
+#endif
 	comp->gr->draw_mode(comp->gr, draw_mode_end);
 }
 

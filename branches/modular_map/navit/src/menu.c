@@ -8,9 +8,7 @@
 #include "route.h"
 #include "cursor.h"
 #include "menu.h"
-#include "command.h"
 #include "transform.h"
-#include "street.h"
 #include "statusbar.h"
 #include "destination.h"
 #include "main.h"
@@ -21,7 +19,9 @@ void
 menu_route_do_update(struct container *co)
 {
 	if (co->cursor) {
+#if 0 /* FIXME */
 		route_set_position(co->route, cursor_pos_get(co->cursor));
+#endif
 		graphics_redraw(co);
 		if (co->statusbar && co->statusbar->statusbar_route_update)
 			co->statusbar->statusbar_route_update(co->statusbar, co->route);

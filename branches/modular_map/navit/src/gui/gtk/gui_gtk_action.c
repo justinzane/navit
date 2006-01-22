@@ -58,7 +58,9 @@ orient_north_action(GtkWidget *w, struct action *ac)
 static void
 destination_action(GtkWidget *w, struct action *ac)
 {
+#if 0 /* FIXME */
 	destination_address(ac->gui->co);
+#endif
 }
 
 

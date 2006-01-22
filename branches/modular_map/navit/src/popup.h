@@ -1,3 +1,4 @@
+struct container;
 void popup(struct container *co, int x, int y, int button);
 struct popup_item *popup_item_new_text(struct popup_item **last, char *text, int priority);
 

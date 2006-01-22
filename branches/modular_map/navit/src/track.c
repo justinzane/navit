@@ -1,3 +1,4 @@
+#if 0
 #include <stdio.h>
 #include <glib.h>
 #include "coord.h"
@@ -230,3 +231,4 @@ track_destroy(struct track *tr)
 	track_free_lines(tr);
 	g_free(tr);
 }
+#endif

@@ -5,11 +5,7 @@
 #include "coord.h"
 #include "file.h"
 #include "map_data.h"
-#include "block.h"
 #include "display.h"
-#include "town.h"
-#include "street.h"
-#include "poly.h"
 #include "log.h"
 #include "popup.h"
 #include "plugin.h"
@@ -82,6 +78,7 @@ param_to_menu_new(char *name,struct param_list *plist, int c, int iso)
 static void
 popup_set_no_passing(struct popup_item *item, void *param)
 {
+#if 0
 	struct display_list *l=param;
 	struct segment *seg=(struct segment *)(l->data);
 	struct street_str *str=(struct street_str *)(seg->data[0]);
@@ -93,6 +90,7 @@ popup_set_no_passing(struct popup_item *item, void *param)
 	sprintf(log,"Attributes Street 0x%x updated: limit=0x%x(0x%x)", segid, 0x33, str->limit);
 	str->limit=0x33;
 	log_write(log, seg->blk_inf.file, str, sizeof(*str));
+#endif
 }
 
 static void
@@ -102,8 +100,10 @@ popup_set_destination(struct popup_item *item, void *param)
 	struct popup *popup=ref->param;
 	struct container *co=popup->co;
 	printf("Destination %s\n", ref->text);
+#if 0 /* FIXME */
 	route_set_position(co->route, cursor_pos_get(co->cursor));
 	route_set_destination(co->route, &popup->c);
+#endif
 	graphics_redraw(popup->co);
 	if (co->statusbar && co->statusbar->statusbar_route_update)
 		co->statusbar->statusbar_route_update(co->statusbar, co->route);
@@ -181,6 +181,7 @@ popup_menu(struct popup_item *list)
 static void
 popup_display_list_default(struct display_list *d, struct popup_item **popup_list)
 {
+#if 0
 	struct segment *seg;
 	char *desc,*text,*item_text;
 	struct popup_item *curr_item,*submenu;
@@ -222,6 +223,7 @@ popup_display_list_default(struct display_list *d, struct popup_item **popup_lis
 			submenu->next=param_to_menu_new(desc, plist, street_bti_get_param(seg, plist, 100), 1);
 		}
 	}
+#endif
 }
 
 static void

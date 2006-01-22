@@ -1,9 +1,9 @@
+#if 0 /* FIXME */
 #include <stdlib.h>
 #include <string.h>
 #include <gtk/gtk.h>
 #include "coord.h"
 #include "transform.h"
-#include "block.h"
 #include "data_window.h"
 #include "country.h"
 #include "town.h"
@@ -642,3 +642,4 @@ int destination_address(struct container *co)
 
 	return 0;
 }
+#endif

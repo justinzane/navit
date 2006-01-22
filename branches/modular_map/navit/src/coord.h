@@ -3,8 +3,13 @@
 
 /*! A integer mercator coordinate */
 struct coord {
-	long x; /*!< X-Value */
-	long y; /*!< Y-Value */
+	int x; /*!< X-Value */
+	int y; /*!< Y-Value */
+};
+
+struct coord_rect {
+	struct coord lu;
+	struct coord rl;
 };
 
 //! A double mercator coordinate
@@ -20,5 +25,8 @@ struct coord_geo {
 };
 
 struct coord * coord_get(unsigned char **p);
+int coord_rect_overlap(struct coord_rect *r1, struct coord_rect *r2);
+int coord_rect_contains(struct coord_rect *r, struct coord *c);
+
 
 #endif

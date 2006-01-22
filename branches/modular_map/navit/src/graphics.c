@@ -1,14 +1,11 @@
 #include <glib.h>
+#include <stdio.h>
 #include "string.h"
 #include "draw_info.h"
 #include "graphics.h"
 #include "map_data.h"
 #include "coord.h"
 #include "param.h"	/* FIXME */
-#include "block.h"	/* FIXME */
-#include "poly.h"
-#include "town.h"
-#include "street.h"
 #include "transform.h"
 #include "container.h"
 #include "plugin.h"
@@ -41,7 +38,9 @@
 #define GC_STREET_BIG2_L 21
 #define GC_STREET_NO_PASS 22
 #define GC_STREET_ROUTE 23
-#define GC_LAST	24
+#define GC_RAIL1 24
+#define GC_BORDER 25
+#define GC_LAST	26
 
 
 int color[][3]={
@@ -69,7 +68,33 @@ int color[][3]={
 	{0xffff, 0x0000, 0x0000},
 	{0xe0e0, 0xe0e0, 0xffff},
 	{0x0000, 0x0000, 0xa0a0},
+	{0xffff, 0xffff, 0xffff},
+	{0x8080, 0x8080, 0x8080},
 };
+
+void
+graphics_parse(void)
+{
+	FILE *f;
+	char line[1024];
+	char mode[1024];
+	char item[1024];
+	char type[1024];
+	int limit;
+	int len;
+
+	printf("graphics_parse\n");
+	f=fopen("graphics.txt","r");
+	while (fgets(line, 1024, f)) {
+		len=strlen(line);
+		if (len && line[len-1] == '\n') 
+			line[len-1]='\0';
+		printf("line '%s'\n", line);
+		sscanf(line, "%s\t%s\t%d\t%s", mode, item, &limit, type);
+		printf("mode='%s' item='%s' limit=%d type='%s'\n", mode, item, limit, type);
+	}
+	fclose(f);
+}
 
 
 void
@@ -89,6 +114,8 @@ container_init_gra(struct container *co)
 		gra->gc_set_foreground(gra->gc[i], color[i][0], color[i][1], color[i][2]);
 	}
 	gra->gc_set_background(gra->gc[GC_TEXT_BG], color[7][0], color[7][1], color[7][2]);
+	graphics_parse();
+	
 }
 
 void
@@ -121,6 +148,196 @@ graphics_draw(struct map_data *mdata, int file, struct container *co, int displa
 	map_data_foreach(mdata, file, co->trans, limit2, func, &info);
 }
 
+#include "attr.h"
+#include "item.h"
+#include <stdio.h>
+
+static void
+do_draw_poly(struct display_list *d, int line, struct transformation *t,struct item *item)
+{
+	struct coord c;
+	int max=16384;
+	struct point pnt[max];
+	int count=0;
+
+	while (count < max) {
+		if (!item_coord_get(item, &c, 1))
+			break;
+		transform(t, &c, &pnt[count]);
+		count++;
+			
+	}
+	g_assert(count < max);
+	display_add(d, line, 0, NULL, count, pnt, NULL, NULL, NULL);	
+}
+
+static void
+do_draw_label(struct display_list *d, struct transformation *t, struct item *item)
+{
+	struct point pnt;
+	struct coord c;
+	struct attr attr;
+	item_coord_get(item, &c, 1);
+	transform(t, &c, &pnt);
+	item_attr_get(item, attr_name, &attr); 
+	display_add(d, 3, 0, attr.u.str, 1, &pnt, NULL, NULL, 0);
+}
+
+static void
+do_draw_item(struct container *co, struct item *item)
+{
+	switch (item->type) {
+	case type_town_label:
+		do_draw_label(&co->disp[display_town+8], co->trans, item);
+		break;
+	case type_district_label:
+		do_draw_label(&co->disp[display_town+8], co->trans, item);
+		break;
+	case type_highway_exit_label:
+		do_draw_label(&co->disp[display_town+8], co->trans, item);
+		break;
+	case type_street_0:
+		do_draw_poly(&co->disp[display_street], 1, co->trans, item);
+		break;
+	case type_street_1_city:
+		do_draw_poly(&co->disp[display_street], 1, co->trans, item);
+		break;
+	case type_street_2_city:
+		do_draw_poly(&co->disp[display_street1], 1, co->trans, item);
+		break;
+	case type_street_3_city:
+		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
+		break;
+	case type_street_4_city:
+		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
+		break;
+	case type_highway_city:
+		do_draw_poly(&co->disp[display_street3], 1, co->trans, item);
+		break;
+	case type_street_1_land:
+		do_draw_poly(&co->disp[display_street], 1, co->trans, item);
+		break;
+	case type_street_2_land:
+		do_draw_poly(&co->disp[display_street1], 1, co->trans, item);
+		break;
+	case type_street_3_land:
+		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
+		break;
+	case type_street_4_land:
+		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
+		break;
+	case type_street_n_lanes:
+		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
+		break;
+	case type_highway_land:
+		do_draw_poly(&co->disp[display_street3], 1, co->trans, item);
+		break;
+	case type_ramp:
+		do_draw_poly(&co->disp[display_street1], 1, co->trans, item);
+		break;
+	case type_ferry:
+		do_draw_poly(&co->disp[display_rail], 1, co->trans, item);
+		break;
+	case type_street_unkn:
+		do_draw_poly(&co->disp[display_street_route], 1, co->trans, item);
+		break;
+	case type_rail:
+		do_draw_poly(&co->disp[display_border], 1, co->trans, item);
+		break;
+	case type_border_country:
+		do_draw_poly(&co->disp[display_border], 1, co->trans, item);
+		break;
+	case type_border_state:
+		do_draw_poly(&co->disp[display_border], 1, co->trans, item);
+		break;
+	case type_water_line:
+		do_draw_poly(&co->disp[display_water], 1, co->trans, item);
+		break;
+	case type_wood:
+		do_draw_poly(&co->disp[display_wood], 0, co->trans, item);
+		break;
+	case type_water_poly:
+		do_draw_poly(&co->disp[display_water], 0, co->trans, item);
+		break;
+	case type_town_poly:
+	case type_airport_poly:
+		do_draw_poly(&co->disp[display_other], 0, co->trans, item);
+		break;
+	case type_industry_poly:
+		do_draw_poly(&co->disp[display_other1], 0, co->trans, item);
+		break;
+	case type_hospital_poly:
+		do_draw_poly(&co->disp[display_other2], 0, co->trans, item);
+		break;
+	case type_park_poly:
+		do_draw_poly(&co->disp[display_other3], 0, co->trans, item);
+		break;
+	case type_sport_poly:
+		do_draw_poly(&co->disp[display_other1], 0, co->trans, item);
+		break;
+	default:
+		printf("Unsupported item\n");
+		exit(1);
+	}
+}
+
+static void
+do_draw(struct container *co)
+{
+	struct coord_rect r;
+	struct map_rect *mr;
+	struct item *item;
+	int scale,order,rem;
+
+	extern struct map *map_default1,*map_default2;
+	extern struct map *map_default3,*map_default4;
+	extern struct map *map_default5,*map_default6;
+	scale=transform_get_scale(co->trans);
+	printf("scale=%d\n", scale);
+	order=0;
+	while (scale > 1) {
+		order++;
+		scale>>=1;
+	}
+	order=14-order;
+	if (order < 0)
+		order=0;
+	printf("order=%d\n", order);
+	
+	r.lu=co->trans->rect[0];
+	r.rl=co->trans->rect[1];
+	mr=map_rect_new(map_default1, &r, NULL, order);
+	while (item=map_rect_get_item(mr)) {
+		do_draw_item(co, item);
+	}
+	map_rect_destroy(mr);
+	mr=map_rect_new(map_default2, &r, NULL, order);
+	while (item=map_rect_get_item(mr)) {
+		do_draw_item(co, item);
+	}
+	map_rect_destroy(mr);
+	mr=map_rect_new(map_default3, &r, NULL, order);
+	while (item=map_rect_get_item(mr)) {
+		do_draw_item(co, item);
+	}
+	map_rect_destroy(mr);
+	mr=map_rect_new(map_default4, &r, NULL, order);
+	while (item=map_rect_get_item(mr)) {
+		do_draw_item(co, item);
+	}
+	map_rect_destroy(mr);
+	mr=map_rect_new(map_default5, &r, NULL, order);
+	while (item=map_rect_get_item(mr)) {
+		do_draw_item(co, item);
+	}
+	map_rect_destroy(mr);
+	mr=map_rect_new(map_default6, &r, NULL, order);
+	while (item=map_rect_get_item(mr)) {
+		do_draw_item(co, item);
+	}
+	map_rect_destroy(mr);
+}
+
 void
 graphics_redraw(struct container *co)
 {
@@ -129,6 +346,7 @@ graphics_redraw(struct container *co)
 	int bw[4],w[4],t[4];
 	struct display_list **disp=co->disp;
 	struct graphics *gra=co->gra;
+	unsigned char dashes[]={4,4};
 
 #if 0
 	printf("scale=%d center=0x%lx,0x%lx mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
@@ -143,6 +361,8 @@ graphics_redraw(struct container *co)
 		data_window_begin(co->data_window[i]);	
 	}
 	gra->gc_set_linewidth(gra->gc[GC_RAIL], 3);
+	gra->gc_set_linewidth(gra->gc[GC_BORDER], 3);
+	gra->gc_set_dashes(gra->gc[GC_RAIL1], dashes, 2);
 
 	bw[0]=0;
 	bw[1]=0;
@@ -308,6 +528,7 @@ graphics_redraw(struct container *co)
 	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2_B], bw[3]);
 	gra->gc_set_linewidth(gra->gc[GC_STREET_ROUTE], w[3]+7+w[3]/2);
 
+#if 0
 	profile_timer(NULL);
 	graphics_draw(co->map_data, file_border_ply, co, display_rail, plimit, 48, poly_draw_block);
 	graphics_draw(co->map_data, file_woodland_ply, co, display_wood, plimit, 48, poly_draw_block);
@@ -329,6 +550,9 @@ graphics_redraw(struct container *co)
 	draw_poly(map, &co->d_tunnel_ply, "Tunnel", 0, 11, plimit);
 #endif
 	graphics_draw(co->map_data, file_street_str, co, display_street, slimit, 7, street_draw_block);
+#endif
+	do_draw(co);
+
   
 	display_draw(disp[display_sea], gra, gra->gc[GC_WATER_FILL], NULL); 
 	display_draw(disp[display_wood], gra, gra->gc[GC_WOOD], NULL); 
@@ -338,7 +562,11 @@ graphics_redraw(struct container *co)
 	display_draw(disp[display_other3], gra, gra->gc[GC_PARK], NULL); 
 	display_draw(disp[display_water], gra, gra->gc[GC_WATER_FILL], gra->gc[GC_WATER_LINE]); 
 	display_draw(disp[display_rail], gra, gra->gc[GC_RAIL], NULL); 
+	display_draw(disp[display_rail], gra, gra->gc[GC_RAIL1], NULL); 
+	display_draw(disp[display_border], gra, gra->gc[GC_BORDER], NULL); 
+#if 0 /* FIXME */
 	street_route_draw(co);
+#endif
 	display_draw(disp[display_street_route], gra, gra->gc[GC_STREET_ROUTE], NULL); 
 	if (bw[0]) {
 		display_draw(disp[display_street_no_pass], gra, gra->gc[GC_STREET_SMALL_B], NULL); 

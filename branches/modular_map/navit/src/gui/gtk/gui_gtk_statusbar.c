@@ -75,11 +75,13 @@ statusbar_route_update(struct statusbar *this, struct route *route)
 	struct tm *eta_tm;
 	double route_len;
 
+#if 0 /* FIXME */
 	eta_tm=route_get_eta(route);
 	route_len=route_get_len(route);
 	
 	sprintf(this->gui->route_text,"Route %4.0fkm    %02d:%02d ETA",route_len/1000, eta_tm->tm_hour, eta_tm->tm_min);
 	gtk_label_set_text(GTK_LABEL(this->gui->route), this->gui->route_text);
+#endif
 }
 
 struct statusbar *

@@ -90,6 +90,8 @@ display_free(struct display_list **list, int count)
 		curr=*list;
 		while (curr) {
 			next=curr->next;
+			if (curr->label)
+				g_free(curr->label);
 			g_free(curr);
 			curr=next;
 		}
@@ -101,26 +103,22 @@ void *
 display_add(struct display_list **head, int type, int attr, char *label, int count, struct point *p, void (*info)(struct display_list *list, struct popup_item **item),void *data, int data_size)
 {
 	struct display_list *new;
-	int label_len=0;
 
 	if (! data)
 		data_size=0;
 
-	if (label)
-		label_len=strlen(label)+1;
-	new=g_malloc(sizeof(*new)+count*sizeof(*p)+label_len+data_size);
+	new=g_malloc(sizeof(*new)+count*sizeof(*p)+data_size);
 	new->type=type;
 	new->attr=attr;
 	new->info=info;
-	if (label) {
-		new->label=(char *)new+sizeof(*new)+count*sizeof(*p);
-		strcpy(new->label, label);
-	} else 
+	if (label) 
+		new->label=g_convert(label, -1, "utf-8", "iso8859-1", NULL, NULL, NULL);
+	else 
 		new->label=NULL;
 	new->count=count;
 	memcpy(new->p, p, count*sizeof(*p));
 	if (data_size) {
-		new->data=(char *)new+sizeof(*new)+count*sizeof(*p)+label_len;
+		new->data=(char *)new+sizeof(*new)+count*sizeof(*p);
 		memcpy(new->data, data, data_size);
 	} else
 		new->data=NULL;

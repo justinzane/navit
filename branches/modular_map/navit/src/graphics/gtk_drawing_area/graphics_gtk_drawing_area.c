@@ -73,6 +73,7 @@ static struct graphics_font *font_new(struct graphics *gr, int size)
 		return NULL;
 	}
         FT_Set_Char_Size(font->face, 0, size, 300, 300);
+	FT_Select_Charmap(font->face, FT_ENCODING_UNICODE);
 	return font;
 }
 
@@ -89,6 +90,13 @@ static void
 gc_set_linewidth(struct graphics_gc *gc, int w)
 {
 	gdk_gc_set_line_attributes(gc->gc, w, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+}
+
+static void
+gc_set_dashes(struct graphics_gc *gc, unsigned char dash_list[], int n)
+{
+	gdk_gc_set_dashes(gc->gc, 0, dash_list, n);
+	gdk_gc_set_line_attributes(gc->gc, 1, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 }
 
 static void
@@ -237,10 +245,13 @@ display_text_render(char *text, struct graphics_font *font, int dx, int dy, int 
 	FT_Matrix matrix;
 	FT_Vector pen;
 	FT_UInt  glyph_index;
-	int n,len=strlen(text);
-	struct text_render *ret=g_malloc(sizeof(*ret)+len*sizeof(struct text_glyph *));
+	int n,len;
+	struct text_render *ret;
 	struct text_glyph *curr;
+	wchar_t wtext[1024];
 
+	len=mbstowcs(wtext, text, 1024);
+	ret=g_malloc(sizeof(*ret)+len*sizeof(struct text_glyph *));
 	ret->glyph_count=len;
 
 	matrix.xx = dx;
@@ -253,12 +264,13 @@ display_text_render(char *text, struct graphics_font *font, int dx, int dy, int 
 	x <<= 6;
 	y <<= 6;
 	FT_Set_Transform( font->face, &matrix, &pen );
+	
 
 
 	for ( n = 0; n < len; n++ )
 	{
 
-		glyph_index = FT_Get_Char_Index(font->face, text[n]);
+		glyph_index = FT_Get_Char_Index(font->face, wtext[n]);
 		FT_Load_Glyph(font->face, glyph_index, FT_LOAD_DEFAULT );
 		FT_Render_Glyph(font->face->glyph, ft_render_mode_normal );
         
@@ -591,6 +603,7 @@ graphics_new(void)
 	this->draw_restore=draw_restore;
 	this->gc_new=gc_new;
 	this->gc_set_linewidth=gc_set_linewidth;
+	this->gc_set_dashes=gc_set_dashes;
 	this->gc_set_foreground=gc_set_foreground;
 	this->gc_set_background=gc_set_background;
 	this->font_new=font_new;

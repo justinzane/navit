@@ -7,6 +7,7 @@ enum display_index {
         display_other3,
         display_water,
         display_rail,
+	display_border,
         display_street,
         display_street1,
         display_street2,

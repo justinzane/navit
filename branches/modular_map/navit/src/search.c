@@ -1,3 +1,4 @@
+#if 0
 #include <glib.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -440,3 +441,4 @@ search_new(struct map_data *mdat, char *country, char *postal, char *town, char 
 	this->user_data=user_data;
 	return this;
 }
+#endif

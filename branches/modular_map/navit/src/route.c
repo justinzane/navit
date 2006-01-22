@@ -1,3 +1,4 @@
+#if 0
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -1033,3 +1034,4 @@ route_crossings_get(struct route *this, struct coord *c)
 	ret->count=crossings;
 	return ret;
 }
+#endif

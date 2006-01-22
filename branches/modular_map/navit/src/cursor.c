@@ -165,10 +165,14 @@ cursor_update(void *t)
 	if (v) {
 		pos=vehicle_pos_get(v);	
 		dir=vehicle_dir_get(v);
+#if 0 /* FIXME */
 		track_update(this->co->track, pos, (int)(*dir));
+#endif
 		if (this->co->flags->orient_north)
 			dir=0;
+#if 0 /* FIXME */
 		route_set_position(this->co->route, cursor_pos_get(this->co->cursor));
+#endif
 		if (!transform(this->co->trans, pos, &pnt)) {
 			cursor_map_reposition(this, pos, dir);
 			transform(this->co->trans, pos, &pnt);

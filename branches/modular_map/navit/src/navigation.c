@@ -1,3 +1,4 @@
+#if 0
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
@@ -328,4 +329,4 @@ navigation_path_description(void *route)
 	}
 	data_window_end(navigation_window);
 }
-
+#endif
