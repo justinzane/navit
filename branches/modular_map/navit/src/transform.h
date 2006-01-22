@@ -9,7 +9,7 @@ struct transformation {
         long scale;		/* Scale factor */
 	int angle;		/* Rotation angle */
 	double cos_val,sin_val;	/* cos and sin of rotation angle */
-	struct coord rect[2];	/* Source rectangle */
+	struct coord_rect r;	/* Source rectangle */
 	struct coord center;	/* Center of source rectangle */
 };
 

@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 	map_default5=map_new("mg","/opt/map2/DIRMAP_MAP/DIE.map/smp4.smp");
 	map_default6=map_new("mg","/opt/map2/DIRMAP_MAP/DIE.map/smp5.smp");
 	plugin_load();
-#if 0
+#if 1
 	co=gui_gtk_window(0x137c79,0x5f2679,1024);
 #else
 	co=gui_gtk_window(0x11e8a1,0x632815,1024);

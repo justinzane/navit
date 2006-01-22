@@ -4,6 +4,35 @@
 
 int coord_debug;
 
+static void
+street_name_get(struct street_name *name, unsigned char **p)
+{
+	unsigned char *start=*p;
+	name->len=get_short(p);
+	name->country=get_short(p);
+	name->townassoc=get_long(p);
+	name->name1=get_string(p);
+	name->name2=get_string(p);
+	name->segment_count=get_long(p);
+	name->segments=(struct street_name_segment *)(*p);
+	(*p)+=(sizeof (struct street_name_segment))*name->segment_count;
+	name->aux_len=name->len-(*p-start);
+	name->aux_data=*p;
+	name->tmp_len=name->aux_len;
+	name->tmp_data=name->aux_data;
+	(*p)+=name->aux_len;
+}
+
+static void
+street_name_get_by_id(struct street_name *name, struct file *file, unsigned long id)
+{
+	unsigned char *p;
+	if (id) {
+		p=file->begin+id+0x2000;
+		street_name_get(name, &p);
+	}
+}
+
 static int street_get_bytes(struct coord_rect *r)
 {
 	int bytes,dx,dy;
@@ -124,9 +153,20 @@ street_attr_rewind(void *priv_data)
 static int
 street_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 {
-	/* struct street_priv *street=priv_data; */
+	struct street_priv *street=priv_data;
 
+	attr->type=attr_type;
 	switch (attr_type) {
+	case attr_name:
+		if (! street->name.len)
+			street_name_get_by_id(&street->name,street->name_file,street->str->nameid);
+		attr->u.str=street->name.name2;
+		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_name_systematic:
+		if (! street->name.len)
+			street_name_get_by_id(&street->name,street->name_file,street->str->nameid);
+		attr->u.str=street->name.name1;
+		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	default:
 		return 0;
 	}
@@ -155,6 +195,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 {
 	if (mr->b.p == mr->b.p_start) {
 		street_get_data(street, &mr->b.p);
+		street->name_file=mr->m->file[file_strname_stn];
 		/* 1-6 */
 #if 1
 		if (street->header->order+street->header->order/2 > mr->limit)
@@ -236,6 +277,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 	}
 #endif
 	street->p_rewind=street->p;
+	street->name.len=0;
 	return 1;
 }
 

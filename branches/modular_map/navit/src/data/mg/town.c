@@ -37,11 +37,14 @@ town_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 {
 	struct town_priv *twn=priv_data;
 
+	attr->type=attr_type;
 	switch (attr_type) {
 	case attr_name:
-		attr->type=attr_name;
 		attr->u.str=twn->name;
-		break;
+		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_district:
+		attr->u.str=twn->district;
+		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	default:
 		g_assert(1==0);
 		return 0;

@@ -80,9 +80,27 @@ struct street_str {
         unsigned int nameid;
 };
 
+struct street_name_segment {
+	int segid;
+	int country;
+};
 
+struct street_name {
+	int len;
+	int country;
+	int townassoc;
+	char *name1;
+	char *name2;
+	int segment_count;
+	struct street_name_segment *segments;
+	int aux_len;
+	unsigned char *aux_data;
+	int tmp_len;
+	unsigned char *tmp_data;
+};
 
 struct street_priv {
+	struct file *name_file;
 	struct street_header *header;
 	int type_count;
 	struct street_type *type;
@@ -96,6 +114,7 @@ struct street_priv {
 	int status_rewind;
 	struct coord *ref;
 	int bytes;
+	struct street_name name;
 };
 
 enum file_index {
@@ -114,6 +133,12 @@ enum file_index {
         file_woodland_ply,
         file_end
 };
+
+struct map_priv {
+	int id;
+	struct file *file[file_end];
+};
+
 #define BT_STACK_SIZE 32
 
 struct block_bt_priv {

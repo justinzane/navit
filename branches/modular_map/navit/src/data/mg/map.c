@@ -25,11 +25,6 @@ static char *file[]={
 };
 
 
-struct map_priv {
-	int id;
-	struct file *file[file_end];
-};
-
 static int
 file_next(struct map_rect_priv *mr)
 {

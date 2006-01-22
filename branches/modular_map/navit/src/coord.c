@@ -92,4 +92,17 @@ coord_rect_contains(struct coord_rect *r, struct coord *c)
 	return 1;
 }
 
+void
+coord_rect_extend(struct coord_rect *r, struct coord *c)
+{
+	if (c->x < r->lu.x)
+		r->lu.x=c->x;
+	if (c->x > r->rl.x)
+		r->rl.x=c->x;
+	if (c->y < r->rl.y)
+		r->rl.y=c->y;
+	if (c->y > r->lu.y)
+		r->lu.y=c->y;
+}
+
 /** @} */

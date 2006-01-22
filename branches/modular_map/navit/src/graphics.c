@@ -92,6 +92,8 @@ graphics_parse(void)
 		printf("line '%s'\n", line);
 		sscanf(line, "%s\t%s\t%d\t%s", mode, item, &limit, type);
 		printf("mode='%s' item='%s' limit=%d type='%s'\n", mode, item, limit, type);
+		if (! strcasecmp(type,"l")) {
+		}
 	}
 	fclose(f);
 }
@@ -158,17 +160,28 @@ do_draw_poly(struct display_list *d, int line, struct transformation *t,struct i
 	struct coord c;
 	int max=16384;
 	struct point pnt[max];
+	struct attr attr;
+	struct coord_rect r;
 	int count=0;
 
 	while (count < max) {
 		if (!item_coord_get(item, &c, 1))
 			break;
+		if (! count) {
+			r.lu=c;
+			r.rl=c;
+		} else
+			coord_rect_extend(&r, &c);
 		transform(t, &c, &pnt[count]);
 		count++;
 			
 	}
 	g_assert(count < max);
-	display_add(d, line, 0, NULL, count, pnt, NULL, NULL, NULL);	
+	if (coord_rect_overlap(&t->r, &r)) {
+		if (!item_attr_get(item, attr_name, &attr))
+			item_attr_get(item, attr_name_systematic, &attr);
+		display_add(d, line, 0, attr.u.str, count, pnt, NULL, NULL, NULL);	
+	}
 }
 
 static void
@@ -178,9 +191,11 @@ do_draw_label(struct display_list *d, struct transformation *t, struct item *ite
 	struct coord c;
 	struct attr attr;
 	item_coord_get(item, &c, 1);
-	transform(t, &c, &pnt);
-	item_attr_get(item, attr_name, &attr); 
-	display_add(d, 3, 0, attr.u.str, 1, &pnt, NULL, NULL, 0);
+	if (transform(t, &c, &pnt)) {
+		if (!item_attr_get(item, attr_district, &attr))
+			item_attr_get(item, attr_name, &attr); 
+		display_add(d, 3, 0, attr.u.str, 1, &pnt, NULL, NULL, 0);
+	}
 }
 
 static void
@@ -304,8 +319,7 @@ do_draw(struct container *co)
 		order=0;
 	printf("order=%d\n", order);
 	
-	r.lu=co->trans->rect[0];
-	r.rl=co->trans->rect[1];
+	r=co->trans->r;
 	mr=map_rect_new(map_default1, &r, NULL, order);
 	while (item=map_rect_get_item(mr)) {
 		do_draw_item(co, item);

@@ -10,11 +10,10 @@ int
 transform(struct transformation *t, struct coord *c, struct point *p)
 {
         double xc,yc;
-	int ret=0;
+	int ret;
         xc=c->x;
         yc=c->y;
-        if (xc >= t->rect[0].x && xc <= t->rect[1].x && yc >= t->rect[1].y && yc <= t->rect[0].y)
-                ret=1;
+	ret=coord_rect_contains(&t->r, c);
         xc-=t->center.x;
         yc-=t->center.y;
 	yc=-yc;
@@ -127,10 +126,10 @@ transform_setup_source_rect_limit(struct transformation *t, struct coord *center
 	t->center=*center;
 	t->scale=1;
 	t->angle=0;
-	t->rect[0].x=center->x-limit;
-	t->rect[1].x=center->x+limit;
-	t->rect[1].y=center->y-limit;
-	t->rect[0].y=center->y+limit;
+	t->r.lu.x=center->x-limit;
+	t->r.rl.x=center->x+limit;
+	t->r.rl.y=center->y-limit;
+	t->r.lu.y=center->y+limit;
 }
 
 void
@@ -151,10 +150,10 @@ transform_setup_source_rect(struct transformation *t)
 	for (i = 0 ; i < 4 ; i++) {
 		transform_reverse(t, &screen_pnt[i], &screen[i]);
 	}
-	t->rect[0].x=min4(screen[0].x,screen[1].x,screen[2].x,screen[3].x);
-	t->rect[1].x=max4(screen[0].x,screen[1].x,screen[2].x,screen[3].x);
-	t->rect[1].y=min4(screen[0].y,screen[1].y,screen[2].y,screen[3].y);
-	t->rect[0].y=max4(screen[0].y,screen[1].y,screen[2].y,screen[3].y);
+	t->r.lu.x=min4(screen[0].x,screen[1].x,screen[2].x,screen[3].x);
+	t->r.rl.x=max4(screen[0].x,screen[1].x,screen[2].x,screen[3].x);
+	t->r.rl.y=min4(screen[0].y,screen[1].y,screen[2].y,screen[3].y);
+	t->r.lu.y=max4(screen[0].y,screen[1].y,screen[2].y,screen[3].y);
 }
 
 int
@@ -279,19 +278,19 @@ transform_print_deg(double deg)
 int 
 is_visible(struct transformation *t, struct coord *c)
 {
-	struct coord *r=t->rect;
+	struct coord_rect *r=&t->r;
 
 	assert(c[0].x <= c[1].x);
 	assert(c[0].y >= c[1].y);
-	assert(r[0].x <= r[1].x);
-	assert(r[0].y >= r[1].y);
-	if (c[0].x > r[1].x)
+	assert(r->lu.x <= r->rl.x);
+	assert(r->lu.y >= r->rl.y);
+	if (c[0].x > r->rl.x)
 		return 0;
-	if (c[1].x < r[0].x)
+	if (c[1].x < r->lu.x)
 		return 0;
-	if (c[0].y < r[1].y)
+	if (c[0].y < r->rl.y)
 		return 0;
-	if (c[1].y > r[0].y)
+	if (c[1].y > r->lu.y)
 		return 0;
 	return 1;
 }
@@ -299,17 +298,17 @@ is_visible(struct transformation *t, struct coord *c)
 int
 is_line_visible(struct transformation *t, struct coord *c)
 {
-	struct coord *r=t->rect;
+	struct coord_rect *r=&t->r;
 
-	assert(r[0].x <= r[1].x);
-	assert(r[0].y >= r[1].y);
-	if (MIN(c[0].x,c[1].x) > r[1].x)
+	assert(r->lu.x <= r->rl.x);
+	assert(r->lu.y >= r->rl.y);
+	if (MIN(c[0].x,c[1].x) > r->rl.x)
 		return 0;
-	if (MAX(c[0].x,c[1].x) < r[0].x)
+	if (MAX(c[0].x,c[1].x) < r->lu.x)
 		return 0;
-	if (MAX(c[0].y,c[1].y) < r[1].y)
+	if (MAX(c[0].y,c[1].y) < r->rl.y)
 		return 0;
-	if (MIN(c[0].y,c[1].y) > r[0].y)
+	if (MIN(c[0].y,c[1].y) > r->lu.y)
 		return 0;
 	return 1;
 }
@@ -317,7 +316,7 @@ is_line_visible(struct transformation *t, struct coord *c)
 int 
 is_point_visible(struct transformation *t, struct coord *c)
 {
-	struct coord *r=t->rect;
+	struct coord *r=&t->r;
 
 	assert(r[0].x <= r[1].x);
 	assert(r[0].y >= r[1].y);
