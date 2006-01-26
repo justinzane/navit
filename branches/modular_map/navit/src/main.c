@@ -27,10 +27,6 @@ struct container *co;
 
 struct map_data *map_data_default;
 
-struct map *map_default1,*map_default2;
-struct map *map_default3,*map_default4;
-struct map *map_default5,*map_default6;
-
 struct container *gui_gtk_window(int x, int y, int scale);
 
 extern void test(struct map_data *mdat);
@@ -54,21 +50,16 @@ int main(int argc, char **argv)
 	gdk_rgb_init();
 
 	python_init();
+	plugin_init();
 #if 0
 	map_data_default=load_maps(NULL);
 #endif
-	map_default1=map_new("mg","/opt/map2/DIRMAP_MAP/DIE.map");
-	map_default2=map_new("mg","/opt/map2/DIRMAP_MAP/DIE.map/smp1.smp");
-	map_default3=map_new("mg","/opt/map2/DIRMAP_MAP/DIE.map/smp2.smp");
-	map_default4=map_new("mg","/opt/map2/DIRMAP_MAP/DIE.map/smp3.smp");
-	map_default5=map_new("mg","/opt/map2/DIRMAP_MAP/DIE.map/smp4.smp");
-	map_default6=map_new("mg","/opt/map2/DIRMAP_MAP/DIE.map/smp5.smp");
-	plugin_load();
 #if 1
 	co=gui_gtk_window(0x137c79,0x5f2679,1024);
 #else
 	co=gui_gtk_window(0x11e8a1,0x632815,1024);
 #endif
+	config_load("navit.xml", co, NULL);
 
 #if 0	/* FIXME */
 	co->route=route_new();

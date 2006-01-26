@@ -2,6 +2,8 @@
 #include <string.h>
 #include "coord.h"
 #include "map.h"
+#include "maptype.h"
+#include "item.h"
 
 struct map {
 	struct map_methods meth;
@@ -18,12 +20,15 @@ struct map *
 map_new(char *type, char *filename)
 {
 	struct map *m;
+	struct maptype *mt;
+
+	mt=maptype_get(type);
+	if (! mt)
+		return NULL;
 
 	m=g_new0(struct map, 1);
 
-	if (! strcmp(type, "mg")) {
-		m->priv=map_new_mg(&m->meth, filename);
-	}
+	m->priv=mt->map_new(&m->meth, filename);
 	m->charset=m->meth.map_charset(m->priv);
 	return m;
 }
@@ -53,10 +58,14 @@ map_rect_new(struct map *m, struct coord_rect *r, struct layer *layers, int limi
 struct item *
 map_rect_get_item(struct map_rect *mr)
 {
+	struct item *ret;
 	g_assert(mr != NULL);
 	g_assert(mr->m != NULL);
 	g_assert(mr->m->meth.map_rect_get_item != NULL);
-	return mr->m->meth.map_rect_get_item(mr->priv);
+	ret=mr->m->meth.map_rect_get_item(mr->priv);
+	if (ret)
+		ret->map=mr->m;
+	return ret;
 }
 
 void

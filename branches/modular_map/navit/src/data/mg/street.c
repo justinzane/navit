@@ -220,8 +220,10 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 	g_assert(street->p != NULL);
 	street->next=NULL;
 	street->status_rewind=street->status=street->str[1].segid >= 0 ? 0:1;
-	if (!street->status)
+	if (street->status)
 		street->type++;
+	item->id_hi=street->type->country;
+	item->id_lo=street->str->segid > 0 ? street->str->segid : -street->str->segid;
 	switch(street->str->type & 0x1f) {
 	case 0xf: /* very small street */
 		item->type=type_street_0;

@@ -1,11 +1,11 @@
 AUTOMAKE_OPTIONS = no-exeext
-AM_CPPFLAGS = @PACKAGE_CFLAGS@ -I../..
+AM_CPPFLAGS = @PACKAGE_CFLAGS@ -I../.. -shared
 
 objdir=$(prefix)
-obj_PROGRAMS=mg.o
+obj_PROGRAMS=mg.so
 INSTALL_PROGRAM=/bin/true
 
-mg_o_SOURCES=map.c block.c town.c poly.c street.c
+mg_so_SOURCES=map.c block.c town.c poly.c street.c
 
-mg.o: $(mg_o_OBJECTS)
-	ld -r -o mg.o $(mg_o_OBJECTS)
+mg.so: $(mg_so_OBJECTS)
+	$(CC) $(CFLAGS) -shared -o $@ $(mg_so_OBJECTS)

@@ -44,6 +44,7 @@ struct item {
 	enum item_type type;
 	int id_hi;
 	int id_lo;
+	struct map *map;
 	struct item_methods *meth;	
 	void *priv_data;
 };

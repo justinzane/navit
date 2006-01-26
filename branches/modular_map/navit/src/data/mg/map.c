@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <stdio.h>
 #include <string.h>
+#include "maptype.h"
 #include "mg.h"
 
 
@@ -151,4 +152,11 @@ map_new_mg(struct map_methods *meth, char *dirname)
 	}
 
 	return m;
+}
+
+int
+plugin_init(void)
+{
+	printf("mg: plugin_init\n");
+	maptype_register("mg", map_new_mg);
 }

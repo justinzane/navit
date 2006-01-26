@@ -51,6 +51,7 @@ struct map_flags {
 };
 
 struct container {
+	GList *mapsets;
 	struct window *win;
 	struct transformation *trans;
 	struct graphics *gra;

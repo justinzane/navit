@@ -5,10 +5,8 @@
 #include "plugin.h"
 
 void
-plugin_load(void)
+plugin_load(char *plugin)
 {
-#if 0
-	char *plugin="plugins/poi_geodownload/plugin_poi_geodownload.so";
 	void *h=dlopen(plugin,RTLD_LAZY);
 	void (*init)(void);
 
@@ -18,5 +16,10 @@ plugin_load(void)
 		init=dlsym(h,"plugin_init");
 		(*init)();
 	}
-#endif
+}
+
+void
+plugin_init(void)
+{
+	plugin_load("data/mg/mg.so");
 }

@@ -1,5 +1,5 @@
-void plugin_load(void);
-int plugin_init(void);
+void plugin_load(char *plugin);
+void plugin_init(void);
 
 struct container;
 struct popup;

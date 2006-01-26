@@ -72,6 +72,25 @@ int color[][3]={
 	{0x8080, 0x8080, 0x8080},
 };
 
+#if 0
+struct graphics_element {
+	char *name;
+	int level;
+	enum item_type type;
+	int with;
+	char *color;
+	int dashes_count;
+	unsigned char dashes[];	
+};
+
+enum item_type
+text_to_item(char *s)
+{
+	printf("item '%s' not supported\n");
+	g_abort();
+}
+#endif
+
 void
 graphics_parse(void)
 {
@@ -91,7 +110,9 @@ graphics_parse(void)
 			line[len-1]='\0';
 		printf("line '%s'\n", line);
 		sscanf(line, "%s\t%s\t%d\t%s", mode, item, &limit, type);
+		
 		printf("mode='%s' item='%s' limit=%d type='%s'\n", mode, item, limit, type);
+		
 		if (! strcasecmp(type,"l")) {
 		}
 	}
@@ -155,6 +176,16 @@ graphics_draw(struct map_data *mdata, int file, struct container *co, int displa
 #include <stdio.h>
 
 static void
+graphics_popup(struct display_list *list, struct popup_item **popup)
+{
+	struct item *item;
+	printf("Hallo %s\n", list->label);
+	item=list->data;
+	printf("id_hi 0x%x id_lo 0x%x\n", item->id_hi, item->id_lo);
+	
+}
+
+static void
 do_draw_poly(struct display_list *d, int line, struct transformation *t,struct item *item)
 {
 	struct coord c;
@@ -180,7 +211,7 @@ do_draw_poly(struct display_list *d, int line, struct transformation *t,struct i
 	if (coord_rect_overlap(&t->r, &r)) {
 		if (!item_attr_get(item, attr_name, &attr))
 			item_attr_get(item, attr_name_systematic, &attr);
-		display_add(d, line, 0, attr.u.str, count, pnt, NULL, NULL, NULL);	
+		display_add(d, line, 0, attr.u.str, count, pnt, graphics_popup, item, sizeof(*item));
 	}
 }
 
@@ -194,7 +225,7 @@ do_draw_label(struct display_list *d, struct transformation *t, struct item *ite
 	if (transform(t, &c, &pnt)) {
 		if (!item_attr_get(item, attr_district, &attr))
 			item_attr_get(item, attr_name, &attr); 
-		display_add(d, 3, 0, attr.u.str, 1, &pnt, NULL, NULL, 0);
+		display_add(d, 3, 0, attr.u.str, 1, &pnt, graphics_popup, item, sizeof(*item));
 	}
 }
 
@@ -302,7 +333,10 @@ do_draw(struct container *co)
 	struct coord_rect r;
 	struct map_rect *mr;
 	struct item *item;
-	int scale,order,rem;
+	struct mapset *ms;
+	struct map *m;
+	int scale,order,rem;	
+	void *h;
 
 	extern struct map *map_default1,*map_default2;
 	extern struct map *map_default3,*map_default4;
@@ -320,36 +354,16 @@ do_draw(struct container *co)
 	printf("order=%d\n", order);
 	
 	r=co->trans->r;
-	mr=map_rect_new(map_default1, &r, NULL, order);
-	while (item=map_rect_get_item(mr)) {
-		do_draw_item(co, item);
+	ms=co->mapsets->data;
+	h=mapset_open(ms);
+	while (m=mapset_get(h)) {
+		mr=map_rect_new(m, &r, NULL, order);
+		while (item=map_rect_get_item(mr)) {
+			do_draw_item(co, item);
+		}
+		map_rect_destroy(mr);
 	}
-	map_rect_destroy(mr);
-	mr=map_rect_new(map_default2, &r, NULL, order);
-	while (item=map_rect_get_item(mr)) {
-		do_draw_item(co, item);
-	}
-	map_rect_destroy(mr);
-	mr=map_rect_new(map_default3, &r, NULL, order);
-	while (item=map_rect_get_item(mr)) {
-		do_draw_item(co, item);
-	}
-	map_rect_destroy(mr);
-	mr=map_rect_new(map_default4, &r, NULL, order);
-	while (item=map_rect_get_item(mr)) {
-		do_draw_item(co, item);
-	}
-	map_rect_destroy(mr);
-	mr=map_rect_new(map_default5, &r, NULL, order);
-	while (item=map_rect_get_item(mr)) {
-		do_draw_item(co, item);
-	}
-	map_rect_destroy(mr);
-	mr=map_rect_new(map_default6, &r, NULL, order);
-	while (item=map_rect_get_item(mr)) {
-		do_draw_item(co, item);
-	}
-	map_rect_destroy(mr);
+	mapset_close(h);
 }
 
 void

@@ -1,5 +1,6 @@
 struct map_priv;
 struct layer;
+struct coord_rect;
 
 struct map_methods {
 	void 			(*map_destroy)(struct map_priv *priv);
