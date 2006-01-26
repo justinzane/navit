@@ -39,6 +39,7 @@ int main(int argc, char **argv)
 	Map map_client = CORBA_OBJECT_NIL;
 #endif
 	char *gps;
+	GError *error;
 
 	setenv("LC_NUMERIC","C",1);
 	setlocale(LC_ALL,"");
@@ -59,7 +60,7 @@ int main(int argc, char **argv)
 #else
 	co=gui_gtk_window(0x11e8a1,0x632815,1024);
 #endif
-	config_load("navit.xml", co, NULL);
+	config_load("navit.xml", co, &error);
 
 #if 0	/* FIXME */
 	co->route=route_new();

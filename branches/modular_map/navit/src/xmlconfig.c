@@ -1,7 +1,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include "container.h"
-#include "config.h"
+#include "xmlconfig.h"
 #include "map.h"
 #include "mapset.h"
 
@@ -24,6 +24,24 @@ static char * find_attribute(const char *attribute, const char **attribute_name,
 	return NULL;
 }
 
+static int
+parent(char *actual, char *required, GError **error)
+{
+	if (! actual && ! required)
+		return 1;
+	if (! actual || ! required) {
+		if (error)
+			*error=G_MARKUP_ERROR_INVALID_CONTENT;
+		return 0;
+	}
+	if (g_ascii_strcasecmp(actual, required)) {
+		g_printf("wrong parent: '%s' vs '%s'\n", actual, required);
+		if (error)
+			*error=G_MARKUP_ERROR_INVALID_CONTENT;
+		return 0;
+	}
+	return 1;
+}
 
 #if 0
 static struct vehile_data * config_add_vehicle(struct config_data *config, char *name, char *source, char *color)
@@ -49,14 +67,17 @@ start_element (GMarkupParseContext *context,
 {
 	struct elem_data *data = user_data;
 	void *elem=NULL;
-	void *parent_object=data->elem_stack ? data->elem_stack->data : NULL;
-	char *parent_token=data->token_stack->data ? data->token_stack->data : NULL;
+	void *parent_object;
+	char *parent_token;
+	parent_object=data->elem_stack ? data->elem_stack->data : NULL;
+	parent_token=data->token_stack ? data->token_stack->data : NULL;
 
 	g_printf("start_element: %s AN: %s AV: %s\n",element_name,*attribute_names,*attribute_values);
 
 
 	if(!g_ascii_strcasecmp("navit", element_name)) {
-		elem = data->co;
+		if (parent(parent_token, NULL, error))
+			elem = data->co;
 	}
 	else if(!g_ascii_strcasecmp("vehicle", element_name)) {
 #if 0
@@ -68,20 +89,26 @@ start_element (GMarkupParseContext *context,
 	}
 	else if(!g_ascii_strcasecmp("mapset", element_name)) {
 		struct container *co=parent_object;
-		elem = mapset_new();
-		co->mapsets = g_list_prepend(co->mapsets, elem);
+		if (parent(parent_token, "navit", error)) {
+			elem = mapset_new();
+			co->mapsets = g_list_prepend(co->mapsets, elem);
+		}
 	}
 	else if(!g_ascii_strcasecmp("map", element_name)) {
 		struct mapset *ms=parent_object;
-		elem = map_new(find_attribute("type", attribute_names, attribute_values),
-				find_attribute("data", attribute_names, attribute_values));
-		mapset_add(ms, elem);
+		if (parent(parent_token, "mapset", error)) {
+			elem = map_new(find_attribute("type", attribute_names, attribute_values),
+					find_attribute("data", attribute_names, attribute_values));
+			mapset_add(ms, elem);
+		}
 	}
 	else  {
 		g_printf("start_element: unknown token: %s\n", element_name);
+		if (error)
+			*error=G_MARKUP_ERROR_UNKNOWN_ELEMENT;
 	}
 	data->elem_stack = g_list_prepend(data->elem_stack, elem);
-	data->token_stack = g_list_prepend(data->token_stack, &element_name);
+	data->token_stack = g_list_prepend(data->token_stack, element_name);
 }
 
 
