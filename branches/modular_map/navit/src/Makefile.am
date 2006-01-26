@@ -9,7 +9,7 @@ AM_CPPFLAGS = @PACKAGE_CFLAGS@
 
 bin_PROGRAMS = navit
 
-navit_SOURCES = compass.c config.c coord.c country.c cursor.c data_window.c debug.c destination.c \
+navit_SOURCES = compass.c coord.c country.c cursor.c data_window.c debug.c destination.c \
 	display.c file.c graphics.c item.c log.c main.c map.c \
 	mapset.c maptype.c menu.c navigation.c param.c phrase.c plugin.c popup.c \
 	profile.c python.c route.c search.c speech.c transform.c track.c \
