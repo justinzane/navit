@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE navit SYSTEM "navit.dtd">
+<navit>
+	<vehicle name="Meins" source="gpsd://localhost" color="#0000ff"/>
+	<vehicle name="Deins" source="gpsd://somehost" color="#0000aa"/>
+	<mapset>
+		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map" />
+		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp1.smp" />
+		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp2.smp" />
+		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp3.smp" />
+		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp4.smp" />
+		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp5.smp" />
+	</mapset>
+	<graphic layout="Tag">
+		<layer layerid="0">
+			<zoom level="1">
+				<line width="1" color="#777" />
+			</zoom>
+			<zoom level="3">
+				<line width="4" color="#ccc" />
+				<line width="2" color="#000" />
+			</zoom>
+		</layer>
+	</graphic>
+</navit>

@@ -1,0 +1,156 @@
+#include <glib.h>
+#include <glib/gprintf.h>
+#include "container.h"
+#include "config.h"
+#include "map.h"
+#include "mapset.h"
+
+
+struct elem_data {
+	struct container *co;
+	GList *elem_stack;
+	GList *token_stack;
+};
+
+
+static char * find_attribute(const char *attribute, const char **attribute_name, const char **attribute_value)
+{
+	while(*attribute_name) {
+		if(! g_ascii_strcasecmp(attribute,*attribute_name))
+			return g_strdup(*attribute_value);
+		attribute_name++;
+		attribute_value++;
+	}
+	return NULL;
+}
+
+
+#if 0
+static struct vehile_data * config_add_vehicle(struct config_data *config, char *name, char *source, char *color)
+{
+	struct vehicle_data *v;
+
+	v = g_new0(struct vehicle_data,1);
+	v->name = name;
+	v->source = source;
+	v->color = color;
+	config->vehicles =
+		g_list_prepend(config->vehicles, v);
+}
+#endif
+
+static void
+start_element (GMarkupParseContext *context,
+		const gchar         *element_name,
+		const gchar        **attribute_names,
+		const gchar        **attribute_values,
+		gpointer             user_data,
+		GError             **error)
+{
+	struct elem_data *data = user_data;
+	void *elem=NULL;
+	void *parent_object=data->elem_stack ? data->elem_stack->data : NULL;
+	char *parent_token=data->token_stack->data ? data->token_stack->data : NULL;
+
+	g_printf("start_element: %s AN: %s AV: %s\n",element_name,*attribute_names,*attribute_values);
+
+
+	if(!g_ascii_strcasecmp("navit", element_name)) {
+		elem = data->co;
+	}
+	else if(!g_ascii_strcasecmp("vehicle", element_name)) {
+#if 0
+		elem = config_add_vehicle(data->config,
+				find_attribute("name", attribute_names, attribute_values),
+				find_attribute("source", attribute_names, attribute_values),
+				find_attribute("color", attribute_names, attribute_values));
+#endif
+	}
+	else if(!g_ascii_strcasecmp("mapset", element_name)) {
+		struct container *co=parent_object;
+		elem = mapset_new();
+		co->mapsets = g_list_prepend(co->mapsets, elem);
+	}
+	else if(!g_ascii_strcasecmp("map", element_name)) {
+		struct mapset *ms=parent_object;
+		elem = map_new(find_attribute("type", attribute_names, attribute_values),
+				find_attribute("data", attribute_names, attribute_values));
+		mapset_add(ms, elem);
+	}
+	else  {
+		g_printf("start_element: unknown token: %s\n", element_name);
+	}
+	data->elem_stack = g_list_prepend(data->elem_stack, elem);
+	data->token_stack = g_list_prepend(data->token_stack, &element_name);
+}
+
+
+/* Called for close tags </foo> */
+static void
+end_element (GMarkupParseContext *context,
+		const gchar         *element_name,
+		gpointer             user_data,
+		GError             **error)
+{
+	struct elem_data *data = user_data;
+
+	g_printf("end_element: %s\n",element_name);
+
+	data->token_stack = g_list_delete_link (data->token_stack, data->token_stack);
+	data->elem_stack = g_list_delete_link (data->elem_stack, data->elem_stack);
+
+}
+
+
+/* Called for character data */
+/* text is not nul-terminated */
+static void
+text (GMarkupParseContext *context,
+		const gchar            *text,
+		gsize                   text_len,
+		gpointer                user_data,
+		GError               **error)
+{
+	struct elem_data *data = user_data;
+
+	(void) data;
+}
+
+
+
+static const GMarkupParser parser = {
+	start_element,
+	end_element,
+	text,
+	NULL,
+	NULL
+};
+
+
+gboolean config_load(char *filename, struct container *co, GError **error)
+{
+	GMarkupParseContext *context;
+	char *contents;
+	gsize len;
+	gboolean result;
+
+	struct elem_data data;
+	
+	data.co = co;
+	data.elem_stack = NULL;
+	data.token_stack = NULL;
+	
+
+	context = g_markup_parse_context_new (&parser, 0, &data, NULL);
+
+	if (!g_file_get_contents (filename, &contents, &len, error))
+		return FALSE;
+
+	result = g_markup_parse_context_parse (context, contents, len, error);
+
+	g_markup_parse_context_free (context);
+	g_free (contents);
+
+	return result;
+}
+

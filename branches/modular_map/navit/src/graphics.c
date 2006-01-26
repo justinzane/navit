@@ -94,6 +94,7 @@ text_to_item(char *s)
 void
 graphics_parse(void)
 {
+#if 0
 	FILE *f;
 	char line[1024];
 	char mode[1024];
@@ -117,6 +118,7 @@ graphics_parse(void)
 		}
 	}
 	fclose(f);
+#endif
 }
 
 
