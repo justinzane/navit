@@ -42,7 +42,7 @@ void *
 mapset_open(struct mapset *ms)
 {
 	struct mapset_item **iter;
-	iter=g_new(struct mapset_item **,1);
+	iter=g_new(struct mapset_item *,1);
 	g_printf("ms=%p ms->first=%p\n", ms, ms->first);
 	*iter=ms->first;
 	return iter;	

@@ -316,17 +316,17 @@ is_line_visible(struct transformation *t, struct coord *c)
 int 
 is_point_visible(struct transformation *t, struct coord *c)
 {
-	struct coord *r=&t->r;
+	struct coord_rect *r=&t->r;
 
-	assert(r[0].x <= r[1].x);
-	assert(r[0].y >= r[1].y);
-	if (c->x > r[1].x)
+	assert(r->lu.x <= r->rl.x);
+	assert(r->lu.y >= r->rl.y);
+	if (c->x > r->rl.x)
 		return 0;
-	if (c->x < r[0].x)
+	if (c->x < r->lu.x)
 		return 0;
-	if (c->y < r[1].y)
+	if (c->y < r->rl.y)
 		return 0;
-	if (c->y > r[0].y)
+	if (c->y > r->lu.y)
 		return 0;
 	return 1;
 }
