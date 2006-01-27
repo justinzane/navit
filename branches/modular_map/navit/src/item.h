@@ -1,3 +1,5 @@
+#include "attr.h"
+
 enum item_type {
 	/* Point */
 	type_town_label=1,

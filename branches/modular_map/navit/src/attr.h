@@ -1,3 +1,6 @@
+#ifndef ATTR_H
+#define ATTR_H
+
 enum attr_type {
 	/* common */
 	attr_id=1,
@@ -15,3 +18,5 @@ struct attr {
 		char *str;
 	} u;
 };
+
+#endif

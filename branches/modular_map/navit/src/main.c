@@ -20,6 +20,8 @@
 #include "track.h"
 #include "container.h"
 #include "debug.h"
+#include "xmlconfig.h"
+#include "python.h"
 
 void *speech_handle;
 
