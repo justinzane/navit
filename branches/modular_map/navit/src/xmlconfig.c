@@ -29,15 +29,10 @@ parent(char *actual, char *required, GError **error)
 {
 	if (! actual && ! required)
 		return 1;
-	if (! actual || ! required) {
-		if (error)
-			*error=G_MARKUP_ERROR_INVALID_CONTENT;
-		return 0;
-	}
-	if (g_ascii_strcasecmp(actual, required)) {
-		g_printf("wrong parent: '%s' vs '%s'\n", actual, required);
-		if (error)
-			*error=G_MARKUP_ERROR_INVALID_CONTENT;
+	if (! actual || ! required || g_ascii_strcasecmp(actual, required) ) {
+		g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
+				"Element '%s' within unexpected context. Expected '%s'",
+				actual, required);
 		return 0;
 	}
 	return 1;
@@ -103,12 +98,11 @@ start_element (GMarkupParseContext *context,
 		}
 	}
 	else  {
-		g_printf("start_element: unknown token: %s\n", element_name);
-		if (error)
-			*error=G_MARKUP_ERROR_UNKNOWN_ELEMENT;
+		g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+				"Unknown element '%s'", element_name);
 	}
 	data->elem_stack = g_list_prepend(data->elem_stack, elem);
-	data->token_stack = g_list_prepend(data->token_stack, element_name);
+	data->token_stack = g_list_prepend(data->token_stack, (gpointer)element_name);
 }
 
 
