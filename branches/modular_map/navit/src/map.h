@@ -12,4 +12,6 @@ struct map_methods {
 
 struct map * map_new(char *type, char *filename);
 void map_destroy(struct map *m);
+struct map_rect * map_rect_new(struct map *m, struct coord_rect *r, struct layer *layers, int limit);
+void map_rect_destroy(struct map_rect *mr);
 

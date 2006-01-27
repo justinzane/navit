@@ -1,3 +1,5 @@
+struct map_methods;
+
 struct maptype {
 	char *name;
 	struct map_priv *(*map_new)(struct map_methods *meth, char *data);

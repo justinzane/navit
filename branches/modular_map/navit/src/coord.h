@@ -25,6 +25,10 @@ struct coord_geo {
 };
 
 struct coord * coord_get(unsigned char **p);
+struct coord * coord_new(int x, int y);
+void coord_destroy(struct coord *c);
+struct coord_rect * coord_rect_new(struct coord *lu, struct coord *rl);
+void coord_rect_destroy(struct coord_rect *r);
 int coord_rect_overlap(struct coord_rect *r1, struct coord_rect *r2);
 int coord_rect_contains(struct coord_rect *r, struct coord *c);
 
