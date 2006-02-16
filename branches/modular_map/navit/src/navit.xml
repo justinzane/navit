@@ -11,15 +11,38 @@
 		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp4.smp" />
 		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp5.smp" />
 	</mapset>
-	<graphic layout="Tag">
-		<layer layerid="0">
-			<zoom level="1">
-				<line width="1" color="#777" />
-			</zoom>
-			<zoom level="3">
-				<line width="4" color="#ccc" />
-				<line width="2" color="#000" />
-			</zoom>
+	<layout name="Tag">
+		<layer name="sea" details="0">
+			<item type="sea" zoom="1">
+				<polygon color="#82c8ea" />
+			</item>
 		</layer>
-	</graphic>
+		<layer name="wood" details="0">
+			<item type="wood" zoom="1">
+				<polygon color="#8ec78d" />
+			</item>
+		</layer>
+		<layer name="highway" details="0">
+			<item type="highway" zoom="1">
+				<line color="#ff0000" width="3" />
+				<line color="#ffff0a" width="1" />
+			</item>
+			<item type="highway" zoom="5">
+				<line color="#ff0000" width="5" />
+				<line color="#ffff0a" width="3" />
+				<text color="#000000" font="arial" size="12" />
+			</item>
+		</layer>
+		<layer name="label" details="0">
+			<item type="town0" zoom="3">
+				<circle radius="3" />
+				<text color="#000000" font="arial" size="12" />
+			</item>
+		</layer>
+		<layer name="poi" details="0">
+			<item type="mcdonalds" zoom="3">
+				<icon src="mcdonalds.xpm" />
+			</item>
+		</layer>
+	</layout>
 </navit>

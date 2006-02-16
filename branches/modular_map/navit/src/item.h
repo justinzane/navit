@@ -35,6 +35,9 @@ enum item_type {
 	type_park_poly,
 	type_sport_poly,
 };
+
+struct coord;
+
 struct item_methods {
 	void (*item_coord_rewind)(void *priv_data);
 	int (*item_coord_get)(void *priv_data, struct coord *c, int count);
@@ -56,3 +59,5 @@ void item_coord_rewind(struct item *it);
 int item_coord_get(struct item *it, struct coord *c, int count);
 void item_attr_rewind(struct item *it);
 int item_attr_get(struct item *it, enum attr_type attr_type, struct attr *attr);
+struct item * item_new(char *type, int zoom);
+

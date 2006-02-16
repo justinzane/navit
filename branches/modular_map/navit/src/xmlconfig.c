@@ -4,6 +4,7 @@
 #include "xmlconfig.h"
 #include "map.h"
 #include "mapset.h"
+#include "layout.h"
 
 
 struct elem_data {
@@ -22,6 +23,12 @@ static char * find_attribute(const char *attribute, const char **attribute_name,
 		attribute_value++;
 	}
 	return NULL;
+}
+
+static int
+convert_number(const char *val)
+{
+	return g_ascii_strtoull(val,NULL,0);
 }
 
 static int
@@ -48,7 +55,7 @@ static struct vehile_data * config_add_vehicle(struct config_data *config, char 
 	v->source = source;
 	v->color = color;
 	config->vehicles =
-		g_list_prepend(config->vehicles, v);
+		g_list_append(config->vehicles, v);
 }
 #endif
 
@@ -86,7 +93,7 @@ start_element (GMarkupParseContext *context,
 		struct container *co=parent_object;
 		if (parent(parent_token, "navit", error)) {
 			elem = mapset_new();
-			co->mapsets = g_list_prepend(co->mapsets, elem);
+			co->mapsets = g_list_append(co->mapsets, elem);
 		}
 	}
 	else if(!g_ascii_strcasecmp("map", element_name)) {
@@ -95,6 +102,29 @@ start_element (GMarkupParseContext *context,
 			elem = map_new(find_attribute("type", attribute_names, attribute_values),
 					find_attribute("data", attribute_names, attribute_values));
 			mapset_add(ms, elem);
+		}
+	}
+	else if(!g_ascii_strcasecmp("layout", element_name)) {
+		struct container *co=parent_object;
+		if(parent(parent_token, "navit", error)) {
+			elem =layout_new(find_attribute("name", attribute_names, attribute_values));
+			co->layouts = g_list_append(co->layouts, elem);
+		}
+	}
+	else if(!g_ascii_strcasecmp("layer", element_name)) {
+		struct layout *layout=parent_object;
+		if(parent(parent_token, "layout", error)) {
+			elem =layer_new(find_attribute("name", attribute_names, attribute_values),
+					convert_number(find_attribute("details",attribute_names, attribute_values)));
+			layout_add_layer(layout, elem);
+		}
+	}
+	else if(!g_ascii_strcasecmp("item", element_name)) {
+		struct layout *layer=parent_object;
+		if(parent(parent_token, "layer", error)) {
+			elem =item_new(find_attribute("type", attribute_names, attribute_values),
+					convert_number(find_attribute("zoom",attribute_names, attribute_values)));
+			layer_add_item(layer, elem);
 		}
 	}
 	else  {

@@ -50,8 +50,12 @@ struct map_flags {
 	int track;
 };
 
+struct layout;
+
 struct container {
 	GList *mapsets;
+	GList *layouts;
+	struct layout *layout_current;
 	struct window *win;
 	struct transformation *trans;
 	struct graphics *gra;
