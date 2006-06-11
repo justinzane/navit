@@ -107,24 +107,30 @@ start_element (GMarkupParseContext *context,
 	else if(!g_ascii_strcasecmp("layout", element_name)) {
 		struct container *co=parent_object;
 		if(parent(parent_token, "navit", error)) {
+#if 0
 			elem =layout_new(find_attribute("name", attribute_names, attribute_values));
 			co->layouts = g_list_append(co->layouts, elem);
+#endif
 		}
 	}
 	else if(!g_ascii_strcasecmp("layer", element_name)) {
 		struct layout *layout=parent_object;
 		if(parent(parent_token, "layout", error)) {
+#if 0
 			elem =layer_new(find_attribute("name", attribute_names, attribute_values),
 					convert_number(find_attribute("details",attribute_names, attribute_values)));
 			layout_add_layer(layout, elem);
+#endif
 		}
 	}
 	else if(!g_ascii_strcasecmp("item", element_name)) {
 		struct layout *layer=parent_object;
 		if(parent(parent_token, "layer", error)) {
+#if 0
 			elem =item_new(find_attribute("type", attribute_names, attribute_values),
 					convert_number(find_attribute("zoom",attribute_names, attribute_values)));
 			layer_add_item(layer, elem);
+#endif
 		}
 	}
 	else  {
