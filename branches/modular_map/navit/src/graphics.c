@@ -211,6 +211,7 @@ do_draw_poly(struct display_list *d, int line, struct transformation *t,struct i
 	}
 	g_assert(count < max);
 	if (coord_rect_overlap(&t->r, &r)) {
+		attr.u.str=NULL;
 		if (!item_attr_get(item, attr_name, &attr))
 			item_attr_get(item, attr_name_systematic, &attr);
 		display_add(d, line, 0, attr.u.str, count, pnt, graphics_popup, item, sizeof(*item));

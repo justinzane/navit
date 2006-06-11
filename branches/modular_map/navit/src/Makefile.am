@@ -20,5 +20,5 @@ navit_SOURCES = compass.c coord.c country.c cursor.c data_window.c debug.c desti
 	param.h phrase.h plugin.h point.h popup.h route.h search.h speech.h statusbar.h \
 	toolbar.h transform.h track.h util.h vehicle.h xmlconfig.h
 
-navit_LDADD = @PACKAGE_LIBS@ gui/gtk/gtk.o graphics/gtk_drawing_area/gtk_drawing_area.o -Lfib-1.0 -lfib
+navit_LDADD = @PACKAGE_LIBS@ gui/gtk/gtk.so graphics/gtk_drawing_area/gtk_drawing_area.so -Lfib-1.0 -lfib
 

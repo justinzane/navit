@@ -49,6 +49,8 @@ AC_SUBST(PYTHON_INC)
 
 AC_CONFIG_SUBDIRS(src/fib-1.0)
 
+LIBS="$LIBS -rdynamic"
+
 AC_OUTPUT([
 Makefile
 src/Makefile
