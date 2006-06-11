@@ -8,12 +8,12 @@ static void
 street_name_get(struct street_name *name, unsigned char **p)
 {
 	unsigned char *start=*p;
-	name->len=get_short(p);
-	name->country=get_short(p);
-	name->townassoc=get_long(p);
+	name->len=get_short_unal(p);
+	name->country=get_short_unal(p);
+	name->townassoc=get_long_unal(p);
 	name->name1=get_string(p);
 	name->name2=get_string(p);
-	name->segment_count=get_long(p);
+	name->segment_count=get_long_unal(p);
 	name->segments=(struct street_name_segment *)(*p);
 	(*p)+=(sizeof (struct street_name_segment))*name->segment_count;
 	name->aux_len=name->len-(*p-start);
@@ -101,7 +101,7 @@ street_coord_get_begin(unsigned char **p)
 	struct street_str *str;
 
 	str=(struct street_str *)(*p);
-	while (str->segid) {
+	while (L(str->segid)) {
 		str++;
 	}
 	(*p)=(unsigned char *)str;
@@ -159,12 +159,12 @@ street_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 	switch (attr_type) {
 	case attr_name:
 		if (! street->name.len)
-			street_name_get_by_id(&street->name,street->name_file,street->str->nameid);
+			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));
 		attr->u.str=street->name.name2;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	case attr_name_systematic:
 		if (! street->name.len)
-			street_name_get_by_id(&street->name,street->name_file,street->str->nameid);
+			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));
 		attr->u.str=street->name.name1;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	default:
@@ -215,15 +215,15 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 		street->str++;
 		street->p=street->next;
 	}
-	if (! street->str->segid)
+	if (! L(street->str->segid))
 		return 0;
 	g_assert(street->p != NULL);
 	street->next=NULL;
-	street->status_rewind=street->status=street->str[1].segid >= 0 ? 0:1;
+	street->status_rewind=street->status=L(street->str[1].segid) >= 0 ? 0:1;
 	if (street->status)
 		street->type++;
 	item->id_hi=street->type->country;
-	item->id_lo=street->str->segid > 0 ? street->str->segid : -street->str->segid;
+	item->id_lo=L(street->str->segid) > 0 ? L(street->str->segid) : -L(street->str->segid);
 	switch(street->str->type & 0x1f) {
 	case 0xf: /* very small street */
 		item->type=type_street_0;

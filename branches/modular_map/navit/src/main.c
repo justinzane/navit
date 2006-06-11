@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include "config.h"
 #include "coord.h"
 #include "vehicle.h"
 #include "cursor.h"
@@ -21,7 +22,9 @@
 #include "container.h"
 #include "debug.h"
 #include "xmlconfig.h"
+#ifdef HAVE_PYTHON
 #include "python.h"
+#endif
 
 void *speech_handle;
 
@@ -52,7 +55,9 @@ int main(int argc, char **argv)
 	gtk_init(&argc, &argv);
 	gdk_rgb_init();
 
+#ifdef HAVE_PYTHON
 	python_init();
+#endif
 	plugin_init();
 #if 0
 	map_data_default=load_maps(NULL);

@@ -1,3 +1,5 @@
+#include "config.h"
+#ifdef HAVE_PYTHON
 #include <Python.h>
 #include <fcntl.h>
 #include "coord.h"
@@ -276,3 +278,4 @@ void python_init(void)
 	Py_Finalize();
 	exit(0);
 }
+#endif

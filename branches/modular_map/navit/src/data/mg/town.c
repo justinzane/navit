@@ -20,7 +20,7 @@ town_coord_get(void *priv_data, struct coord *c, int count)
 	if (twn->cidx || count <= 0)
 		return 0;
 	twn->cidx=1;
-	*c=*twn->c;
+	*c=twn->c;
 	return 1;
 }
 
@@ -61,20 +61,21 @@ static struct item_methods town_meth = {
 static void
 town_get_data(struct town_priv *twn, unsigned char **p)
 {
-	twn->id=get_long(p);
-	twn->c=coord_get(p);
+	twn->id=get_long_unal(p);
+	twn->c.x=get_long_unal(p);
+	twn->c.y=get_long_unal(p);
 	twn->name=get_string(p);
 	twn->district=get_string(p);
 	twn->postal_code1=get_string(p);
 	twn->order=get_char(p);			/* 1-15 (19) */
 	twn->country=get_short(p);
 	twn->type=get_char(p);
-	twn->unknown2=get_long(p);
+	twn->unknown2=get_long_unal(p);
 	twn->size=get_char(p);
-	twn->street_assoc=get_long(p);
+	twn->street_assoc=get_long_unal(p);
 	twn->unknown3=get_char(p);
 	twn->postal_code2=get_string(p);
-	twn->unknown4=get_long(p);
+	twn->unknown4=get_long_unal(p);
 #if 0
 		printf("%s\t%s\t%s\t%d\t%d\t%d\n",twn->name,twn->district,twn->postal_code1,twn->order, twn->country, twn->type);
 #endif
@@ -93,7 +94,7 @@ town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 		twn->aidx=0;
 		if (twn->order == 19)
 			printf("%s %s\n", twn->name, twn->district);		
-		if (twn->order <= limit[mr->limit] && coord_rect_contains(&mr->r,twn->c)) {
+		if (twn->order <= limit[mr->limit] && coord_rect_contains(&mr->r,&twn->c)) {
 			switch(twn->type) {
 			case 1:
 				item->type=type_town_label;

@@ -55,25 +55,27 @@ block_setup_tags(struct map_rect_priv *mr)
 	p=mr->file->begin+0x0c;
 	while (*p) {
 		str=get_string(&p);
-		len=get_long(&p);
+		len=get_long_unal(&p);
 		t=p;
 		/* printf("String '%s' len %d\n", str, len); */
 		if (! strcmp(str,"FirstBatBlock")) {
-			/* printf("%ld\n", get_long(&t)); */
+			/* printf("%ld\n", get_long_unal(&t)); */
 		} else if (! strcmp(str,"MaxBlockSize")) {
-			/* printf("%ld\n", get_long(&t)); */
+			/* printf("%ld\n", get_long_unal(&t)); */
 		} else if (! strcmp(str,"FREE_BLOCK_LIST")) {
-			/* printf("%ld\n", get_long(&t)); */
+			/* printf("%ld\n", get_long_unal(&t)); */
 		} else if (! strcmp(str,"TotalRect")) {
-			mr->b.b_rect.lu=*(coord_get(&t));
-			mr->b.b_rect.rl=*(coord_get(&t));
+			mr->b.b_rect.lu.x=get_long_unal(&t);
+			mr->b.b_rect.lu.y=get_long_unal(&t);
+			mr->b.b_rect.rl.x=get_long_unal(&t);
+			mr->b.b_rect.rl.y=get_long_unal(&t);
 			/* printf("0x%x,0x%x-0x%x,0x%x\n", mr->b.b_rect.lu.x, mr->b.b_rect.lu.y, mr->b.b_rect.rl.x, mr->b.b_rect.rl.y); */
 		} else if (! strcmp(str,"Version")) {
-			/* printf("0x%lx\n", get_long(&t)); */
+			/* printf("0x%lx\n", get_long_unal(&t)); */
 		} else if (! strcmp(str,"Categories")) {
 			/* printf("0x%x\n", get_short(&t)); */
 		} else if (! strcmp(str,"binaryTree")) {
-			mr->b.binarytree=get_long(&t);
+			mr->b.binarytree=get_long_unal(&t);
 			/* printf("%d\n", mr->b.binarytree); */
 		} else if (! strcmp(str,"CategorySets")) {
 			/* printf("0x%x\n", get_short(&t)); */

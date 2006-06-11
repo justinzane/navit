@@ -19,7 +19,7 @@ struct block {
 
 struct town_priv {
 	unsigned int id; /*!< Identifier */
-	struct coord *c; /*!< Coordinates */
+	struct coord c; /*!< Coordinates */
 	char *name; /*!< Name */
 	char *district; /*!< District */
 	char *postal_code1; /*!< Postal code */
@@ -44,7 +44,7 @@ struct poly_priv {
 	unsigned char *subpoly_next;
 	unsigned char *subpoly_start;
 	unsigned char *p;
-	struct coord *c;
+	struct coord c[2];
 	char *name;
 	unsigned char order;
 	unsigned char type;

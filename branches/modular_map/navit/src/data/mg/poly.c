@@ -19,7 +19,9 @@ poly_coord_get(void *priv_data, struct coord *c, int count)
 	while (count--) {
 		if (poly->p >= poly->subpoly_next)
 			break;
-		*c++=*(coord_get(&poly->p));
+		c->x=get_long_unal(&poly->p);
+		c->y=get_long_unal(&poly->p);
+		c++;
 		ret++;
 	}
 	return ret;
@@ -55,8 +57,11 @@ static struct item_methods poly_meth = {
 static void
 poly_get_data(struct poly_priv *poly, unsigned char **p)
 {
-	poly->c=(struct coord *) (*p);
-	*p+=3*sizeof(struct coord);
+	poly->c[0].x=get_long_unal(p);
+	poly->c[0].y=get_long_unal(p);
+	poly->c[1].x=get_long_unal(p);
+	poly->c[1].y=get_long_unal(p);
+	*p+=sizeof(struct coord);
 	poly->name=(char *)(*p);
 	while (**p) {
 		(*p)++;
@@ -64,9 +69,9 @@ poly_get_data(struct poly_priv *poly, unsigned char **p)
 	(*p)++;
 	poly->order=*(*p)++;
 	poly->type=*(*p)++;
-	poly->polys=*(unsigned int *)(*p); (*p)+=sizeof(unsigned int);
+	poly->polys=get_long_unal(p);
 	poly->count=(unsigned int *)(*p); (*p)+=poly->polys*sizeof(unsigned int);
-	poly->count_sum=*(unsigned long *)(*p); (*p)+=sizeof(unsigned long);
+	poly->count_sum=get_long_unal(p);
 }
 
 int
@@ -144,7 +149,7 @@ poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item)
 			}
 		} else 
 			mr->b.p=poly->subpoly_next;
-		poly->subpoly_next=mr->b.p+poly->count[poly->subpoly_num]*sizeof(struct coord);
+		poly->subpoly_next=mr->b.p+L(poly->count[poly->subpoly_num])*sizeof(struct coord);
 		poly->subpoly_num++;
 		if (poly->subpoly_num >= poly->polys) 
 			poly->subpoly_num=0;

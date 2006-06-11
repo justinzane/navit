@@ -74,7 +74,7 @@ start_element (GMarkupParseContext *context,
 	parent_object=data->elem_stack ? data->elem_stack->data : NULL;
 	parent_token=data->token_stack ? data->token_stack->data : NULL;
 
-	g_printf("start_element: %s AN: %s AV: %s\n",element_name,*attribute_names,*attribute_values);
+	/* g_printf("start_element: %s AN: %s AV: %s\n",element_name,*attribute_names,*attribute_values); */
 
 
 	if(!g_ascii_strcasecmp("navit", element_name)) {
