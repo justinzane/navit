@@ -364,10 +364,8 @@ draw_text(struct graphics *gr, struct graphics_gc *fg, struct graphics_gc *bg, s
 static void
 draw_image(struct graphics *gr, struct graphics_gc *fg, struct point *p, struct graphics_image *img)
 {
-	printf("draw_image1 \n");
 	gdk_draw_pixbuf(gr->gra->drawable, fg->gc, img->gra->pixbuf, 0, 0, p->x, p->y,
 		    img->width, img->height, GDK_RGB_DITHER_NONE, 0, 0);
-	printf("draw_image1 end\n");
 }
 
 static void

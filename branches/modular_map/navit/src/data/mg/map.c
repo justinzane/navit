@@ -64,12 +64,18 @@ map_charset_mg(struct map_priv *m)
 	return "iso8859-1";
 }
 
+extern int block_lin_count,block_idx_count,block_active_count,block_mem,block_active_mem;
 
 static struct map_rect_priv *
 map_rect_new_mg(struct map_priv *map, struct coord_rect *r, struct layer *layers, int limit)
 {
 	struct map_rect_priv *mr;
 
+	block_lin_count=0;
+	block_idx_count=0;
+	block_active_count=0;
+	block_mem=0;
+	block_active_mem=0;
 	mr=g_new0(struct map_rect_priv, 1);
 	mr->m=map;
 	mr->r=*r;
@@ -108,6 +114,7 @@ map_rect_get_item_mg(struct map_rect_priv *mr)
 			continue;
 		if (file_next(mr))
 			continue;
+		printf("lin_count %d idx_count %d active_count %d %d kB (%d kB)\n", block_lin_count, block_idx_count, block_active_count, (block_mem+block_active_mem)/1024, block_active_mem/1024);
 		return NULL;
 	}
 }

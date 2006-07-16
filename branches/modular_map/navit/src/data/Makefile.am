@@ -1,1 +1,1 @@
-SUBDIRS=mg
+SUBDIRS=mg textfile

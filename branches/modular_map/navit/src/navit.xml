@@ -5,43 +5,59 @@
 	<vehicle name="Deins" source="gpsd://somehost" color="#0000aa"/>
 	<mapset>
 		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map" />
-		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp1.smp" />
-		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp2.smp" />
 		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp3.smp" />
 		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp4.smp" />
-		<map type="mg" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp5.smp" />
+		<map type="textfile" data="/tmp/roadbook.txt" />
 	</mapset>
 	<layout name="Tag">
 		<layer name="sea" details="0">
-			<item type="sea" zoom="1">
-				<polygon color="#82c8ea" />
-			</item>
+			<zoom level="1">
+				<item type="sea">
+					<polygon color="#82c8ea" />
+				</item>
+			</zoom>
 		</layer>
+		<layer name="wood" details="0">
+			<zoom level="1">
+				<item type="wood">
+					<polygon color="#8ec78d" />
+				</item>
+			</zoom>
+		</layer>
+		<layer name="highway" details="0">
+			<zoom level="1">
+				<item type="highway">
+					<line color="#ff0000" width="3" />
+					<line color="#ffff0a" width="1" />
+				</item>
+			</zoom>
+			<zoom level="5">
+				<item type="highway">
+					<line color="#ff0000" width="5" />
+					<line color="#ffff0a" width="3" />
+					<text color="#000000" font="arial" size="12">
+				</item>
+			</zoom>
+		</layer>
+		<layer name="label" details="0">
+			<zoom level="1" />
+			<zoom level="3">
+				<item type="town0">
+					<circle radius="3" />
+					<text color="#000000" font="arial" size="12">
+				</item>
+			</zoom>
+		</layer>
+		<layer name="poi" details="0">
+			<zoom level="1" />
+			<zoom level="3">
+				<item type="mcdonalds">
+					<icon src="mcdonalds.xpm" />
+				</item>
+			</zoom>
 		<layer name="wood" details="0">
 			<item type="wood" zoom="1">
 				<polygon color="#8ec78d" />
-			</item>
-		</layer>
-		<layer name="highway" details="0">
-			<item type="highway" zoom="1">
-				<line color="#ff0000" width="3" />
-				<line color="#ffff0a" width="1" />
-			</item>
-			<item type="highway" zoom="5">
-				<line color="#ff0000" width="5" />
-				<line color="#ffff0a" width="3" />
-				<text color="#000000" font="arial" size="12" />
-			</item>
-		</layer>
-		<layer name="label" details="0">
-			<item type="town0" zoom="3">
-				<circle radius="3" />
-				<text color="#000000" font="arial" size="12" />
-			</item>
-		</layer>
-		<layer name="poi" details="0">
-			<item type="mcdonalds" zoom="3">
-				<icon src="mcdonalds.xpm" />
 			</item>
 		</layer>
 	</layout>

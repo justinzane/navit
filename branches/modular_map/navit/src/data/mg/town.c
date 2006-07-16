@@ -45,6 +45,9 @@ town_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 	case attr_district:
 		attr->u.str=twn->district;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_size:
+		attr->u.num=twn->order;
+		return 1;
 	default:
 		g_assert(1==0);
 		return 0;

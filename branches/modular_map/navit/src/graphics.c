@@ -40,7 +40,8 @@
 #define GC_STREET_ROUTE 23
 #define GC_RAIL1 24
 #define GC_BORDER 25
-#define GC_LAST	26
+#define GC_ROADBOOK 26
+#define GC_LAST	27
 
 
 int color[][3]={
@@ -70,6 +71,7 @@ int color[][3]={
 	{0x0000, 0x0000, 0xa0a0},
 	{0xffff, 0xffff, 0xffff},
 	{0x8080, 0x8080, 0x8080},
+	{0xffff, 0x8080, 0x8080},
 };
 
 #if 0
@@ -188,7 +190,7 @@ graphics_popup(struct display_list *list, struct popup_item **popup)
 }
 
 static void
-do_draw_poly(struct display_list *d, int line, struct transformation *t,struct item *item)
+do_draw_poly(struct display_list **d, int line, struct transformation *t,struct item *item)
 {
 	struct coord c;
 	int max=16384;
@@ -219,16 +221,39 @@ do_draw_poly(struct display_list *d, int line, struct transformation *t,struct i
 }
 
 static void
-do_draw_label(struct display_list *d, struct transformation *t, struct item *item)
+do_draw_label(struct display_list **d, struct transformation *t, int maxoff, struct item *item)
+{
+	struct point pnt;
+	struct coord c;
+	struct attr attr;
+	int offset;
+
+	item_coord_get(item, &c, 1);
+	if (transform(t, &c, &pnt)) {
+		if (maxoff && item_attr_get(item, attr_size, &attr)) {
+			offset=attr.u.num;
+			if (offset < 0)
+				offset=0;
+			if (offset > maxoff)
+				offset=maxoff;
+			d+=offset;
+		}
+		if (!item_attr_get(item, attr_district, &attr))
+			item_attr_get(item, attr_name, &attr); 
+		display_add(d, 3, 0, attr.u.str, 1, &pnt, graphics_popup, item, sizeof(*item));
+	}
+}
+
+static void
+do_draw_poi(struct display_list **d, struct transformation *t, struct item *item)
 {
 	struct point pnt;
 	struct coord c;
 	struct attr attr;
 	item_coord_get(item, &c, 1);
 	if (transform(t, &c, &pnt)) {
-		if (!item_attr_get(item, attr_district, &attr))
-			item_attr_get(item, attr_name, &attr); 
-		display_add(d, 3, 0, attr.u.str, 1, &pnt, graphics_popup, item, sizeof(*item));
+		item_attr_get(item, attr_icon, &attr); 
+		display_add(d, 5, 0, attr.u.str, 1, &pnt, graphics_popup, item, sizeof(*item));
 	}
 }
 
@@ -237,13 +262,16 @@ do_draw_item(struct container *co, struct item *item)
 {
 	switch (item->type) {
 	case type_town_label:
-		do_draw_label(&co->disp[display_town+8], co->trans, item);
+		do_draw_label(&co->disp[display_town], co->trans, 15, item);
+		break;
+	case type_waypoint:
+		do_draw_label(&co->disp[display_town+15], co->trans, 0, item);
 		break;
 	case type_district_label:
-		do_draw_label(&co->disp[display_town+8], co->trans, item);
+		do_draw_label(&co->disp[display_town], co->trans, 15, item);
 		break;
 	case type_highway_exit_label:
-		do_draw_label(&co->disp[display_town+8], co->trans, item);
+		do_draw_label(&co->disp[display_town], co->trans, 15, item);
 		break;
 	case type_street_0:
 		do_draw_poly(&co->disp[display_street], 1, co->trans, item);
@@ -287,6 +315,9 @@ do_draw_item(struct container *co, struct item *item)
 	case type_ferry:
 		do_draw_poly(&co->disp[display_rail], 1, co->trans, item);
 		break;
+	case type_roadbook:
+		do_draw_poly(&co->disp[display_roadbook], 1, co->trans, item);
+		break;
 	case type_street_unkn:
 		do_draw_poly(&co->disp[display_street_route], 1, co->trans, item);
 		break;
@@ -324,6 +355,10 @@ do_draw_item(struct container *co, struct item *item)
 	case type_sport_poly:
 		do_draw_poly(&co->disp[display_other1], 0, co->trans, item);
 		break;
+	case type_poi:
+		do_draw_poi(&co->disp[display_poi], co->trans, item);
+		break;
+		
 	default:
 		printf("Unsupported item\n");
 		exit(1);
@@ -379,7 +414,7 @@ graphics_redraw(struct container *co)
 	struct graphics *gra=co->gra;
 	unsigned char dashes[]={4,4};
 
-#if 0
+#if 1
 	printf("scale=%d center=0x%lx,0x%lx mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
 #endif
 	
@@ -558,6 +593,7 @@ graphics_redraw(struct container *co)
 	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2], w[3]);
 	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2_B], bw[3]);
 	gra->gc_set_linewidth(gra->gc[GC_STREET_ROUTE], w[3]+7+w[3]/2);
+	gra->gc_set_linewidth(gra->gc[GC_ROADBOOK], w[3]+7+w[3]/2);
 
 #if 0
 	profile_timer(NULL);
@@ -599,6 +635,7 @@ graphics_redraw(struct container *co)
 	street_route_draw(co);
 #endif
 	display_draw(disp[display_street_route], gra, gra->gc[GC_STREET_ROUTE], NULL); 
+	display_draw(disp[display_roadbook], gra, gra->gc[GC_ROADBOOK], NULL); 
 	if (bw[0]) {
 		display_draw(disp[display_street_no_pass], gra, gra->gc[GC_STREET_SMALL_B], NULL); 
 		display_draw(disp[display_street], gra, gra->gc[GC_STREET_SMALL_B], NULL); 
@@ -635,6 +672,7 @@ graphics_redraw(struct container *co)
 	}
 	display_labels(disp[display_street2], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
 	display_labels(disp[display_street3], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
+	display_labels(disp[display_roadbook], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
 
 	for (i = display_town+t[1] ; i < display_town+0x10 ; i++) 
 		display_labels(disp[i], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);

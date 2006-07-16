@@ -5,6 +5,8 @@ enum item_type {
 	type_town_label=1,
 	type_district_label,
 	type_highway_exit_label,
+	type_poi,
+	type_waypoint,
 	/* Line */
 	type_border_country,
 	type_border_state,
@@ -24,6 +26,7 @@ enum item_type {
 	type_highway_land,
 	type_ramp,
 	type_ferry,
+	type_roadbook,
 	type_street_unkn,
 	/* Area */
 	type_wood,

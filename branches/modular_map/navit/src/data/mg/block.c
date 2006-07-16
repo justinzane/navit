@@ -4,6 +4,8 @@
 #include "mg.h"
 
 
+int block_lin_count,block_idx_count,block_active_count,block_mem,block_active_mem;
+
 struct block_index_item {
 	unsigned long blocknum;
 	unsigned long blocks;
@@ -33,6 +35,7 @@ block_get_byid(struct file *file, int id, unsigned char **p_ret)
 
 	blk_idx=(struct block_index *)(file->begin+0x1000);
 	max=(blk_idx->size-sizeof(struct block_index))/sizeof(struct block_index_item);
+	block_mem+=24;
 	while (id >= max) {
 		blk_idx=(struct block_index *)(file->begin+blk_idx->next*512);
 		id-=max;
@@ -116,10 +119,13 @@ block_init(struct map_rect_priv *mr)
 	return block_next(mr);
 }
 
+
 static int
 block_next_lin(struct map_rect_priv *mr)
 {
 	for (;;) {
+		block_lin_count++;
+		block_mem+=sizeof(struct block *);
 		mr->b.block_num++;
 		if (! mr->b.block_num) 
 			mr->b.p=mr->file->begin+0x2000;
@@ -134,6 +140,8 @@ block_next_lin(struct map_rect_priv *mr)
 		if (mr->b.b->count == -1)
 			return 0;
 		if (coord_rect_overlap(&mr->r, &mr->b.b->r) || mr->current_file == file_street_str+100) {
+			block_active_count++;
+			block_active_mem+=mr->b.b->blocks*512-sizeof(struct block *);
 			return 1;
 		}
 	}
@@ -174,8 +182,10 @@ block_next(struct map_rect_priv *mr)
 			bt->block_count++;
 		}
 		while (mr->b.bt.p < mr->b.bt.end) {
+			block_idx_count++;
 			blk_num=get_long(&mr->b.bt.p);
 			coord=get_long(&mr->b.bt.p); 
+			block_mem+=8;
 			if (debug) {
 				printf("%p vs %p coord 0x%x ", mr->b.bt.end, mr->b.bt.p, coord);
 				printf("block 0x%x", blk_num);
@@ -190,6 +200,7 @@ block_next(struct map_rect_priv *mr)
 			}
 			mr->b.b=NULL;
 			if (blk_num != -1) {
+				block_mem+=8;
 				if (coord_rect_overlap(&mr->r, &bt->r_curr)) {
 					mr->b.b=block_get_byid(mr->file, blk_num, &mr->b.p);
 					mr->b.block_num=blk_num;
@@ -222,8 +233,11 @@ block_next(struct map_rect_priv *mr)
 						return 0;
 				}
 			}
-			if (mr->b.b)
+			if (mr->b.b) {
+				block_active_count++;
+				block_active_mem+=mr->b.b->blocks*512;
 				return 1;
+			}
 		}
 		bt->p=NULL;
 	}	

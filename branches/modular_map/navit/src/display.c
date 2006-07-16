@@ -210,36 +210,40 @@ display_find(struct point *p, struct display_list **in, int in_count, int maxdis
 static void
 label_line(struct graphics *gr, struct graphics_gc *fg, struct graphics_gc *bg, struct graphics_font *font, struct point *p, int count, char *label)
 {
-	int i,x,y,tl;
+	int i,x,y,tl,f=1,lcount=0;
 	double dx,dy,l;
 	struct point p_t;
 
 	tl=strlen(label)*400;
+	if (strlen(label) < 4)
+		f=3;
 	for (i = 0 ; i < count-1 ; i++) {
 		dx=p[i+1].x-p[i].x;
 		dx*=100;
 		dy=p[i+1].y-p[i].y;
 		dy*=100;
 		l=(int)sqrt((float)(dx*dx+dy*dy));	
-		if (l > tl) {
-			x=p[i].x;
-			y=p[i].y;
-			if (dx < 0) {
-				dx=-dx;
-				dy=-dy;
-				x=p[i+1].x;
-				y=p[i+1].y;
-			}
-			x+=(l-tl)*dx/l/200;
-			y+=(l-tl)*dy/l/200;
-			x-=dy*45/l/10;
-			y+=dx*45/l/10;
-			p_t.x=x;
-			p_t.y=y;
+		if (l > tl*f) {
+			if ((lcount++ % f) == 0) {
+				x=p[i].x;
+				y=p[i].y;
+				if (dx < 0) {
+					dx=-dx;
+					dy=-dy;
+					x=p[i+1].x;
+					y=p[i+1].y;
+				}
+				x+=(l-tl)*dx/l/200;
+				y+=(l-tl)*dy/l/200;
+				x-=dy*45/l/10;
+				y+=dx*45/l/10;
+				p_t.x=x;
+				p_t.y=y;
 #if 0
 			printf("display_text: '%s', %d, %d, %d, %d %d\n", label, x, y, dx*0x10000/l, dy*0x10000/l, l);
 #endif
-			gr->draw_text(gr, fg, bg, font, label, &p_t, dx*0x10000/l, dy*0x10000/l);
+				gr->draw_text(gr, fg, bg, font, label, &p_t, dx*0x10000/l, dy*0x10000/l);
+			}
 		}
 	}	
 }

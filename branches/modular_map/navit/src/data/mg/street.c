@@ -256,7 +256,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 		item->type=type_street_4_land;
 		break;
 	case 0x4:
-		item->type=type_ferry;
+		item->type=type_street_4_land;
 		break;
 	case 0x3:
 		item->type=type_street_n_lanes;

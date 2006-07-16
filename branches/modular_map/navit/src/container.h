@@ -15,6 +15,7 @@ enum display_index {
         display_street_no_pass,
         display_street_route,
         display_street_route_static,
+	display_roadbook,
         display_town,
         display_town1,
         display_town2,
