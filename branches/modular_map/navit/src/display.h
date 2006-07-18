@@ -8,6 +8,7 @@ struct graphics_font;
 struct display_list {
 	struct display_list *next;
 	void *data;
+	void *data2;
 	int type;
 	int attr;
 	char *label;

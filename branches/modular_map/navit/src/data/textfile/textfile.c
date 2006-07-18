@@ -20,7 +20,7 @@ contains_coord(char *line)
 	return g_ascii_isdigit(line[0]);
 }
 
-static int debug=0;
+static int debug=1;
 
 static int
 get_tag(char *line, char *name, int *pos, char *ret)
@@ -74,6 +74,7 @@ get_tag(char *line, char *name, int *pos, char *ret)
 static void
 get_line(struct map_rect_priv *mr)
 {
+	mr->pos=ftell(mr->f);
 	fgets(mr->line, 256, mr->f);
 }
 
@@ -158,6 +159,12 @@ textfile_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 	case attr_icon:
 		str="icon";
 		break;
+	case attr_info_html:
+		str="info_html";
+		break;
+	case attr_price_html:
+		str="price_html";
+		break;
 	default:
 		break;
 	}
@@ -182,7 +189,8 @@ map_rect_new_textfile(struct map_priv *map, struct coord_rect *r, struct layer *
 
 	mr=g_new0(struct map_rect_priv, 1);
 	mr->m=map;
-	mr->r=*r;
+	if (r) 
+		mr->r=*r;
 	mr->limit=limit;
 	mr->item.id_hi=0;
 	mr->item.id_lo=0;
@@ -206,7 +214,7 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 {
 	char *p,type[256];
 	if (debug)
-		printf("map_rect_get_item_textfile\n");
+		printf("map_rect_get_item_textfile line=%s\n", mr->line);
 	for(;;) {
 		if (feof(mr->f)) {
 			if (mr->item.id_hi) {
@@ -226,6 +234,7 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 			mr->eoc=0;
 		} else {
 			strcpy(mr->attrs, mr->line);
+			printf("get_item attrs=%s line=%s\n", mr->attrs, mr->line);
 			get_line(mr);
 			if ((p=index(mr->attrs,'\n'))) {
 				*p='\0';
@@ -254,10 +263,19 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 				mr->item.type=type_poi;
 			}
 		}
-		mr->item.id_lo++;
+		mr->item.id_lo=mr->pos;
 		mr->attr_last=attr_none;
 		return &mr->item;
 	}
+}
+
+static struct item *
+map_rect_get_item_byid_textfile(struct map_rect_priv *mr, int id_hi, int id_lo)
+{
+	fseek(mr->f, id_lo, SEEK_SET);
+	get_line(mr);
+	mr->item.id_hi=id_hi;
+	return map_rect_get_item_textfile(mr);
 }
 
 static struct map_methods map_methods_textfile = {
@@ -266,6 +284,7 @@ static struct map_methods map_methods_textfile = {
 	map_rect_new_textfile,
 	map_rect_destroy_textfile,
 	map_rect_get_item_textfile,
+	map_rect_get_item_byid_textfile,
 };
 
 static struct map_priv *

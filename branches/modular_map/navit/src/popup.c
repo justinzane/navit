@@ -39,7 +39,7 @@ popup_item_new_text(struct popup_item **last, char *text, int priority)
 	return curr;
 }
 
-static struct popup_item *
+struct popup_item *
 popup_item_new_func(struct popup_item **last, char *text, int priority, void (*func)(struct popup_item *, void *), void *param)
 {
 	struct popup_item *curr=popup_item_new_text(last, text, priority);

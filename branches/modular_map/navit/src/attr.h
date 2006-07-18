@@ -13,7 +13,8 @@ enum attr_type {
 	attr_size,
 	/* poi */
 	attr_icon,
-	
+	attr_info_html,
+	attr_price_html,
 };
 
 struct attr {

@@ -177,16 +177,42 @@ graphics_draw(struct map_data *mdata, int file, struct container *co, int displa
 
 #include "attr.h"
 #include "item.h"
+#include "popup.h"
 #include <stdio.h>
+
+static void
+popup_view_html(struct popup_item *item, char *file)
+{
+	char command[1024];
+	sprintf(command,"firefox %s", file);
+	system(command);
+}
 
 static void
 graphics_popup(struct display_list *list, struct popup_item **popup)
 {
 	struct item *item;
-	printf("Hallo %s\n", list->label);
+	struct attr attr;
+	struct map_rect *mr;
+	struct coord c;
+	struct popup_item *curr_item,*last=NULL;
 	item=list->data;
-	printf("id_hi 0x%x id_lo 0x%x\n", item->id_hi, item->id_lo);
-	
+	mr=map_rect_new(item->map, NULL, NULL, 0);
+	item=map_rect_get_item_byid(mr, item->id_hi, item->id_lo);
+	if (item) {
+		item_coord_get(item, &c, 1);
+		if (item_attr_get(item, attr_name, &attr)) {
+			curr_item=popup_item_new_text(popup,attr.u.str,1);
+			if (item_attr_get(item, attr_info_html, &attr)) {
+				popup_item_new_func(&last,"HTML Info",1, popup_view_html, g_strdup(attr.u.str));
+			}
+			if (item_attr_get(item, attr_price_html, &attr)) {
+				popup_item_new_func(&last,"HTML Preis",2, popup_view_html, g_strdup(attr.u.str));
+			}
+			curr_item->submenu=last;
+		}
+	}
+	map_rect_destroy(mr);
 }
 
 static void

@@ -78,7 +78,8 @@ map_rect_new_mg(struct map_priv *map, struct coord_rect *r, struct layer *layers
 	block_active_mem=0;
 	mr=g_new0(struct map_rect_priv, 1);
 	mr->m=map;
-	mr->r=*r;
+	if (r)
+		mr->r=*r;
 	mr->limit=limit;
 	mr->current_file=-1;
 	file_next(mr);

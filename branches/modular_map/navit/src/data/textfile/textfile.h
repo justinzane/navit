@@ -11,6 +11,7 @@ struct map_rect_priv {
 	int limit;
 
 	FILE *f;
+	long pos;
 	char line[256];
 	int attr_pos;
 	enum attr_type attr_last;
