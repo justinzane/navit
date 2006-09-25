@@ -64,21 +64,21 @@ static struct item_methods town_meth = {
 static void
 town_get_data(struct town_priv *twn, unsigned char **p)
 {
-	twn->id=get_long_unal(p);
-	twn->c.x=get_long_unal(p);
-	twn->c.y=get_long_unal(p);
+	twn->id=get_u32_unal(p);
+	twn->c.x=get_u32_unal(p);
+	twn->c.y=get_u32_unal(p);
 	twn->name=get_string(p);
 	twn->district=get_string(p);
 	twn->postal_code1=get_string(p);
-	twn->order=get_char(p);			/* 1-15 (19) */
-	twn->country=get_short(p);
-	twn->type=get_char(p);
-	twn->unknown2=get_long_unal(p);
-	twn->size=get_char(p);
-	twn->street_assoc=get_long_unal(p);
-	twn->unknown3=get_char(p);
+	twn->order=get_u8(p);			/* 1-15 (19) */
+	twn->country=get_u16(p);
+	twn->type=get_u8(p);
+	twn->unknown2=get_u32_unal(p);
+	twn->size=get_u8(p);
+	twn->street_assoc=get_u32_unal(p);
+	twn->unknown3=get_u8(p);
 	twn->postal_code2=get_string(p);
-	twn->unknown4=get_long_unal(p);
+	twn->unknown4=get_u32_unal(p);
 #if 0
 		printf("%s\t%s\t%s\t%d\t%d\t%d\n",twn->name,twn->district,twn->postal_code1,twn->order, twn->country, twn->type);
 #endif

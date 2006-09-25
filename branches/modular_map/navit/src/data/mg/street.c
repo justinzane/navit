@@ -8,12 +8,12 @@ static void
 street_name_get(struct street_name *name, unsigned char **p)
 {
 	unsigned char *start=*p;
-	name->len=get_short_unal(p);
-	name->country=get_short_unal(p);
-	name->townassoc=get_long_unal(p);
+	name->len=get_u16_unal(p);
+	name->country=get_u16_unal(p);
+	name->townassoc=get_u32_unal(p);
 	name->name1=get_string(p);
 	name->name2=get_string(p);
-	name->segment_count=get_long_unal(p);
+	name->segment_count=get_u32_unal(p);
 	name->segments=(struct street_name_segment *)(*p);
 	(*p)+=(sizeof (struct street_name_segment))*name->segment_count;
 	name->aux_len=name->len-(*p-start);

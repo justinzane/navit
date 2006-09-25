@@ -58,30 +58,30 @@ block_setup_tags(struct map_rect_priv *mr)
 	p=mr->file->begin+0x0c;
 	while (*p) {
 		str=get_string(&p);
-		len=get_long_unal(&p);
+		len=get_u32_unal(&p);
 		t=p;
 		/* printf("String '%s' len %d\n", str, len); */
 		if (! strcmp(str,"FirstBatBlock")) {
-			/* printf("%ld\n", get_long_unal(&t)); */
+			/* printf("%ld\n", get_u32_unal(&t)); */
 		} else if (! strcmp(str,"MaxBlockSize")) {
-			/* printf("%ld\n", get_long_unal(&t)); */
+			/* printf("%ld\n", get_u32_unal(&t)); */
 		} else if (! strcmp(str,"FREE_BLOCK_LIST")) {
-			/* printf("%ld\n", get_long_unal(&t)); */
+			/* printf("%ld\n", get_u32_unal(&t)); */
 		} else if (! strcmp(str,"TotalRect")) {
-			mr->b.b_rect.lu.x=get_long_unal(&t);
-			mr->b.b_rect.lu.y=get_long_unal(&t);
-			mr->b.b_rect.rl.x=get_long_unal(&t);
-			mr->b.b_rect.rl.y=get_long_unal(&t);
+			mr->b.b_rect.lu.x=get_u32_unal(&t);
+			mr->b.b_rect.lu.y=get_u32_unal(&t);
+			mr->b.b_rect.rl.x=get_u32_unal(&t);
+			mr->b.b_rect.rl.y=get_u32_unal(&t);
 			/* printf("0x%x,0x%x-0x%x,0x%x\n", mr->b.b_rect.lu.x, mr->b.b_rect.lu.y, mr->b.b_rect.rl.x, mr->b.b_rect.rl.y); */
 		} else if (! strcmp(str,"Version")) {
-			/* printf("0x%lx\n", get_long_unal(&t)); */
+			/* printf("0x%lx\n", get_u32_unal(&t)); */
 		} else if (! strcmp(str,"Categories")) {
-			/* printf("0x%x\n", get_short(&t)); */
+			/* printf("0x%x\n", get_u16(&t)); */
 		} else if (! strcmp(str,"binaryTree")) {
-			mr->b.binarytree=get_long_unal(&t);
+			mr->b.binarytree=get_u32_unal(&t);
 			/* printf("%d\n", mr->b.binarytree); */
 		} else if (! strcmp(str,"CategorySets")) {
-			/* printf("0x%x\n", get_short(&t)); */
+			/* printf("0x%x\n", get_u16(&t)); */
 		} else if (! strcmp(str,"Kommentar")) {
 			/* printf("%s\n", get_string(&t)); */
 		}
@@ -175,7 +175,7 @@ block_next(struct map_rect_priv *mr)
 				}
 				bt->r=bt->b->r;
 				bt->r_curr=bt->r;
-				coord=get_long(&mr->b.bt.p);
+				coord=get_u32(&mr->b.bt.p);
 			} else {
 				bt->p=(unsigned char *)bt->b+0xc;
 			}
@@ -183,8 +183,8 @@ block_next(struct map_rect_priv *mr)
 		}
 		while (mr->b.bt.p < mr->b.bt.end) {
 			block_idx_count++;
-			blk_num=get_long(&mr->b.bt.p);
-			coord=get_long(&mr->b.bt.p); 
+			blk_num=get_u32(&mr->b.bt.p);
+			coord=get_u32(&mr->b.bt.p); 
 			block_mem+=8;
 			if (debug) {
 				printf("%p vs %p coord 0x%x ", mr->b.bt.end, mr->b.bt.p, coord);

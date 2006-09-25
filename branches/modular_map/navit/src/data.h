@@ -1,11 +1,11 @@
 static inline unsigned char
-get_char(unsigned char **p)
+get_u8(unsigned char **p)
 {
 	return *((*p)++);
 }
 
 static inline unsigned short
-get_short(unsigned char **p) {
+get_u16(unsigned char **p) {
 	unsigned short ret;
 	ret=*((unsigned short *)*p);
 	*p+=sizeof(unsigned short);
@@ -13,7 +13,7 @@ get_short(unsigned char **p) {
 }
 
 static inline unsigned short
-get_short_unal(unsigned char **p) {
+get_u16_unal(unsigned char **p) {
 	unsigned short ret;
 	ret=*(*p)++;
 	ret|=(*(*p)++) << 8;
@@ -21,25 +21,25 @@ get_short_unal(unsigned char **p) {
 }
 
 
-static inline unsigned long
-get_triple(unsigned char **p) {
+static inline unsigned int
+get_u24(unsigned char **p) {
 	unsigned long ret;
-	ret=get_short(p);
+	ret=get_u16(p);
 	ret|=*((*p)++) << 16;
 	return ret;
 }
 
 
-static inline unsigned long
-get_long(unsigned char **p) {
+static inline unsigned int
+get_u32(unsigned char **p) {
 	unsigned long ret;
 	ret=*((unsigned int *)*p);
 	*p+=sizeof(unsigned int);
 	return ret;
 }
 
-static inline unsigned long
-get_long_unal(unsigned char **p) {
+static inline unsigned int
+get_u32_unal(unsigned char **p) {
 	unsigned long ret;
 	ret=*(*p)++;
 	ret|=(*(*p)++) << 8;

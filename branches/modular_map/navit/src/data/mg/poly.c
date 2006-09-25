@@ -19,8 +19,8 @@ poly_coord_get(void *priv_data, struct coord *c, int count)
 	while (count--) {
 		if (poly->p >= poly->subpoly_next)
 			break;
-		c->x=get_long_unal(&poly->p);
-		c->y=get_long_unal(&poly->p);
+		c->x=get_u32_unal(&poly->p);
+		c->y=get_u32_unal(&poly->p);
 		c++;
 		ret++;
 	}
@@ -57,10 +57,10 @@ static struct item_methods poly_meth = {
 static void
 poly_get_data(struct poly_priv *poly, unsigned char **p)
 {
-	poly->c[0].x=get_long_unal(p);
-	poly->c[0].y=get_long_unal(p);
-	poly->c[1].x=get_long_unal(p);
-	poly->c[1].y=get_long_unal(p);
+	poly->c[0].x=get_u32_unal(p);
+	poly->c[0].y=get_u32_unal(p);
+	poly->c[1].x=get_u32_unal(p);
+	poly->c[1].y=get_u32_unal(p);
 	*p+=sizeof(struct coord);
 	poly->name=(char *)(*p);
 	while (**p) {
@@ -69,9 +69,9 @@ poly_get_data(struct poly_priv *poly, unsigned char **p)
 	(*p)++;
 	poly->order=*(*p)++;
 	poly->type=*(*p)++;
-	poly->polys=get_long_unal(p);
+	poly->polys=get_u32_unal(p);
 	poly->count=(unsigned int *)(*p); (*p)+=poly->polys*sizeof(unsigned int);
-	poly->count_sum=get_long_unal(p);
+	poly->count_sum=get_u32_unal(p);
 }
 
 int

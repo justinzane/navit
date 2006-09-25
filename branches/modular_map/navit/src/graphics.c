@@ -441,7 +441,7 @@ graphics_redraw(struct container *co)
 	unsigned char dashes[]={4,4};
 
 #if 1
-	printf("scale=%d center=0x%lx,0x%lx mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
+	printf("scale=%d center=0x%x,0x%x mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
 #endif
 	
 	display_free(co->disp, display_end);
