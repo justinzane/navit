@@ -74,8 +74,10 @@ get_tag(char *line, char *name, int *pos, char *ret)
 static void
 get_line(struct map_rect_priv *mr)
 {
-	mr->pos=ftell(mr->f);
-	fgets(mr->line, 256, mr->f);
+	if(mr->f) {
+		mr->pos=ftell(mr->f);
+		fgets(mr->line, 256, mr->f);
+	}
 }
 
 static void
@@ -107,7 +109,7 @@ textfile_coord_get(void *priv_data, struct coord *c, int count)
 	if (debug)
 		printf("textfile_coord_get %d\n",count);
 	while (count--) {
-		if (contains_coord(mr->line) && !feof(mr->f) && (!mr->item.id_hi || !mr->eoc)) {
+		if (contains_coord(mr->line) && mr->f && !feof(mr->f) && (!mr->item.id_hi || !mr->eoc)) {
 			pos=0;
 			sscanf(mr->line,"%lf %c %lf %c %n",&lat,&lat_c,&lng,&lng_c,&pos);
 			if (mr->item.id_hi) {
@@ -197,6 +199,9 @@ map_rect_new_textfile(struct map_priv *map, struct coord_rect *r, struct layer *
 	mr->item.meth=&methods_textfile;
 	mr->item.priv_data=mr;
 	mr->f=fopen(map->filename, "r");
+	if(!mr->f) {
+		printf("map_rect_new_textfile unable to open textfile %s\n",map->filename);
+	}
 	get_line(mr);
 	return mr;
 }
@@ -205,7 +210,9 @@ map_rect_new_textfile(struct map_priv *map, struct coord_rect *r, struct layer *
 static void
 map_rect_destroy_textfile(struct map_rect_priv *mr)
 {
-	fclose(mr->f);
+	if (mr->f) {
+		fclose(mr->f);
+	}
         g_free(mr);
 }
 
@@ -215,6 +222,9 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 	char *p,type[256];
 	if (debug)
 		printf("map_rect_get_item_textfile line=%s\n", mr->line);
+	if (!mr->f) {
+		return NULL;
+	}
 	for(;;) {
 		if (feof(mr->f)) {
 			if (mr->item.id_hi) {
