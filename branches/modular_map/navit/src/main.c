@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	Map map_client = CORBA_OBJECT_NIL;
 #endif
 	char *gps;
-	GError *error;
+	GError *error=NULL;
 
 	setenv("LC_NUMERIC","C",1);
 	setlocale(LC_ALL,"");
