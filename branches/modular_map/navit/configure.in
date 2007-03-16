@@ -57,6 +57,7 @@ src/Makefile
 src/data/Makefile
 src/data/mg/Makefile
 src/data/textfile/Makefile
+src/data/garmin_img/Makefile
 src/gui/Makefile
 src/gui/gtk/Makefile
 src/graphics/Makefile
