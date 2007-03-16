@@ -3,6 +3,7 @@
 #include <string.h>
 #include "plugin.h"
 #include "maptype.h"
+#include "projection.h"
 #include "mg.h"
 
 
@@ -63,6 +64,13 @@ map_charset_mg(struct map_priv *m)
 {
 	return "iso8859-1";
 }
+
+static enum projection
+map_projection_mg(struct map_priv *m)
+{
+	return projection_mg;
+}
+
 
 extern int block_lin_count,block_idx_count,block_active_count,block_mem,block_active_mem;
 
@@ -130,6 +138,7 @@ map_rect_destroy_mg(struct map_rect_priv *mr)
 static struct map_methods map_methods_mg = {
 	map_destroy_mg,
 	map_charset_mg,
+	map_projection_mg,
 	map_rect_new_mg,
 	map_rect_destroy_mg,
 	map_rect_get_item_mg,

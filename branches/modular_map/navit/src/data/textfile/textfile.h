@@ -17,6 +17,8 @@ struct map_rect_priv {
 	enum attr_type attr_last;
 	char attrs[256];
 	char attr[256];
+	double lat,lng;
+	char lat_c,lng_c;
 	int eoc;
 	struct map_priv *m;
 	struct item item;

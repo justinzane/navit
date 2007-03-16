@@ -31,6 +31,7 @@ struct coord_rect * coord_rect_new(struct coord *lu, struct coord *rl);
 void coord_rect_destroy(struct coord_rect *r);
 int coord_rect_overlap(struct coord_rect *r1, struct coord_rect *r2);
 int coord_rect_contains(struct coord_rect *r, struct coord *c);
+void coord_rect_extend(struct coord_rect *r, struct coord *c);
 
 
 #endif

@@ -93,10 +93,11 @@ poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item)
 			return 0;
 		if (!poly->subpoly_num) {
 			mr->b.p=poly->poly_next;
+			item->id_lo=mr->b.p-mr->file->begin;
 			poly_get_data(poly, &mr->b.p);
 			poly->poly_next=mr->b.p+poly->count_sum*sizeof(struct coord);
 			poly->poly_num++;
-			if (poly->order >= mr->limit*3) {
+			if (poly->order > mr->limit*3) {
 				mr->b.p=poly->poly_next;
 				continue;
 			}
@@ -141,7 +142,7 @@ poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item)
 				break;
 			default:
 				printf("Unknown type 0x%x '%s' 0x%x,0x%x\n", poly->type,poly->name,r.lu.x,r.lu.y);
-				item->type=type_rail;
+				item->type=type_street_unkn;
 			}
 			if (!coord_rect_overlap(&mr->r, &r)) {
 				mr->b.p=poly->poly_next;
@@ -149,6 +150,7 @@ poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item)
 			}
 		} else 
 			mr->b.p=poly->subpoly_next;
+		item->id_hi=poly->subpoly_num | (mr->current_file << 16);
 		poly->subpoly_next=mr->b.p+L(poly->count[poly->subpoly_num])*sizeof(struct coord);
 		poly->subpoly_num++;
 		if (poly->subpoly_num >= poly->polys) 

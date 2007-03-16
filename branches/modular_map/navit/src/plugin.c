@@ -27,4 +27,5 @@ plugin_init(void)
 {
 	plugin_load("data/mg/mg.so");
 	plugin_load("data/textfile/textfile.so");
+	plugin_load("data/garmin_img/garmin_img.so");
 }

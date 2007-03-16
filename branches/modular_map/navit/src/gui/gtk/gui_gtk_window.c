@@ -51,7 +51,7 @@ gui_gtk_window(int x, int y, int scale)
 
 	co->win=(struct window *) window;
 	co->statusbar=gui_gtk_statusbar_new(&statusbar);
-	gui_gtk_actions_new(co,&vbox);
+	co->action=gui_gtk_actions_new(co,&vbox);
 	
 /*
 	gtk_box_pack_start(GTK_BOX(vbox), menu, FALSE, FALSE, 0);

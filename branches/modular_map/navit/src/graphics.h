@@ -42,10 +42,13 @@ struct graphics
 
 	struct graphics_font *(*font_new)(struct graphics *gr, int size);
 	struct graphics_gc *(*gc_new)(struct graphics *gr);
+	void (*gc_destroy)(struct graphics_gc *gc);
 	void (*gc_set_linewidth)(struct graphics_gc *gc, int width);
 	void (*gc_set_dashes)(struct graphics_gc *gc, unsigned char dash_list[], int n);
 	void (*gc_set_foreground)(struct graphics_gc *gc, int r, int g, int b);
 	void (*gc_set_background)(struct graphics_gc *gc, int r, int g, int b);
 	struct graphics_image *(*image_new)(struct graphics *gr, char *path);
+	void (*image_destroy)(struct graphics_image *img);
 	struct graphics *(*overlay_new)(struct graphics *gr, struct point *p, int w, int h);
+	void (*overlay_destroy)(struct graphics_image *img);
 };

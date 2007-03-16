@@ -39,6 +39,7 @@ town_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 
 	attr->type=attr_type;
 	switch (attr_type) {
+	case attr_label:
 	case attr_name:
 		attr->u.str=twn->name;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
@@ -95,8 +96,6 @@ town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 		town_get_data(twn, &mr->b.p);
 		twn->cidx=0;
 		twn->aidx=0;
-		if (twn->order == 19)
-			printf("%s %s\n", twn->name, twn->district);		
 		if (twn->order <= limit[mr->limit] && coord_rect_contains(&mr->r,&twn->c)) {
 			switch(twn->type) {
 			case 1:
@@ -112,7 +111,7 @@ town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 				printf("unknown town type %d\n", twn->type);
 				item->type=type_town_label;
 			}
-			item->id_hi=twn->country;
+			item->id_hi=twn->country | (mr->current_file << 16);
 			item->id_lo=twn->id;
 			item->priv_data=twn;
 			item->meth=&town_meth;

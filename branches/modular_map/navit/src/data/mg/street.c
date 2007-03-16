@@ -222,7 +222,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 	street->status_rewind=street->status=L(street->str[1].segid) >= 0 ? 0:1;
 	if (street->status)
 		street->type++;
-	item->id_hi=street->type->country;
+	item->id_hi=street->type->country | (mr->current_file << 16);
 	item->id_lo=L(street->str->segid) > 0 ? L(street->str->segid) : -L(street->str->segid);
 	switch(street->str->type & 0x1f) {
 	case 0xf: /* very small street */

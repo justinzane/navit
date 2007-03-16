@@ -9,139 +9,35 @@
 #include "transform.h"
 #include "container.h"
 #include "plugin.h"
-#include "display.h"
 #include "data_window.h"
 #include "profile.h"
+#include "mapset.h"
 
 
-#define GC_BACKGROUND 0
-#define GC_WOOD 1
-#define GC_TOWN_FILL 2
-#define GC_TOWN_LINE 3
-#define GC_WATER_FILL 4
-#define GC_WATER_LINE 5
-#define GC_RAIL 6
-#define GC_TEXT_FG 7
-#define GC_TEXT_BG 8
-#define GC_BLACK 9
-#define GC_STREET_SMALL 10
-#define GC_STREET_SMALL_B 11
-#define GC_PARK 12
-#define GC_BUILDING 13
-#define GC_BUILDING_2 14
-#define GC_STREET_MID 15
-#define GC_STREET_MID_B 16
-#define GC_STREET_BIG 17
-#define GC_STREET_BIG_B 18
-#define GC_STREET_BIG2 19
-#define GC_STREET_BIG2_B 20
-#define GC_STREET_BIG2_L 21
-#define GC_STREET_NO_PASS 22
-#define GC_STREET_ROUTE 23
-#define GC_RAIL1 24
-#define GC_BORDER 25
-#define GC_ROADBOOK 26
-#define GC_LAST	27
+#include "layout.h"
 
-
-int color[][3]={
-	{0xffff, 0xefef, 0xb7b7},
-	{0x8e8e, 0xc7c7, 0x8d8d},
-	{0xffff, 0xc8c8, 0x9595},
-	{0xebeb, 0xb4b4, 0x8181},
-	{0x8282, 0xc8c8, 0xeaea},
-	{0x5050, 0x9696, 0xb8b8},
-	{0x8080, 0x8080, 0x8080},
-	{0x0, 0x0, 0x0},
-	{0xffff, 0xffff, 0xffff},
-	{0x0, 0x0, 0x0},
-	{0xffff, 0xffff, 0xffff},
-	{0xe0e0, 0xe0e0, 0xe0e0},
-	{0x7c7c, 0xc3c3, 0x3434},
-	{0xe6e6, 0xe6e6, 0xe6e6},
-	{0xffff, 0x6666, 0x6666},
-	{0xffff, 0xffff, 0x0a0a},
-	{0xe0e0, 0xe0e0, 0xe0e0},
-	{0xffff, 0x0000, 0x0000},
-	{0x0000, 0x0000, 0x0000},
-	{0xffff, 0xffff, 0x0a0a},
-	{0xffff, 0x0000, 0x0000},
-	{0xffff, 0x0000, 0x0000},
-	{0xe0e0, 0xe0e0, 0xffff},
-	{0x0000, 0x0000, 0xa0a0},
-	{0xffff, 0xffff, 0xffff},
-	{0x8080, 0x8080, 0x8080},
-	{0xffff, 0x8080, 0x8080},
-};
-
-#if 0
-struct graphics_element {
-	char *name;
-	int level;
-	enum item_type type;
-	int with;
-	char *color;
-	int dashes_count;
-	unsigned char dashes[];	
-};
-
-enum item_type
-text_to_item(char *s)
-{
-	printf("item '%s' not supported\n");
-	g_abort();
-}
-#endif
-
-void
-graphics_parse(void)
-{
-#if 0
-	FILE *f;
-	char line[1024];
-	char mode[1024];
-	char item[1024];
-	char type[1024];
-	int limit;
-	int len;
-
-	printf("graphics_parse\n");
-	f=fopen("graphics.txt","r");
-	while (fgets(line, 1024, f)) {
-		len=strlen(line);
-		if (len && line[len-1] == '\n') 
-			line[len-1]='\0';
-		printf("line '%s'\n", line);
-		sscanf(line, "%s\t%s\t%d\t%s", mode, item, &limit, type);
-		
-		printf("mode='%s' item='%s' limit=%d type='%s'\n", mode, item, limit, type);
-		
-		if (! strcasecmp(type,"l")) {
-		}
-	}
-	fclose(f);
-#endif
-}
-
+GHashTable *ht;
 
 void
 container_init_gra(struct container *co)
 {
 	struct graphics *gra=co->gra;
-	int i;
 
 	gra->font=g_new0(struct graphics_font *,3);
 	gra->font[0]=gra->font_new(gra,140);
 	gra->font[1]=gra->font_new(gra,200);
 	gra->font[2]=gra->font_new(gra,300);
-	gra->gc=g_new0(struct graphics_gc *, GC_LAST);
-	for (i = 0 ; i < GC_LAST ; i++) {
-		gra->gc[i]=gra->gc_new(gra);
-		gra->gc_set_background(gra->gc[i], color[0][0], color[0][1], color[0][2]);
-		gra->gc_set_foreground(gra->gc[i], color[i][0], color[i][1], color[i][2]);
-	}
-	gra->gc_set_background(gra->gc[GC_TEXT_BG], color[7][0], color[7][1], color[7][2]);
-	graphics_parse();
+	gra->gc=g_new0(struct graphics_gc *, 3);
+	gra->gc[0]=gra->gc_new(gra);
+	gra->gc_set_background(gra->gc[0], 0xffff, 0xefef, 0xb7b7);
+	gra->gc_set_foreground(gra->gc[0], 0xffff, 0xefef, 0xb7b7);
+	gra->gc[1]=gra->gc_new(gra);
+	gra->gc_set_background(gra->gc[1], 0x0000, 0x0000, 0x0000);
+	gra->gc_set_foreground(gra->gc[1], 0xffff, 0xffff, 0xffff);
+	gra->gc[2]=gra->gc_new(gra);
+	gra->gc_set_background(gra->gc[2], 0xffff, 0x0000, 0x0000);
+	gra->gc_set_foreground(gra->gc[2], 0xffff, 0x0000, 0x0000);
+	ht=g_hash_table_new(NULL,NULL);
 	
 }
 
@@ -164,22 +60,11 @@ graphics_set_view(struct container *co, long *x, long *y, unsigned long *scale)
 	graphics_redraw(co);
 }
 
-static void
-graphics_draw(struct map_data *mdata, int file, struct container *co, int display, int limit, int limit2,
-		  void(*func)(struct block_info *, unsigned char *, unsigned char *, void *))
-{
-	struct draw_info info;
-	info.co=co;
-	info.display=display;
-	info.limit=limit;
-	map_data_foreach(mdata, file, co->trans, limit2, func, &info);
-}
-
 #include "attr.h"
-#include "item.h"
 #include "popup.h"
 #include <stdio.h>
 
+#if 0
 static void
 popup_view_html(struct popup_item *item, char *file)
 {
@@ -198,9 +83,9 @@ graphics_popup(struct display_list *list, struct popup_item **popup)
 	struct popup_item *curr_item,*last=NULL;
 	item=list->data;
 	mr=map_rect_new(item->map, NULL, NULL, 0);
+	printf("id hi=0x%x lo=0x%x\n", item->id_hi, item->id_lo);
 	item=map_rect_get_item_byid(mr, item->id_hi, item->id_lo);
 	if (item) {
-		item_coord_get(item, &c, 1);
 		if (item_attr_get(item, attr_name, &attr)) {
 			curr_item=popup_item_new_text(popup,attr.u.str,1);
 			if (item_attr_get(item, attr_info_html, &attr)) {
@@ -214,9 +99,181 @@ graphics_popup(struct display_list *list, struct popup_item **popup)
 	}
 	map_rect_destroy(mr);
 }
+#endif
+
+struct display_item {
+	struct item item;
+	char *label;
+	int count;
+	int displayed;
+	struct point pnt[0];
+};
+
+static int
+xdisplay_free_list(gpointer key, gpointer value, gpointer user_data)
+{
+	GList *h, *l;
+	h=value;
+	l=h;
+	while (l) {
+		struct display_item *di=l->data;
+#if 0
+		if (! di->displayed) 
+			printf("warning: item '%s' not displayed\n", item_to_name(di->item.type));
+#endif
+		g_free(l->data);
+		l=g_list_next(l);
+	}
+	g_list_free(h);
+	return TRUE;
+}
 
 static void
-do_draw_poly(struct display_list **d, int line, struct transformation *t,struct item *item)
+xdisplay_free(void)
+{
+	g_hash_table_foreach_remove(ht, xdisplay_free_list, NULL);
+}
+
+static void
+xdisplay_add(struct item *item, int count, struct point *pnt, char *label)
+{
+	struct display_item *di;
+	int len;
+	GList *l;
+	char *p;
+
+
+	len=sizeof(*di)+count*sizeof(*pnt);
+	if (label)
+		len+=strlen(label)+1;
+
+	p=g_malloc(len);
+
+	di=(struct display_item *)p;
+	p+=sizeof(*di)+count*sizeof(*pnt);
+	di->item=*item;
+	if (label) {
+		di->label=p;
+		strcpy(di->label, label);
+	} else 
+		di->label=NULL;
+	di->count=count;
+	memcpy(di->pnt, pnt, count*sizeof(*pnt));
+
+	l=g_hash_table_lookup(ht, GINT_TO_POINTER(item->type));
+	l=g_list_prepend(l, di);
+	g_hash_table_insert(ht, GINT_TO_POINTER(item->type), l);
+}
+
+static void
+xdisplay_draw_elements(struct graphics *gra, GList *es, GList *ls)
+{
+	struct element *e;
+	GList *l;
+	struct graphics_gc *gc;
+	struct graphics_image *img;
+	struct point p;
+
+	while (es) {
+		e=es->data;
+		l=ls;
+		gc=NULL;
+		img=NULL;
+		while (l) {
+			struct display_item *di;
+			di=l->data;
+			di->displayed=1;
+			if (! gc) {
+				gc=gra->gc_new(gra);
+				gra->gc_set_foreground(gc, e->color[0],e->color[1], e->color[2]);
+			}
+			switch (e->type) {
+			case element_polygon:
+				gra->draw_polygon(gra, gc, di->pnt, di->count);
+				break;
+			case element_polyline:
+				if (e->u.polyline.width > 1) 
+					gra->gc_set_linewidth(gc, e->u.polyline.width);
+				gra->draw_lines(gra, gc, di->pnt, di->count);
+				break;
+			case element_circle:
+				if (e->u.circle.width > 1) 
+					gra->gc_set_linewidth(gc, e->u.polyline.width);
+				gra->draw_circle(gra, gc, &di->pnt[0], e->u.circle.radius);
+				p.x=di->pnt[0].x+3;
+				p.y=di->pnt[0].y+10;
+				gra->draw_text(gra, gra->gc[2], gra->gc[1], gra->font[e->label_size], di->label, &p, 0x10000, 0);
+				break;
+			case element_icon:
+				if (!img) {
+					img=gra->image_new(gra, e->u.icon.src);
+				}
+				p.x=di->pnt[0].x - img->width/2;
+				p.y=di->pnt[0].y - img->height/2;
+				gra->draw_image(gra, gra->gc[0], &p, img);
+				break;
+			default:
+				printf("Unhandled element type %d\n", e->type);
+			
+			}
+			l=g_list_next(l);
+		}
+		es=g_list_next(es);
+	}	
+}
+
+static void
+xdisplay_draw_layer(struct graphics *gra, struct layer *lay, int order)
+{
+	GList *itms;
+	GList *types;
+	struct itemtype *itm;
+	enum item_type type;
+
+	itms=lay->itemtypes;
+	while (itms) {
+		itm=itms->data;
+		if (order >= itm->zoom_min && order <= itm->zoom_max) {
+			types=itm->type;
+			while (types) {
+				type=GPOINTER_TO_INT(types->data);
+				xdisplay_draw_elements(gra, itm->elements, g_hash_table_lookup(ht, GINT_TO_POINTER(type)));
+				types=g_list_next(types);
+			}
+		}
+		itms=g_list_next(itms);
+	}
+}
+
+static void
+xdisplay_draw_layout(struct graphics *gra, struct layout *l, int order)
+{
+	GList *lays;
+	struct layer *lay;
+	
+	lays=l->layers;
+	while (lays) {
+		lay=lays->data;
+		xdisplay_draw_layer(gra, lay, order);
+		lays=g_list_next(lays);
+	}
+}
+
+static void
+xdisplay_draw(struct graphics *gra, GList *layouts, int order)
+{
+	struct layout *l;
+
+	while (layouts) {
+		l=layouts->data;
+		xdisplay_draw_layout(gra, l, order);
+		return;
+		layouts=g_list_next(layouts);
+	}
+}
+
+static void
+do_draw_poly(struct transformation *t, enum projection pro, struct item *item)
 {
 	struct coord c;
 	int max=16384;
@@ -233,197 +290,64 @@ do_draw_poly(struct display_list **d, int line, struct transformation *t,struct 
 			r.rl=c;
 		} else
 			coord_rect_extend(&r, &c);
-		transform(t, &c, &pnt[count]);
+		transform(t, pro, &c, &pnt[count]);
 		count++;
 			
 	}
 	g_assert(count < max);
-	if (coord_rect_overlap(&t->r, &r)) {
+	if (1 || coord_rect_overlap(&t->r, &r)) {
 		attr.u.str=NULL;
-		if (!item_attr_get(item, attr_name, &attr))
-			item_attr_get(item, attr_name_systematic, &attr);
-		display_add(d, line, 0, attr.u.str, count, pnt, graphics_popup, item, sizeof(*item));
+		item_attr_get(item, attr_label, &attr);
+		xdisplay_add(item, count, pnt, attr.u.str);
 	}
 }
 
 static void
-do_draw_label(struct display_list **d, struct transformation *t, int maxoff, struct item *item)
+do_draw_point(struct transformation *t, enum projection pro, struct item *item)
 {
 	struct point pnt;
 	struct coord c;
 	struct attr attr;
-	int offset;
 
 	item_coord_get(item, &c, 1);
-	if (transform(t, &c, &pnt)) {
-		if (maxoff && item_attr_get(item, attr_size, &attr)) {
-			offset=attr.u.num;
-			if (offset < 0)
-				offset=0;
-			if (offset > maxoff)
-				offset=maxoff;
-			d+=offset;
-		}
-		if (!item_attr_get(item, attr_district, &attr))
-			item_attr_get(item, attr_name, &attr); 
-		display_add(d, 3, 0, attr.u.str, 1, &pnt, graphics_popup, item, sizeof(*item));
+	if (transform(t, pro, &c, &pnt)) {
+		attr.u.str=NULL;
+		item_attr_get(item, attr_label, &attr); 
+		xdisplay_add(item, 1, &pnt, attr.u.str);
 	}
 }
 
 static void
-do_draw_poi(struct display_list **d, struct transformation *t, struct item *item)
+do_draw_item(struct transformation *t, enum projection pro, struct item *item)
 {
-	struct point pnt;
-	struct coord c;
-	struct attr attr;
-	item_coord_get(item, &c, 1);
-	if (transform(t, &c, &pnt)) {
-		item_attr_get(item, attr_icon, &attr); 
-		display_add(d, 5, 0, attr.u.str, 1, &pnt, graphics_popup, item, sizeof(*item));
+	if (item->type < type_line) {
+		do_draw_point(t, pro, item);
+	} else {
+		do_draw_poly(t, pro, item);
 	}
 }
 
 static void
-do_draw_item(struct container *co, struct item *item)
-{
-	switch (item->type) {
-	case type_town_label:
-		do_draw_label(&co->disp[display_town], co->trans, 15, item);
-		break;
-	case type_waypoint:
-		do_draw_label(&co->disp[display_town+15], co->trans, 0, item);
-		break;
-	case type_district_label:
-		do_draw_label(&co->disp[display_town], co->trans, 15, item);
-		break;
-	case type_highway_exit_label:
-		do_draw_label(&co->disp[display_town], co->trans, 15, item);
-		break;
-	case type_street_0:
-		do_draw_poly(&co->disp[display_street], 1, co->trans, item);
-		break;
-	case type_street_1_city:
-		do_draw_poly(&co->disp[display_street], 1, co->trans, item);
-		break;
-	case type_street_2_city:
-		do_draw_poly(&co->disp[display_street1], 1, co->trans, item);
-		break;
-	case type_street_3_city:
-		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
-		break;
-	case type_street_4_city:
-		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
-		break;
-	case type_highway_city:
-		do_draw_poly(&co->disp[display_street3], 1, co->trans, item);
-		break;
-	case type_street_1_land:
-		do_draw_poly(&co->disp[display_street], 1, co->trans, item);
-		break;
-	case type_street_2_land:
-		do_draw_poly(&co->disp[display_street1], 1, co->trans, item);
-		break;
-	case type_street_3_land:
-		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
-		break;
-	case type_street_4_land:
-		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
-		break;
-	case type_street_n_lanes:
-		do_draw_poly(&co->disp[display_street2], 1, co->trans, item);
-		break;
-	case type_highway_land:
-		do_draw_poly(&co->disp[display_street3], 1, co->trans, item);
-		break;
-	case type_ramp:
-		do_draw_poly(&co->disp[display_street1], 1, co->trans, item);
-		break;
-	case type_ferry:
-		do_draw_poly(&co->disp[display_rail], 1, co->trans, item);
-		break;
-	case type_roadbook:
-		do_draw_poly(&co->disp[display_roadbook], 1, co->trans, item);
-		break;
-	case type_street_unkn:
-		do_draw_poly(&co->disp[display_street_route], 1, co->trans, item);
-		break;
-	case type_rail:
-		do_draw_poly(&co->disp[display_border], 1, co->trans, item);
-		break;
-	case type_border_country:
-		do_draw_poly(&co->disp[display_border], 1, co->trans, item);
-		break;
-	case type_border_state:
-		do_draw_poly(&co->disp[display_border], 1, co->trans, item);
-		break;
-	case type_water_line:
-		do_draw_poly(&co->disp[display_water], 1, co->trans, item);
-		break;
-	case type_wood:
-		do_draw_poly(&co->disp[display_wood], 0, co->trans, item);
-		break;
-	case type_water_poly:
-		do_draw_poly(&co->disp[display_water], 0, co->trans, item);
-		break;
-	case type_town_poly:
-	case type_airport_poly:
-		do_draw_poly(&co->disp[display_other], 0, co->trans, item);
-		break;
-	case type_industry_poly:
-		do_draw_poly(&co->disp[display_other1], 0, co->trans, item);
-		break;
-	case type_hospital_poly:
-		do_draw_poly(&co->disp[display_other2], 0, co->trans, item);
-		break;
-	case type_park_poly:
-		do_draw_poly(&co->disp[display_other3], 0, co->trans, item);
-		break;
-	case type_sport_poly:
-		do_draw_poly(&co->disp[display_other1], 0, co->trans, item);
-		break;
-	case type_poi:
-		do_draw_poi(&co->disp[display_poi], co->trans, item);
-		break;
-		
-	default:
-		printf("Unsupported item\n");
-		exit(1);
-	}
-}
-
-static void
-do_draw(struct container *co)
+do_draw(struct container *co, int order)
 {
 	struct coord_rect r;
 	struct map_rect *mr;
 	struct item *item;
 	struct mapset *ms;
 	struct map *m;
-	int scale,order,rem;	
+	struct transformation *t=co->trans;
+	enum projection pro;
 	void *h;
 
-	extern struct map *map_default1,*map_default2;
-	extern struct map *map_default3,*map_default4;
-	extern struct map *map_default5,*map_default6;
-	scale=transform_get_scale(co->trans);
-	printf("scale=%d\n", scale);
-	order=0;
-	while (scale > 1) {
-		order++;
-		scale>>=1;
-	}
-	order=14-order;
-	if (order < 0)
-		order=0;
-	printf("order=%d\n", order);
-	
+	printf("co=%p\n", co);	
 	r=co->trans->r;
 	ms=co->mapsets->data;
 	h=mapset_open(ms);
-	while (m=mapset_get(h)) {
+	while ((m=mapset_get(h))) {
+		pro=map_projection(m);
 		mr=map_rect_new(m, &r, NULL, order);
-		while (item=map_rect_get_item(mr)) {
-			do_draw_item(co, item);
+		while ((item=map_rect_get_item(mr))) {
+			do_draw_item(t, pro, item);
 		}
 		map_rect_destroy(mr);
 	}
@@ -434,17 +358,15 @@ void
 graphics_redraw(struct container *co)
 {
 	int scale=transform_get_scale(co->trans);
-	int i,slimit=255,tlimit=255,plimit=255;
-	int bw[4],w[4],t[4];
-	struct display_list **disp=co->disp;
+	int order=transform_get_order(co->trans);
 	struct graphics *gra=co->gra;
-	unsigned char dashes[]={4,4};
+	int i;
 
 #if 1
 	printf("scale=%d center=0x%x,0x%x mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
 #endif
 	
-	display_free(co->disp, display_end);
+	xdisplay_free();
 
 	transform_setup_source_rect(co->trans);
 
@@ -452,272 +374,13 @@ graphics_redraw(struct container *co)
 	for (i = 0 ; i < data_window_type_end; i++) {
 		data_window_begin(co->data_window[i]);	
 	}
-	gra->gc_set_linewidth(gra->gc[GC_RAIL], 3);
-	gra->gc_set_linewidth(gra->gc[GC_BORDER], 3);
-	gra->gc_set_dashes(gra->gc[GC_RAIL1], dashes, 2);
-
-	bw[0]=0;
-	bw[1]=0;
-	bw[2]=0;
-	bw[3]=0;
-	w[0]=1;
-	w[1]=1;
-	w[2]=1;
-	w[3]=1;
-	t[0]=0xf;
-	t[1]=0xf;
-	t[2]=0xf;
-	t[3]=0xf;
-	if (scale < 2) {
-		tlimit=0xff;
-		slimit=0xff;
-		bw[0]=17;
-		w[0]=15;
-		bw[1]=19;
-		w[1]=17;
-		bw[2]=19;
-		w[2]=17;
-		bw[3]=21;
-		w[3]=17;
-	} else if (scale < 4) {
-		tlimit=0xff;
-		slimit=0xff;
-		bw[0]=11;
-		w[0]=9;
-		bw[1]=13;
-		w[1]=11;
-		bw[2]=13;
-		w[2]=11;
-		bw[3]=15;
-		w[3]=11;
-	} else if (scale < 8) {
-		tlimit=0xff;
-		slimit=0xff;
-		bw[0]=5;
-		w[0]=3;
-		bw[1]=11;
-		w[1]=9;
-		bw[2]=11;
-		w[2]=9;
-		bw[3]=13;
-		w[3]=9;
-		t[0]=0xa;
-		t[1]=0xf;
-	} else if (scale < 16) {
-		tlimit=0xff;
-		slimit=0xff;
-		bw[1]=9;
-		w[1]=7;
-		bw[2]=9;
-		w[2]=7;
-		bw[3]=11;
-		w[3]=7;
-		t[0]=0x9;
-		t[1]=0xe;
-	} else if (scale < 32) {
-		tlimit=0xff;
-		slimit=0xff;
-		bw[1]=5;
-		w[1]=3;
-		bw[2]=5;
-		w[2]=3;
-		bw[3]=5;
-		w[3]=3;
-		t[0]=0x8;
-		t[1]=0xb;
-	} else if (scale < 64) {
-		tlimit=0xf;
-		slimit=0x6;
-		bw[1]=5;
-		w[1]=3;
-		bw[2]=5;
-		w[2]=3;
-		bw[3]=5;
-		w[3]=3;
-		t[0]=0x8;
-		t[1]=0xa;
-	} else if (scale < 128) {
-		tlimit=0xc;
-		slimit=0x6;
-		plimit=0x1e;
-		w[1]=3;
-		w[2]=3;
-		bw[3]=5;
-		w[3]=3;
-		t[0]=0x7;
-		t[1]=0xa;
-	} else if (scale < 256) {
-		tlimit=0xb;
-		slimit=0x5;
-		plimit=0x1a;
-		w[2]=3;
-		bw[3]=5;
-		w[3]=3;
-		t[0]=0x7;
-		t[1]=0x8;
-	} else if (scale < 512) {
-		tlimit=0x9;
-		slimit=0x5;
-		plimit=0x14;
-		w[1]=0;
-		w[2]=1;
-		bw[3]=3;
-		w[3]=1;
-		t[0]=0x4;
-		t[1]=0x7;
-	} else if (scale < 1024) {
-		tlimit=0x8;
-		slimit=0x4;
-		slimit=0x4;
-		plimit=0x11;
-		w[1]=0;
-		w[2]=1;
-		bw[3]=3;
-		w[3]=1;
-		t[0]=0x3;
-		t[1]=0x5;
-	} else if (scale < 2048) {
-		tlimit=0x5;
-		slimit=0x3;
-		plimit=0x10;
-		bw[3]=3;
-		w[3]=1;
-		t[0]=0x2;
-		t[1]=0x4;
-	} else if (scale < 4096) {
-		bw[3]=3;
-		w[3]=1;
-		tlimit=0x4;
-		slimit=0x2;
-		plimit=0xf;
-		t[0]=0x2;
-		t[1]=0x3;
-	} else if (scale < 8192) {
-		bw[3]=3;
-		w[3]=1;
-		tlimit=0x3;
-		slimit=0x2;
-		plimit=0xf;
-		t[0]=0x1;
-		t[1]=0x2;
-	} else {
-		bw[3]=3;
-		w[3]=1;
-		tlimit=0x2;
-		slimit=0x2;
-		plimit=0xf;
-		t[0]=0x1;
-		t[1]=0x4;
-	}
-	gra->gc_set_linewidth(gra->gc[GC_STREET_SMALL], w[0]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_NO_PASS], w[0]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_SMALL_B], bw[0]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_MID], w[1]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_MID_B], bw[1]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG], w[2]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG_B], bw[2]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2], w[3]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2_B], bw[3]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_ROUTE], w[3]+7+w[3]/2);
-	gra->gc_set_linewidth(gra->gc[GC_ROADBOOK], w[3]+7+w[3]/2);
-
-#if 0
-	profile_timer(NULL);
-	graphics_draw(co->map_data, file_border_ply, co, display_rail, plimit, 48, poly_draw_block);
-	graphics_draw(co->map_data, file_woodland_ply, co, display_wood, plimit, 48, poly_draw_block);
-	graphics_draw(co->map_data, file_other_ply, co, display_other, plimit, 48, poly_draw_block);
-	graphics_draw(co->map_data, file_town_twn, co, display_town, tlimit, 48, town_draw_block);
-	graphics_draw(co->map_data, file_water_ply, co, display_water, plimit, 48, poly_draw_block);
-	graphics_draw(co->map_data, file_sea_ply, co, display_sea, plimit, 48, poly_draw_block);
-	/* todo height, tunnel, bridge, street_bti ??? */
-#if 0
-	graphics_draw(co->map_data, file_height_ply, co, display_other1, plimit, 48, poly_draw_block);
-#endif
-	if (scale < 256) {
-		graphics_draw(co->map_data, file_rail_ply, co, display_rail, plimit, 48, poly_draw_block);
-	}
-	profile_timer("map_draw");
-	plugin_call_draw(co);
-	profile_timer("plugin");
-#if 0
-	draw_poly(map, &co->d_tunnel_ply, "Tunnel", 0, 11, plimit);
-#endif
-	graphics_draw(co->map_data, file_street_str, co, display_street, slimit, 7, street_draw_block);
-#endif
-	do_draw(co);
-
+	do_draw(co, order);
+	xdisplay_draw(co->gra, co->layouts, order);
   
-	display_draw(disp[display_sea], gra, gra->gc[GC_WATER_FILL], NULL); 
-	display_draw(disp[display_wood], gra, gra->gc[GC_WOOD], NULL); 
-	display_draw(disp[display_other], gra, gra->gc[GC_TOWN_FILL], gra->gc[GC_TOWN_LINE]); 
-	display_draw(disp[display_other1], gra, gra->gc[GC_BUILDING], NULL); 
-	display_draw(disp[display_other2], gra, gra->gc[GC_BUILDING_2], NULL); 
-	display_draw(disp[display_other3], gra, gra->gc[GC_PARK], NULL); 
-	display_draw(disp[display_water], gra, gra->gc[GC_WATER_FILL], gra->gc[GC_WATER_LINE]); 
-	display_draw(disp[display_rail], gra, gra->gc[GC_RAIL], NULL); 
-	display_draw(disp[display_rail], gra, gra->gc[GC_RAIL1], NULL); 
-	display_draw(disp[display_border], gra, gra->gc[GC_BORDER], NULL); 
-#if 0 /* FIXME */
-	street_route_draw(co);
-#endif
-	display_draw(disp[display_street_route], gra, gra->gc[GC_STREET_ROUTE], NULL); 
-	display_draw(disp[display_roadbook], gra, gra->gc[GC_ROADBOOK], NULL); 
-	if (bw[0]) {
-		display_draw(disp[display_street_no_pass], gra, gra->gc[GC_STREET_SMALL_B], NULL); 
-		display_draw(disp[display_street], gra, gra->gc[GC_STREET_SMALL_B], NULL); 
-	}
-	if (bw[1]) 
-		display_draw(disp[display_street1], gra, gra->gc[GC_STREET_MID_B], NULL); 
-	if (bw[2])
-		display_draw(disp[display_street2], gra, gra->gc[GC_STREET_BIG_B], NULL); 
-	if (bw[3])
-		display_draw(disp[display_street3], gra, gra->gc[GC_STREET_BIG2_B], NULL); 
-	if (w[0]) {
-		display_draw(disp[display_street_no_pass], gra, gra->gc[GC_STREET_NO_PASS], NULL); 
-		display_draw(disp[display_street], gra, gra->gc[GC_STREET_SMALL], NULL); 
-	}
-	if (w[1]) 
-		display_draw(disp[display_street1], gra, gra->gc[GC_STREET_MID], gra->gc[GC_BLACK]); 
-	display_draw(disp[display_street2], gra, gra->gc[GC_STREET_BIG], gra->gc[GC_BLACK]); 
-	display_draw(disp[display_street3], gra, gra->gc[GC_STREET_BIG2], gra->gc[GC_BLACK]); 
-	if (w[3] > 1) 
-		display_draw(disp[display_street3], gra, gra->gc[GC_STREET_BIG2_L], NULL); 
-
-	display_draw(disp[display_poi], gra, gra->gc[GC_BLACK], NULL); 
-
-
-	profile_timer("display_draw");
-
-	if (scale < 2) {
-		display_labels(disp[display_street], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[1]);
-		display_labels(disp[display_street1], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[1]);
-	}
-	else {
-		display_labels(disp[display_street], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
-		display_labels(disp[display_street1], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
-	}
-	display_labels(disp[display_street2], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
-	display_labels(disp[display_street3], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
-	display_labels(disp[display_roadbook], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
-
-	for (i = display_town+t[1] ; i < display_town+0x10 ; i++) 
-		display_labels(disp[i], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[0]);
-	for (i = display_town+t[0] ; i < display_town+t[1] ; i++) 
-		display_labels(disp[i], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[1]);
-	for (i = display_town ; i < display_town+t[0] ; i++) 
-		display_labels(disp[i], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[2]);
-
-	for (i = display_town ; i < display_town+0x10 ; i++) 
-		display_draw(disp[i], gra, gra->gc[GC_BLACK], NULL); 
-	display_draw(disp[display_bti], gra, gra->gc[GC_BLACK], NULL); 
-	profile_timer("labels");
 	gra->draw_mode(gra, draw_mode_end);
 	for (i = 0 ; i < data_window_type_end; i++) {
 		data_window_end(co->data_window[i]);	
 	}
-#if 0
-	map_scrollbars_update(map);
-#endif
 }
 
 void

@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -20,14 +21,16 @@ contains_coord(char *line)
 	return g_ascii_isdigit(line[0]);
 }
 
-static int debug=1;
+static int debug=0;
 
 static int
 get_tag(char *line, char *name, int *pos, char *ret)
 {
 	int len,quoted;
 	char *p,*e,*n;
-	/* printf("get_tag %s from %s\n", name, line); */
+
+	if (debug)
+		printf("get_tag %s from %s\n", name, line); 
 	if (! name)
 		return 0;
 	len=strlen(name);
@@ -94,30 +97,40 @@ map_charset_textfile(struct map_priv *m)
 	return "iso8859-1";
 }
 
+static enum projection
+map_projection_textfile(struct map_priv *m)
+{
+	return projection_mg;
+}
+
 static void
 textfile_coord_rewind(void *priv_data)
 {
+}
+
+static void
+parse_line(struct map_rect_priv *mr)
+{
+	int pos=0;
+	sscanf(mr->line,"%lf %c %lf %c %n",&mr->lat,&mr->lat_c,&mr->lng,&mr->lng_c,&pos);
+	if (pos < strlen(mr->line)) {
+		strcpy(mr->attrs, mr->line+pos);
+	}
 }
 
 static int
 textfile_coord_get(void *priv_data, struct coord *c, int count)
 {
 	double lat,lng,lat_deg,lng_deg;
-	char lat_c,lng_c;
 	struct map_rect_priv *mr=priv_data;
-	int pos,ret=0;
+	int ret=0;
 	if (debug)
 		printf("textfile_coord_get %d\n",count);
 	while (count--) {
 		if (contains_coord(mr->line) && mr->f && !feof(mr->f) && (!mr->item.id_hi || !mr->eoc)) {
-			pos=0;
-			sscanf(mr->line,"%lf %c %lf %c %n",&lat,&lat_c,&lng,&lng_c,&pos);
-			if (mr->item.id_hi) {
-				if (pos)
-					strcpy(mr->attrs, mr->line+pos);
-				else
-					mr->attrs[0]='\0';
-			}
+			parse_line(mr);
+			lat=mr->lat;
+			lng=mr->lng;
 			lat_deg=floor(lat/100);
 			lat-=lat_deg*100;
 			lat_deg+=lat/60;
@@ -146,34 +159,28 @@ textfile_attr_rewind(void *priv_data)
 
 static int
 textfile_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
-{
+{	
 	struct map_rect_priv *mr=priv_data;
 	char *str=NULL;
 	if (debug)
-		printf("textfile_attr_get attrs=%s\n", mr->attrs);
+		printf("textfile_attr_get mr=%p attrs='%s' ", mr, mr->attrs);
 	if (attr_type != mr->attr_last) {
 		mr->attr_pos=0;
 	}
-	switch (attr_type) {
-	case attr_name:
-		str="name";
-		break;
-	case attr_icon:
-		str="icon";
-		break;
-	case attr_info_html:
-		str="info_html";
-		break;
-	case attr_price_html:
-		str="price_html";
-		break;
-	default:
-		break;
-	}
+	str=attr_to_name(attr_type);
+	if (debug)
+		printf("attr='%s' ",str);
 	if (get_tag(mr->attrs,str,&mr->attr_pos,mr->attr)) {
-		attr->u.str=mr->attr;
+		if (attr_type == attr_size) 
+			attr->u.num=atoi(mr->attr);
+		else
+			attr->u.str=mr->attr;
+		if (debug)
+			printf("found\n");
 		return 1;
 	}
+	if (debug)
+		printf("not found\n");
 	return 0;
 }
 
@@ -189,6 +196,8 @@ map_rect_new_textfile(struct map_priv *map, struct coord_rect *r, struct layer *
 {
 	struct map_rect_priv *mr;
 
+	if (debug)
+		printf("map_rect_new_textfile\n");
 	mr=g_new0(struct map_rect_priv, 1);
 	mr->m=map;
 	if (r) 
@@ -221,12 +230,14 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 {
 	char *p,type[256];
 	if (debug)
-		printf("map_rect_get_item_textfile line=%s\n", mr->line);
+		printf("map_rect_get_item_textfile id_hi=%d line=%s", mr->item.id_hi, mr->line);
 	if (!mr->f) {
 		return NULL;
 	}
 	for(;;) {
 		if (feof(mr->f)) {
+			if (debug)
+				printf("map_rect_get_item_textfile: eof\n");
 			if (mr->item.id_hi) {
 				return NULL;
 			}
@@ -235,46 +246,48 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 			get_line(mr);
 		}
 		if (mr->item.id_hi) {
-			if ((p=index(mr->line,'\n'))) 
-				*p='\0';
 			if (!contains_coord(mr->line)) {
 				get_line(mr);
 				continue;
 			}
+			if ((p=index(mr->line,'\n'))) 
+				*p='\0';
+			if (debug)
+				printf("map_rect_get_item_textfile: point found\n");
+			mr->attrs[0]='\0';
+			parse_line(mr);
 			mr->eoc=0;
 		} else {
-			strcpy(mr->attrs, mr->line);
-			printf("get_item attrs=%s line=%s\n", mr->attrs, mr->line);
-			get_line(mr);
-			if ((p=index(mr->attrs,'\n'))) {
-				*p='\0';
-			}
-			if (! mr->attrs[0]) {
-				for(;;) {
-					if (feof(mr->f))
-						break;
-					get_line(mr);
-					if (!contains_coord(mr->line))
-						break;
-				}
+			if (contains_coord(mr->line)) {
+				get_line(mr);
 				continue;
 			}
+			if ((p=index(mr->line,'\n'))) 
+				*p='\0';
 			if (debug)
-				printf("attrs=%s\n", mr->attrs);
+				printf("map_rect_get_item_textfile: line found\n");
+			if (! mr->line[0]) {
+				get_line(mr);
+				continue;
+			}
+			strcpy(mr->attrs, mr->line);
+			get_line(mr);
+			if (debug)
+				printf("mr=%p attrs=%s\n", mr, mr->attrs);
 		}
+		if (debug)
+			printf("get_attrs %s\n", mr->attrs);
 		if (get_tag(mr->attrs,"type",NULL,type)) {
 			if (debug)
 				printf("type='%s'\n", type);
-			if (!strcmp(type,"roadbook")) {
-				mr->item.type=type_roadbook;
-			} else if (!strcmp(type,"waypoint")) {
-				mr->item.type=type_waypoint;
-			} else if (!strcmp(type,"poi")) {
-				mr->item.type=type_poi;
-			}
+			mr->item.type=item_from_name(type);
+			if (mr->item.type == type_none) 
+				printf("Warning: type '%s' unknown\n", type);
 		}
 		mr->item.id_lo=mr->pos;
 		mr->attr_last=attr_none;
+		if (debug)
+			printf("return attr='%s'\n", mr->attrs);
 		return &mr->item;
 	}
 }
@@ -291,6 +304,7 @@ map_rect_get_item_byid_textfile(struct map_rect_priv *mr, int id_hi, int id_lo)
 static struct map_methods map_methods_textfile = {
 	map_destroy_textfile,
 	map_charset_textfile,
+	map_projection_textfile,
 	map_rect_new_textfile,
 	map_rect_destroy_textfile,
 	map_rect_get_item_textfile,

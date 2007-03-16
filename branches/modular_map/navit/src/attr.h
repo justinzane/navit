@@ -2,19 +2,11 @@
 #define ATTR_H
 
 enum attr_type {
-	/* common */
-	attr_none=0,
-	attr_id=1,
-	attr_name,
-	attr_name_systematic,
-	attr_district,
-	attr_type,
-	/* town */
-	attr_size,
-	/* poi */
-	attr_icon,
-	attr_info_html,
-	attr_price_html,
+#define ATTR2(x,y) attr_##x=y,
+#define ATTR(x) attr_##x,
+#include "attr_def.h"
+#undef ATTR2
+#undef ATTR
 };
 
 struct attr {
@@ -24,5 +16,8 @@ struct attr {
 		int num;
 	} u;
 };
+
+enum attr_type attr_from_name(char *name);
+char * attr_to_name(enum attr_type attr);
 
 #endif

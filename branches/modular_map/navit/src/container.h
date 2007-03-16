@@ -16,6 +16,7 @@ enum display_index {
         display_street_route,
         display_street_route_static,
 	display_roadbook,
+	display_height,
         display_town,
         display_town1,
         display_town2,
@@ -58,6 +59,7 @@ struct container {
 	GList *layouts;
 	struct layout *layout_current;
 	struct window *win;
+	struct action *action;
 	struct transformation *trans;
 	struct graphics *gra;
 	struct compass *compass;
@@ -73,5 +75,4 @@ struct container {
 	struct track *track;
         struct data_window *data_window[data_window_type_end];
 	struct map_flags *flags;
-	struct _GtkMap *map;
 };

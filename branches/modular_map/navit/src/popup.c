@@ -5,7 +5,6 @@
 #include "coord.h"
 #include "file.h"
 #include "map_data.h"
-#include "display.h"
 #include "log.h"
 #include "popup.h"
 #include "plugin.h"
@@ -17,6 +16,7 @@
 #include "graphics.h"
 #include "transform.h"
 
+#if 0
 static void
 popup_item_destroy_text(struct popup_item *item)
 {
@@ -270,10 +270,12 @@ popup_destroy(GtkObject *obj, void *parm)
 	popup_destroy_items(popup->items);
 	g_free(popup);	
 }
+#endif
 
 void
 popup(struct container *co, int x, int y, int button)
 {
+#if 0
 	GtkWidget *menu;
 	struct popup *popup=g_new(struct popup,1);
 	struct popup_item *list=NULL;
@@ -305,6 +307,6 @@ popup(struct container *co, int x, int y, int button)
 
 	gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, button, gtk_get_current_event_time());
 	g_signal_connect(G_OBJECT(menu), "selection-done", G_CALLBACK (popup_destroy), popup);
+#endif
 }
-
 

@@ -9,6 +9,7 @@
 #include "destination.h"
 
 struct action_gui {
+	GtkUIManager        *menu_manager;
 	struct container *co;
 };
 
@@ -110,10 +111,13 @@ static GtkActionEntry entries[] =
 {
 	{ "DisplayMenuAction", NULL, "Display" },
 	{ "RouteMenuAction", NULL, "Route" },
+	{ "MapMenuAction", NULL, "Map" },
+	{ "LayoutMenuAction", NULL, "Layout" },
 	{ "ZoomOutAction", GTK_STOCK_ZOOM_OUT, "ZoomOut", NULL, NULL, G_CALLBACK(zoom_out_action) },
 	{ "ZoomInAction", GTK_STOCK_ZOOM_IN, "ZoomIn", NULL, NULL, G_CALLBACK(zoom_in_action) },
 	{ "RefreshAction", GTK_STOCK_REFRESH, "Refresh", NULL, NULL, G_CALLBACK(refresh_action) },
 	{ "DestinationAction", "flag_icon", "Destination", NULL, NULL, G_CALLBACK(destination_action) },
+	{ "Test", NULL, "Test", NULL, NULL, G_CALLBACK(destination_action) },
 	{ "QuitAction", GTK_STOCK_QUIT, "_Quit", "<control>Q",NULL, G_CALLBACK (quit_action) }
 };
 
@@ -270,7 +274,7 @@ action_add_widget (GtkUIManager *ui, GtkWidget *widget, GtkContainer *container)
 
 static char layout[] =
 	"<ui>\
-		<menubar>\
+		<menubar name=\"MenuBar\">\
 			<menu name=\"DisplayMenu\" action=\"DisplayMenuAction\">\
 				<menuitem name=\"Zoom in\" action=\"ZoomInAction\" />\
 				<menuitem name=\"Zoom out\" action=\"ZoomOutAction\" />\
@@ -292,6 +296,10 @@ static char layout[] =
 				<menuitem name=\"Destination\" action=\"DestinationAction\" />\
 				<placeholder name=\"RouteMenuAdditions\" />\
 			</menu>\
+			<menu name=\"MapMenu\" action=\"MapMenuAction\">\
+			</menu>\
+			<menu name=\"LayoutMenu\" action=\"LayoutMenuAction\">\
+			</menu>\
 		</menubar>\
 	 	<toolbar action=\"BaseToolbar\" action=\"BaseToolbarAction\">\
 			<placeholder name=\"ToolItems\">\
@@ -308,8 +316,41 @@ static char layout[] =
 		</toolbar>\
 	</ui>";
 			
+void *
+gui_add_menu(struct action *ac, char *name)
+{
+#if 0
+	GtkWidget *item;
+	GtkWidget *mi;
+	GtkWidget *me=gtk_menu_new();
+
+	item = gtk_ui_manager_get_widget( ac->gui->menu_manager, "/ui/MenuBar" );
+	mi=gtk_menu_item_new_with_label(name);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mi), me);
+	gtk_menu_bar_append(item, mi);
+
+	return me;
+#endif
+		
+}
+
+void *
+gui_add_menu_entry(void *ptr, char *name)
+{
+#if 0
+	GtkWidget *mi;
+	mi=gtk_menu_item_new_with_label(name);
+	gtk_menu_append(ptr, mi);
+#endif
+}
 
 void
+gui_add_submenu(void *ptr, char *name)
+{
+}
+
+
+struct action *
 gui_gtk_actions_new(struct container *co, GtkWidget **vbox)
 {
 	GtkActionGroup      *base_group,*debug_group;
@@ -326,6 +367,7 @@ gui_gtk_actions_new(struct container *co, GtkWidget **vbox)
 	base_group = gtk_action_group_new ("BaseActions");
 	debug_group = gtk_action_group_new ("DebugActions");
 	menu_manager = gtk_ui_manager_new ();
+	this->gui->menu_manager=menu_manager;
 
 	gtk_action_group_add_actions (base_group, entries, n_entries, this);
 	gtk_action_group_add_toggle_actions (base_group, toggleentries, n_toggleentries, this);
@@ -341,7 +383,14 @@ gui_gtk_actions_new(struct container *co, GtkWidget **vbox)
 		g_message ("building menus failed: %s", error->message);
 		g_error_free (error);
 	}
-
 	g_signal_connect ( menu_manager, "add_widget", G_CALLBACK (action_add_widget), *vbox);
+
+	{
+	gtk_ui_manager_add_ui( menu_manager, gtk_ui_manager_new_merge_id(menu_manager), "/ui/MenuBar/MapMenu", "Test", "Test", GTK_UI_MANAGER_MENUITEM, FALSE);
+	}
+#if 0
+	gui_add_menu_entry(gui_add_menu(this, "Map"), "Test");
+#endif
+	return this;
 }
 

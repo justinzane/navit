@@ -3,12 +3,14 @@
 #include "coord.h"
 #include "map.h"
 #include "maptype.h"
+#include "transform.h"
 #include "item.h"
 
 struct map {
 	struct map_methods meth;
 	struct map_priv *priv;
 	char *charset;
+	enum projection projection;
 };
 
 struct map_rect {
@@ -30,7 +32,14 @@ map_new(char *type, char *filename)
 
 	m->priv=mt->map_new(&m->meth, filename);
 	m->charset=m->meth.map_charset(m->priv);
+	m->projection=m->meth.map_projection(m->priv);
 	return m;
+}
+
+enum projection
+map_projection(struct map *this)
+{
+	return this->projection;
 }
 
 void

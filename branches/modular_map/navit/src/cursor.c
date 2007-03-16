@@ -161,6 +161,7 @@ cursor_update(void *t)
 	struct coord *pos;
 	struct vehicle *v=this->co->vehicle;
 	double *dir;
+	enum projection pro;
 
 	if (v) {
 		pos=vehicle_pos_get(v);	
@@ -173,16 +174,16 @@ cursor_update(void *t)
 #if 0 /* FIXME */
 		route_set_position(this->co->route, cursor_pos_get(this->co->cursor));
 #endif
-		if (!transform(this->co->trans, pos, &pnt)) {
+		if (!transform(this->co->trans, pro, pos, &pnt)) {
 			cursor_map_reposition(this, pos, dir);
-			transform(this->co->trans, pos, &pnt);
+			transform(this->co->trans, pro, pos, &pnt);
 		}
 		if (pnt.x < 0 || pnt.y < 0 || pnt.x >= this->co->trans->width || pnt.y >= this->co->trans->height) {
 			cursor_map_reposition(this, pos, dir);
-			transform(this->co->trans, pos, &pnt);
+			transform(this->co->trans, pro, pos, &pnt);
 		}
 		if (cursor_map_reposition_boundary(this, pos, dir, &pnt))
-			transform(this->co->trans, pos, &pnt);
+			transform(this->co->trans, pro, pos, &pnt);
 		cursor_draw(this, &pnt, vehicle_speed_get(v), vehicle_dir_get(v));
 	}
 	compass_draw(this->co->compass, this->co);

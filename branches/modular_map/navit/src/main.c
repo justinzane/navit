@@ -28,7 +28,7 @@
 
 void *speech_handle;
 
-struct container *co;
+static struct container *co;
 
 struct map_data *map_data_default;
 
@@ -61,19 +61,14 @@ int main(int argc, char **argv)
 	plugin_init();
 #if 0
 	map_data_default=load_maps(NULL);
-#endif
-#if 1
 	/* co=gui_gtk_window(0x137c79,0x5f2679,1024); */
-	co=gui_gtk_window(0x182079,0x590679,1024);
-#else
+	co=gui_gtk_window(1300000,7000000,8192);
 	co=gui_gtk_window(0x11e8a1,0x632815,1024);
 #endif
-	config_load("navit.xml", co, &error);
-
-#if 0	/* FIXME */
+	config_load("navit.xml", &error);
+#if 0
 	co->route=route_new();
 	route_mapdata_set(co->route, co->map_data); 
-#endif
 	gps=getenv("GPSDATA");
 	if (gps) {
 		co->vehicle=vehicle_new(gps);
@@ -87,10 +82,8 @@ int main(int argc, char **argv)
 	speech_handle=co->speech;
 	if (co->vehicle)
 		co->compass=compass_new(co);
-#if 0 /* FIXME */
 	if (co->vehicle)
 		co->track=track_new(co->map_data);
-#endif
 
 #if 0
         CORBA_exception_init(&ev);
@@ -108,6 +101,7 @@ int main(int argc, char **argv)
 		fclose(ior);
 	}
         CORBA_free(retval);
+#endif
 #endif
 
 	gtk_main();

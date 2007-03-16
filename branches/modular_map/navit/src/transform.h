@@ -3,6 +3,8 @@
 
 #include "point.h"
 
+#include "projection.h"
+
 struct transformation {
         int width;		/* Height of destination rectangle */
         int height;		/* Width of destination rectangle */
@@ -13,7 +15,8 @@ struct transformation {
 	struct coord center;	/* Center of source rectangle */
 };
 
-int transform(struct transformation *t, struct coord *c, struct point *p);
+int transform(struct transformation *t, enum projection pro, struct coord *c, struct point *p);
+int transform_contains(struct transformation *t, enum projection pro, struct coord_rect *r);
 int is_visible(struct transformation *t, struct coord *c);
 int is_line_visible(struct transformation *t, struct coord *c);
 int is_too_small(struct transformation *t, struct coord *c, int limit);
@@ -28,6 +31,7 @@ int transform_distance_line_sq(struct coord *l0, struct coord *l1, struct coord 
 void transform_mercator(double *lng, double *lat, struct coord *c);
 int is_point_visible(struct transformation *t, struct coord *c);
 int transform_get_scale(struct transformation *t);
+int transform_get_order(struct transformation *t);
 void transform_setup_source_rect(struct transformation *t);
 void transform_set_angle(struct transformation *t,int angle);
 void transform_setup(struct transformation *t, int x, int y, int scale, int angle);

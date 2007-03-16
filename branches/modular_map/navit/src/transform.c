@@ -7,13 +7,24 @@
 #include "transform.h"
 
 int
-transform(struct transformation *t, struct coord *c, struct point *p)
+transform(struct transformation *t, enum projection pro, struct coord *c, struct point *p)
 {
         double xc,yc;
 	int ret;
         xc=c->x;
         yc=c->y;
-	ret=coord_rect_contains(&t->r, c);
+	if (pro == projection_garmin) {
+		struct coord c1;
+		double f=360.0/(1<<24);
+		xc*=f;
+		yc*=f;
+		transform_mercator(&xc,&yc,&c1);
+		xc=c1.x;
+		yc=c1.y;
+		ret=1;
+	} else {
+		ret=coord_rect_contains(&t->r, c);
+	}
         xc-=t->center.x;
         yc-=t->center.y;
 	yc=-yc;
@@ -161,6 +172,23 @@ transform_get_scale(struct transformation *t)
 {
 	return t->scale/16;
 }
+
+
+int
+transform_get_order(struct transformation *t)
+{
+	int scale=t->scale/16;
+	int order=0;
+        while (scale > 1) {
+                order++;
+                scale>>=1;
+        }
+        order=14-order;
+        if (order < 0)
+                order=0;
+	return order;
+}
+
 
 void
 transform_lng_lat(struct coord *c, struct coord_geo *g)

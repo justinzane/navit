@@ -3,6 +3,20 @@
 #include "coord.h"
 #include "item.h"
 
+struct item_name {
+        enum item_type item;
+        char *name;
+};
+
+
+struct item_name item_names[]={
+#define ITEM2(x,y) ITEM(y)
+#define ITEM(x) { type_##x, #x },
+#include "item_def.h"
+#undef ITEM2
+#undef ITEM
+};
+
 void
 item_coord_rewind(struct item *it)
 {
@@ -35,4 +49,28 @@ struct item * item_new(char *type, int zoom)
 	/* FIXME evaluate arguments */
 
 	return it;
+}
+
+enum item_type
+item_from_name(char *name)
+{
+	int i;
+
+	for (i=0 ; i < sizeof(item_names)/sizeof(struct item_name) ; i++) {
+		if (! strcmp(item_names[i].name, name))
+			return item_names[i].item;
+	}
+	return type_none;
+}
+
+char *
+item_to_name(enum item_type item)
+{
+	int i;
+
+	for (i=0 ; i < sizeof(item_names)/sizeof(struct item_name) ; i++) {
+		if (item_names[i].item == item)
+			return item_names[i].name;
+	}
+	return NULL; 
 }

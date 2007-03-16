@@ -4,7 +4,7 @@ struct popup_item *popup_item_new_text(struct popup_item **last, char *text, int
 
 struct popup {
 	struct container *co;
-	struct point pnt;
+	/* struct point pnt; */
 	struct coord c;
 	void *gui_data;
 	struct popup_item *items;
