@@ -26,18 +26,19 @@ static char * find_attribute(const char *attribute, const char **attribute_name,
 }
 
 static int
-find_color(const char **attribute_name, const char **attribute_value, int *color)
+find_color(const char **attribute_name, const char **attribute_value, struct color *color)
 {
 	char *value;
+	int r,g,b;
 
 	value=find_attribute("color", attribute_name, attribute_value);
 	if (! value)
 		return 0;
 
-	sscanf(value,"#%02x%02x%02x", color, color+1, color+2);
-	color[0] = (color[0] << 8) | color[0];
-	color[1] = (color[1] << 8) | color[1];
-	color[2] = (color[2] << 8) | color[2];
+	sscanf(value,"#%02x%02x%02x", &r, &g, &b);
+	color->r = (r << 8) | r;
+	color->g = (g << 8) | g;
+	color->b = (b << 8) | b;
 	return 1;
 }
 
@@ -121,12 +122,21 @@ start_element (GMarkupParseContext *context,
 		}
 	}
 	else if(!g_ascii_strcasecmp("vehicle", element_name)) {
+		struct container *co=parent_object;
+		if (parent(parent_token, "navit", error)) {
+			char *s=find_attribute("source", attribute_names, attribute_values);
+			struct color color;
+			if (s && find_color(attribute_names, attribute_values, &color)) {
+				elem = vehicle_new(s);
+				navit_vehicle_add(co, elem, &color);
+			}
 #if 0
 		elem = config_add_vehicle(data->config,
 				find_attribute("name", attribute_names, attribute_values),
 				find_attribute("source", attribute_names, attribute_values),
 				find_attribute("color", attribute_names, attribute_values));
 #endif
+		}
 	}
 	else if(!g_ascii_strcasecmp("mapset", element_name)) {
 		struct container *co=parent_object;
@@ -184,9 +194,9 @@ start_element (GMarkupParseContext *context,
 	else if(!g_ascii_strcasecmp("polygon", element_name) || !g_ascii_strcasecmp("polyline", element_name) || !g_ascii_strcasecmp("circle", element_name)) {
 		struct itemtype *itm=parent_object;
 		if(parent(parent_token, "item", error)) {
-			int color[3];
+			struct color color;
 			struct element *e=NULL;
-			if (find_color(attribute_names, attribute_values, color)) {
+			if (find_color(attribute_names, attribute_values, &color)) {
 				int w=0;
 				if (!g_ascii_strcasecmp("polyline", element_name) || !g_ascii_strcasecmp("circle", element_name)) {
 					char *s=find_attribute("width",attribute_names, attribute_values);
@@ -194,10 +204,10 @@ start_element (GMarkupParseContext *context,
 						w=convert_number(s);
 				}
 				if (!g_ascii_strcasecmp("polygon", element_name)) {
-					e=polygon_new(color);
+					e=polygon_new(&color);
 				}
 				if (!g_ascii_strcasecmp("polyline", element_name)) {
-					e=polyline_new(color, w);
+					e=polyline_new(&color, w);
 				}
 				if (!g_ascii_strcasecmp("circle", element_name)) {
 					int r=0,ls=0;
@@ -208,7 +218,7 @@ start_element (GMarkupParseContext *context,
 					s=find_attribute("label_size",attribute_names, attribute_values);
 					if (s) 
 						ls=convert_number(s);
-					e=circle_new(color, r, w, ls);
+					e=circle_new(&color, r, w, ls);
 				}
 				itemtype_add_element(itm, e);
 			}

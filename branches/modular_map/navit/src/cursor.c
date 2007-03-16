@@ -13,6 +13,7 @@
 #include "menu.h"
 #include "vehicle.h"
 #include "container.h"
+#include "color.h"
 #include "cursor.h"
 #include "compass.h"
 #include "track.h"
@@ -154,14 +155,16 @@ cursor_map_reposition_boundary(struct cursor *this, struct coord *c, double *dir
 }
 
 static void
-cursor_update(void *t)
+cursor_update(struct vehicle *v, void *t)
 {
 	struct cursor *this=t;
 	struct point pnt;
 	struct coord *pos;
-	struct vehicle *v=this->co->vehicle;
 	double *dir;
 	enum projection pro;
+
+	if (! this->co->ready)
+		return; 
 
 	if (v) {
 		pos=vehicle_pos_get(v);	
@@ -186,18 +189,20 @@ cursor_update(void *t)
 			transform(this->co->trans, pro, pos, &pnt);
 		cursor_draw(this, &pnt, vehicle_speed_get(v), vehicle_dir_get(v));
 	}
+#if 0
 	compass_draw(this->co->compass, this->co);
+#endif
 }
 
 extern void *vehicle;
 
 struct cursor *
-cursor_new(struct container *co, struct vehicle *v)
+cursor_new(struct container *co, struct vehicle *v, struct color *c)
 {
 	struct cursor *this=g_new(struct cursor,1);
 	this->co=co;
 	this->cursor_gc=co->gra->gc_new(co->gra);
-	co->gra->gc_set_foreground(this->cursor_gc, 0x0000, 0x0000, 0xffff);
+	co->gra->gc_set_foreground(this->cursor_gc, c->r, c->g, c->b);
 	co->gra->gc_set_linewidth(this->cursor_gc, 2);
 	vehicle_callback(v, cursor_update, this);
 	return this;

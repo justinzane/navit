@@ -55,43 +55,37 @@ void itemtype_add_element(struct itemtype *itemtype, struct element *element)
 }
 
 struct element *
-polygon_new(int *color)
+polygon_new(struct color *color)
 {
 	struct element *e;
 	e = g_new0(struct element, 1);
 	e->type=element_polygon;
-	e->color[0]=color[0];
-	e->color[1]=color[1];
-	e->color[2]=color[2];
+	e->color=*color;
 
 	return e;
 }
 
 struct element *
-polyline_new(int *color, int width)
+polyline_new(struct color *color, int width)
 {
 	struct element *e;
 	
 	e = g_new0(struct element, 1);
 	e->type=element_polyline;
-	e->color[0]=color[0];
-	e->color[1]=color[1];
-	e->color[2]=color[2];
+	e->color=*color;
 	e->u.polyline.width=width;
 
 	return e;
 }
 
 struct element *
-circle_new(int *color, int radius, int width, int label_size)
+circle_new(struct color *color, int radius, int width, int label_size)
 {
 	struct element *e;
 	
 	e = g_new0(struct element, 1);
 	e->type=element_circle;
-	e->color[0]=color[0];
-	e->color[1]=color[1];
-	e->color[2]=color[2];
+	e->color=*color;
 	e->label_size=label_size;
 	e->u.circle.width=width;
 	e->u.circle.radius=radius;

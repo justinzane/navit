@@ -1,11 +1,12 @@
 #include "item.h"
+#include "color.h"
 
 struct element_line;
 struct element_text;
 
 struct element {
 	enum { element_point, element_polyline, element_polygon, element_circle, element_icon } type;
-	int color[3];
+	struct color color;
 	int label_size;
 	union {
 		struct element_point {
@@ -45,7 +46,7 @@ struct itemtype * itemtype_new(int zoom_min, int zoom_max);
 void layer_add_itemtype(struct layer *layer, struct itemtype * itemtype);
 void itemtype_add_element(struct itemtype *itemtype, struct element *element);
 void itemtype_add_type(struct itemtype *this, enum item_type type);
-struct element * polygon_new(int *color);
-struct element * polyline_new(int *color, int width);
-struct element * circle_new(int *color, int radius, int width, int label_size);
+struct element * polygon_new(struct color *color);
+struct element * polyline_new(struct color *color, int width);
+struct element * circle_new(struct color *color, int radius, int width, int label_size);
 struct element * icon_new(char *src);

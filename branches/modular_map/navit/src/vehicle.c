@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <math.h>
+#include <sys/stat.h>
 #include <glib.h>
 #ifdef HAVE_LIBGPS
 #include <gps.h>
@@ -14,10 +15,15 @@
 #include "statusbar.h"
 #include "vehicle.h"
 
-/* #define INTERPOLATION_TIME 50 */
+static void disable_watch(struct vehicle *this);
+static void enable_watch(struct vehicle *this);
+
+ /* #define INTERPOLATION_TIME 50 */
 
 struct vehicle {
 	GIOChannel *iochan;
+	guint watch;
+	int is_file;
 	int timer_count;
 	int qual;
 	int sats;
@@ -33,7 +39,7 @@ struct vehicle {
 #ifdef HAVE_LIBGPS
 	struct gps_data_t *gps;
 #endif
-	void (*callback_func)(void *data);
+	void (*callback_func)(struct vehicle *, void *data);
 	void *callback_data;
 };
 
@@ -51,7 +57,7 @@ vehicle_timer(gpointer t)
 			this->current_pos.x=this->curr.x;
 			this->current_pos.y=this->curr.y;
 			if (this->callback_func)
-				(*this->callback_func)(this->callback_data);
+				(*this->callback_func)(this, this->callback_data);
 		}
 /*	} */
 	return TRUE; 
@@ -85,7 +91,16 @@ vehicle_set_position(struct vehicle *this, struct coord *pos)
 	this->delta.x=0;
 	this->delta.y=0;
 	if (this->callback_func)
-		(*this->callback_func)(this->callback_data);
+		(*this->callback_func)(this, this->callback_data);
+}
+
+static int
+enable_watch_timer(gpointer t)
+{
+	struct vehicle *this=t;
+	enable_watch(this);
+	
+	return FALSE;
 }
 
 static void
@@ -131,8 +146,13 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 		this->curr.x=this->current_pos.x;
 		this->curr.y=this->current_pos.y;
 		this->timer_count=0;
-		if (this->callback_func)
-			(*this->callback_func)(this->callback_data);
+		if (this->callback_func) {
+			(*this->callback_func)(this, this->callback_data);
+		}
+		if (this->is_file) {
+			disable_watch(this);
+			g_timeout_add(1000, enable_watch_timer, this);
+		}
 	}
 	if (!strncmp(buffer,"$GPVTG",6)) {
 		/* $GPVTG,143.58,T,,M,0.26,N,0.5,K*6A 
@@ -169,7 +189,7 @@ vehicle_track(GIOChannel *iochan, GIOCondition condition, gpointer t)
 	char buffer[4096];
 	char *str,*tok;
 	gsize size;
-	
+
 	if (condition == G_IO_IN) {
 #ifdef HAVE_LIBGPS
 		if (this->gps) {
@@ -179,18 +199,37 @@ vehicle_track(GIOChannel *iochan, GIOCondition condition, gpointer t)
 #else
 		{
 #endif
-			g_io_channel_read_chars(iochan, buffer, 4096, &size, &error);
-			buffer[size]='\0';
-			str=buffer;
-			while ((tok=strtok(str, "\n"))) {
-				str=NULL;
-				vehicle_parse_gps(this, tok);
+			if (this->is_file) {
+				char *str;
+				g_io_channel_read_line(iochan, &str, NULL, NULL, &error);
+				vehicle_parse_gps(this, str);
+				g_free(str);
+			} else {
+				g_io_channel_read_chars(iochan, buffer, 4096, &size, &error);
+				buffer[size]='\0';
+				str=buffer;
+				while ((tok=strtok(str, "\n"))) {
+					str=NULL;
+					vehicle_parse_gps(this, tok);
+				}
 			}
 		}
 
 		return TRUE;
 	} 
 	return FALSE;
+}
+
+static void
+enable_watch(struct vehicle *this)
+{
+	this->watch=g_io_add_watch(this->iochan, G_IO_IN|G_IO_ERR|G_IO_HUP, vehicle_track, this);
+}
+
+static void
+disable_watch(struct vehicle *this)
+{
+	g_source_remove(this->watch);
 }
 
 #ifdef HAVE_LIBGPS
@@ -231,7 +270,7 @@ vehicle_gps_callback(struct gps_data_t *data, char *buf, size_t len, int level)
 		this->curr.y=this->current_pos.y;
 		this->timer_count=0;
 		if (this->callback_func)
-			(*this->callback_func)(this->callback_data);
+			(*this->callback_func)(this, this->callback_data);
 		data->set &= ~LATLON_SET;
 	}
 	if (data->set & ALTITUDE_SET) {
@@ -259,12 +298,18 @@ vehicle_new(const char *url)
 #ifdef HAVE_LIBGPS
 	struct gps_data_t *gps=NULL;
 #endif
+	this=g_new0(struct vehicle,1);
 
 	if (! strncmp(url,"file:",5)) {
+		struct stat st;
 		fd=open(url+5,O_RDONLY|O_NDELAY);
 		if (fd < 0) {
 			g_warning("Failed to open %s", url);
 			return NULL;
+		}
+		stat(url+5, &st);
+		if (S_ISREG (st.st_mode)) {
+			this->is_file=1;
 		}
 	} else if (! strncmp(url,"gpsd://",7)) {
 #ifdef HAVE_LIBGPS
@@ -288,13 +333,12 @@ vehicle_new(const char *url)
 		return NULL;
 #endif
 	}
-	this=g_new0(struct vehicle,1);
 #ifdef HAVE_LIBGPS
 	this->gps=gps;
 #endif
 	this->iochan=g_io_channel_unix_new(fd);
 	g_io_channel_set_encoding(this->iochan, NULL, &error);
-	g_io_add_watch(this->iochan, G_IO_IN|G_IO_ERR|G_IO_HUP, vehicle_track, this);
+	enable_watch(this);
 	this->current_pos.x=0x130000;
 	this->current_pos.y=0x600000;
 	this->curr.x=this->current_pos.x;

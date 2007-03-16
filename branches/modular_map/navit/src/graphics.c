@@ -185,7 +185,7 @@ xdisplay_draw_elements(struct graphics *gra, GList *es, GList *ls)
 			di->displayed=1;
 			if (! gc) {
 				gc=gra->gc_new(gra);
-				gra->gc_set_foreground(gc, e->color[0],e->color[1], e->color[2]);
+				gra->gc_set_foreground(gc, e->color.r,e->color.g, e->color.b);
 			}
 			switch (e->type) {
 			case element_polygon:
@@ -381,6 +381,7 @@ graphics_redraw(struct container *co)
 	for (i = 0 ; i < data_window_type_end; i++) {
 		data_window_end(co->data_window[i]);	
 	}
+	co->ready=1;
 }
 
 void
