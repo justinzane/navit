@@ -16,30 +16,97 @@
 
 #include "layout.h"
 
-GHashTable *ht;
+struct graphics *
+graphics_new(char *type)
+{
+	struct graphics *this;
+	struct graphics_priv * (*new)(struct graphics_methods *meth);
+
+	new=plugin_get_graphics_type(type);
+	if (! new)
+		return NULL;	
+	this=g_new0(struct graphics, 1);
+	this->priv=(*new)(&this->meth);
+	printf("this=%p\n", this);
+	return this;
+}
+
 
 void
-container_init_gra(struct container *co)
+graphics_init(struct graphics *this)
 {
-	struct graphics *gra=co->gra;
-
-	gra->font=g_new0(struct graphics_font *,3);
-	gra->font[0]=gra->font_new(gra,140);
-	gra->font[1]=gra->font_new(gra,200);
-	gra->font[2]=gra->font_new(gra,300);
-	gra->gc=g_new0(struct graphics_gc *, 3);
-	gra->gc[0]=gra->gc_new(gra);
-	gra->gc_set_background(gra->gc[0], 0xffff, 0xefef, 0xb7b7);
-	gra->gc_set_foreground(gra->gc[0], 0xffff, 0xefef, 0xb7b7);
-	gra->gc[1]=gra->gc_new(gra);
-	gra->gc_set_background(gra->gc[1], 0x0000, 0x0000, 0x0000);
-	gra->gc_set_foreground(gra->gc[1], 0xffff, 0xffff, 0xffff);
-	gra->gc[2]=gra->gc_new(gra);
-	gra->gc_set_background(gra->gc[2], 0xffff, 0x0000, 0x0000);
-	gra->gc_set_foreground(gra->gc[2], 0xffff, 0x0000, 0x0000);
-	ht=g_hash_table_new(NULL,NULL);
-	
+	this->font[0]=graphics_font_new(this, 140);
+	this->font[1]=graphics_font_new(this, 200);
+	this->font[2]=graphics_font_new(this, 300);
+	this->gc[0]=graphics_gc_new(this);
+	graphics_gc_set_background(this->gc[0], &(struct color) { 0xffff, 0xefef, 0xb7b7 });
+	graphics_gc_set_foreground(this->gc[0], &(struct color) { 0xffff, 0xefef, 0xb7b7 });
+	this->gc[1]=graphics_gc_new(this);
+	graphics_gc_set_background(this->gc[1], &(struct color) { 0x0000, 0x0000, 0x0000 });
+	graphics_gc_set_foreground(this->gc[1], &(struct color) { 0xffff, 0xffff, 0xffff });
+	this->gc[2]=graphics_gc_new(this);
+	graphics_gc_set_background(this->gc[2], &(struct color) { 0xffff, 0xffff, 0xffff });
+	graphics_gc_set_foreground(this->gc[2], &(struct color) { 0xffff, 0xffff, 0xffff });
+	this->meth.background_gc(this->priv, this->gc[0]->priv);
 }
+
+void *
+graphics_get_data(struct graphics *this, char *type)
+{
+	printf("this=%p\n", this);
+	printf("graphics_get_data %p\n", this->meth.get_data);
+	return (this->meth.get_data(this->priv, type));
+}
+
+void
+graphics_register_resize_callback(struct graphics *this, void (*callback)(void *data, int w, int h), void *data)
+{
+	this->meth.register_resize_callback(this->priv, callback, data);
+}
+
+struct graphics_font *
+graphics_font_new(struct graphics *gra, int size)
+{
+	struct graphics_font *this;
+
+	this=g_new0(struct graphics_font,1);
+	this->priv=gra->meth.font_new(gra->priv, &this->meth, size);
+	return this;
+}
+
+struct graphics_gc *
+graphics_gc_new(struct graphics *gra)
+{
+	struct graphics_gc *this;
+
+	this=g_new0(struct graphics_gc,1);
+	this->priv=gra->meth.gc_new(gra->priv, &this->meth);
+	return this;
+}
+
+void
+graphics_gc_set_foreground(struct graphics_gc *gc, struct color *c)
+{
+	gc->meth.gc_set_foreground(gc->priv, c);
+}
+
+void
+graphics_gc_set_background(struct graphics_gc *gc, struct color *c)
+{
+	gc->meth.gc_set_background(gc->priv, c);
+}
+
+struct graphics_image *
+graphics_image_new(struct graphics *gra, char *path)
+{
+	struct graphics_image *this;
+
+	this=g_new0(struct graphics_image,1);
+	this->priv=gra->meth.image_new(gra->priv, &this->meth, path, &this->width, &this->height);
+	return this;
+}
+
+#if 0
 
 void
 graphics_get_view(struct container *co, long *x, long *y, unsigned long *scale)
@@ -59,6 +126,8 @@ graphics_set_view(struct container *co, long *x, long *y, unsigned long *scale)
 	if (scale) t->scale=*scale;
 	graphics_redraw(co);
 }
+
+#endif
 
 #include "attr.h"
 #include "popup.h"
@@ -116,8 +185,8 @@ xdisplay_free_list(gpointer key, gpointer value, gpointer user_data)
 	h=value;
 	l=h;
 	while (l) {
-		struct display_item *di=l->data;
 #if 0
+		struct display_item *di=l->data;
 		if (! di->displayed) 
 			printf("warning: item '%s' not displayed\n", item_to_name(di->item.type));
 #endif
@@ -129,13 +198,13 @@ xdisplay_free_list(gpointer key, gpointer value, gpointer user_data)
 }
 
 static void
-xdisplay_free(void)
+xdisplay_free(GHashTable *display_list)
 {
-	g_hash_table_foreach_remove(ht, xdisplay_free_list, NULL);
+	g_hash_table_foreach_remove(display_list, xdisplay_free_list, NULL);
 }
 
 static void
-xdisplay_add(struct item *item, int count, struct point *pnt, char *label)
+xdisplay_add(GHashTable *display_list, struct item *item, int count, struct point *pnt, char *label)
 {
 	struct display_item *di;
 	int len;
@@ -160,9 +229,9 @@ xdisplay_add(struct item *item, int count, struct point *pnt, char *label)
 	di->count=count;
 	memcpy(di->pnt, pnt, count*sizeof(*pnt));
 
-	l=g_hash_table_lookup(ht, GINT_TO_POINTER(item->type));
+	l=g_hash_table_lookup(display_list, GINT_TO_POINTER(item->type));
 	l=g_list_prepend(l, di);
-	g_hash_table_insert(ht, GINT_TO_POINTER(item->type), l);
+	g_hash_table_insert(display_list, GINT_TO_POINTER(item->type), l);
 }
 
 static void
@@ -184,33 +253,33 @@ xdisplay_draw_elements(struct graphics *gra, GList *es, GList *ls)
 			di=l->data;
 			di->displayed=1;
 			if (! gc) {
-				gc=gra->gc_new(gra);
-				gra->gc_set_foreground(gc, e->color.r,e->color.g, e->color.b);
+				gc=graphics_gc_new(gra);
+				gc->meth.gc_set_foreground(gc->priv, &e->color);
 			}
 			switch (e->type) {
 			case element_polygon:
-				gra->draw_polygon(gra, gc, di->pnt, di->count);
+				gra->meth.draw_polygon(gra->priv, gc->priv, di->pnt, di->count);
 				break;
 			case element_polyline:
 				if (e->u.polyline.width > 1) 
-					gra->gc_set_linewidth(gc, e->u.polyline.width);
-				gra->draw_lines(gra, gc, di->pnt, di->count);
+					gc->meth.gc_set_linewidth(gc->priv, e->u.polyline.width);
+				gra->meth.draw_lines(gra->priv, gc->priv, di->pnt, di->count);
 				break;
 			case element_circle:
 				if (e->u.circle.width > 1) 
-					gra->gc_set_linewidth(gc, e->u.polyline.width);
-				gra->draw_circle(gra, gc, &di->pnt[0], e->u.circle.radius);
+					gc->meth.gc_set_linewidth(gc->priv, e->u.polyline.width);
+				gra->meth.draw_circle(gra->priv, gc->priv, &di->pnt[0], e->u.circle.radius);
 				p.x=di->pnt[0].x+3;
 				p.y=di->pnt[0].y+10;
-				gra->draw_text(gra, gra->gc[2], gra->gc[1], gra->font[e->label_size], di->label, &p, 0x10000, 0);
+				gra->meth.draw_text(gra->priv, gra->gc[2]->priv, gra->gc[1]->priv, gra->font[e->label_size]->priv, di->label, &p, 0x10000, 0);
 				break;
 			case element_icon:
 				if (!img) {
-					img=gra->image_new(gra, e->u.icon.src);
+					img=graphics_image_new(gra, e->u.icon.src);
 				}
 				p.x=di->pnt[0].x - img->width/2;
 				p.y=di->pnt[0].y - img->height/2;
-				gra->draw_image(gra, gra->gc[0], &p, img);
+				gra->meth.draw_image(gra->priv, gra->gc[0]->priv, &p, img->priv);
 				break;
 			default:
 				printf("Unhandled element type %d\n", e->type);
@@ -223,7 +292,7 @@ xdisplay_draw_elements(struct graphics *gra, GList *es, GList *ls)
 }
 
 static void
-xdisplay_draw_layer(struct graphics *gra, struct layer *lay, int order)
+xdisplay_draw_layer(GHashTable *display_list, struct graphics *gra, struct layer *lay, int order)
 {
 	GList *itms;
 	GList *types;
@@ -237,7 +306,7 @@ xdisplay_draw_layer(struct graphics *gra, struct layer *lay, int order)
 			types=itm->type;
 			while (types) {
 				type=GPOINTER_TO_INT(types->data);
-				xdisplay_draw_elements(gra, itm->elements, g_hash_table_lookup(ht, GINT_TO_POINTER(type)));
+				xdisplay_draw_elements(gra, itm->elements, g_hash_table_lookup(display_list, GINT_TO_POINTER(type)));
 				types=g_list_next(types);
 			}
 		}
@@ -246,7 +315,7 @@ xdisplay_draw_layer(struct graphics *gra, struct layer *lay, int order)
 }
 
 static void
-xdisplay_draw_layout(struct graphics *gra, struct layout *l, int order)
+xdisplay_draw_layout(GHashTable *display_list, struct graphics *gra, struct layout *l, int order)
 {
 	GList *lays;
 	struct layer *lay;
@@ -254,26 +323,26 @@ xdisplay_draw_layout(struct graphics *gra, struct layout *l, int order)
 	lays=l->layers;
 	while (lays) {
 		lay=lays->data;
-		xdisplay_draw_layer(gra, lay, order);
+		xdisplay_draw_layer(display_list, gra, lay, order);
 		lays=g_list_next(lays);
 	}
 }
 
 static void
-xdisplay_draw(struct graphics *gra, GList *layouts, int order)
+xdisplay_draw(GHashTable *display_list, struct graphics *gra, GList *layouts, int order)
 {
 	struct layout *l;
 
 	while (layouts) {
 		l=layouts->data;
-		xdisplay_draw_layout(gra, l, order);
+		xdisplay_draw_layout(display_list, gra, l, order);
 		return;
 		layouts=g_list_next(layouts);
 	}
 }
 
 static void
-do_draw_poly(struct transformation *t, enum projection pro, struct item *item)
+do_draw_poly(GHashTable *display_list, struct transformation *t, enum projection pro, struct item *item)
 {
 	struct coord c;
 	int max=16384;
@@ -298,12 +367,12 @@ do_draw_poly(struct transformation *t, enum projection pro, struct item *item)
 	if (1 || coord_rect_overlap(&t->r, &r)) {
 		attr.u.str=NULL;
 		item_attr_get(item, attr_label, &attr);
-		xdisplay_add(item, count, pnt, attr.u.str);
+		xdisplay_add(display_list, item, count, pnt, attr.u.str);
 	}
 }
 
 static void
-do_draw_point(struct transformation *t, enum projection pro, struct item *item)
+do_draw_point(GHashTable *display_list, struct transformation *t, enum projection pro, struct item *item)
 {
 	struct point pnt;
 	struct coord c;
@@ -313,41 +382,39 @@ do_draw_point(struct transformation *t, enum projection pro, struct item *item)
 	if (transform(t, pro, &c, &pnt)) {
 		attr.u.str=NULL;
 		item_attr_get(item, attr_label, &attr); 
-		xdisplay_add(item, 1, &pnt, attr.u.str);
+		xdisplay_add(display_list, item, 1, &pnt, attr.u.str);
 	}
 }
 
 static void
-do_draw_item(struct transformation *t, enum projection pro, struct item *item)
+do_draw_item(GHashTable *display_list, struct transformation *t, enum projection pro, struct item *item)
 {
 	if (item->type < type_line) {
-		do_draw_point(t, pro, item);
+		do_draw_point(display_list, t, pro, item);
 	} else {
-		do_draw_poly(t, pro, item);
+		do_draw_poly(display_list, t, pro, item);
 	}
 }
 
 static void
-do_draw(struct container *co, int order)
+do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int order)
 {
 	struct coord_rect r;
 	struct map_rect *mr;
 	struct item *item;
 	struct mapset *ms;
 	struct map *m;
-	struct transformation *t=co->trans;
 	enum projection pro;
 	void *h;
 
-	printf("co=%p\n", co);	
-	r=co->trans->r;
-	ms=co->mapsets->data;
+	r=t->r;
+	ms=mapsets->data;
 	h=mapset_open(ms);
 	while ((m=mapset_get(h))) {
 		pro=map_projection(m);
 		mr=map_rect_new(m, &r, NULL, order);
 		while ((item=map_rect_get_item(mr))) {
-			do_draw_item(t, pro, item);
+			do_draw_item(display_list, t, pro, item);
 		}
 		map_rect_destroy(mr);
 	}
@@ -355,39 +422,33 @@ do_draw(struct container *co, int order)
 }
 
 void
-graphics_redraw(struct container *co)
+graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, struct transformation *trans, GList *layouts)
 {
-	int scale=transform_get_scale(co->trans);
-	int order=transform_get_order(co->trans);
-	struct graphics *gra=co->gra;
+	int scale=transform_get_scale(trans);
+	int order=transform_get_order(trans);
 	int i;
 
-#if 1
+#if 0
 	printf("scale=%d center=0x%x,0x%x mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
 #endif
 	
-	xdisplay_free();
+	xdisplay_free(display_list);
 
-	transform_setup_source_rect(co->trans);
 
-	gra->draw_mode(gra, draw_mode_begin);
+	gra->meth.draw_mode(gra->priv, draw_mode_begin);
+#if 0
 	for (i = 0 ; i < data_window_type_end; i++) {
 		data_window_begin(co->data_window[i]);	
 	}
-	do_draw(co, order);
-	xdisplay_draw(co->gra, co->layouts, order);
+#endif
+	do_draw(display_list, trans, mapsets, order);
+	xdisplay_draw(display_list, gra, layouts, order);
   
-	gra->draw_mode(gra, draw_mode_end);
+	gra->meth.draw_mode(gra->priv, draw_mode_end);
+#if 0
 	for (i = 0 ; i < data_window_type_end; i++) {
 		data_window_end(co->data_window[i]);	
 	}
-	co->ready=1;
-}
-
-void
-graphics_resize(struct container *co, int w, int h)
-{
-	co->trans->width=w;
-        co->trans->height=h;
-	graphics_redraw(co);
+#endif
+	/* co->ready=1; */
 }

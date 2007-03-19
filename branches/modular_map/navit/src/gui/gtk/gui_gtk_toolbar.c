@@ -15,21 +15,25 @@ struct toolbar_gui {
 static void
 zoom_in(GtkWidget *w, struct toolbar *tb)
 {
+#if 0
 	unsigned long scale;
 	graphics_get_view(tb->gui->co, NULL, NULL, &scale);
 	scale/=2;
 	if (scale < 1)
 		scale=1;
 	graphics_set_view(tb->gui->co, NULL, NULL, &scale);
+#endif
 }
 
 static void
 zoom_out(GtkWidget *w, struct toolbar *tb)
 {
+#if 0
 	unsigned long scale;
 	graphics_get_view(tb->gui->co, NULL, NULL, &scale);
 	scale*=2;
 	graphics_set_view(tb->gui->co, NULL, NULL, &scale);
+#endif
 }
 
 static void

@@ -8,6 +8,10 @@
 #include "coord.h"
 #include "destination.h"
 
+struct menu_priv {
+	
+};
+
 struct action_gui {
 	GtkUIManager        *menu_manager;
 	struct container *co;
@@ -19,23 +23,15 @@ struct action_gui {
 /* Create callbacks that implement our Actions */
 
 static void
-zoom_in_action(GtkWidget *w, struct action *ac)
+zoom_in_action(GtkWidget *w, struct container *co)
 {
-	unsigned long scale;
-	graphics_get_view(ac->gui->co, NULL, NULL, &scale);
-	scale/=2;
-	if (scale < 1)
-		scale=1;
-	graphics_set_view(ac->gui->co, NULL, NULL, &scale);
+	navit_zoom_in(co, 2);
 }
 
 static void
-zoom_out_action(GtkWidget *w, struct action *ac)
+zoom_out_action(GtkWidget *w, struct container *co)
 {
-	unsigned long scale;
-	graphics_get_view(ac->gui->co, NULL, NULL, &scale);
-	scale*=2;
-	graphics_set_view(ac->gui->co, NULL, NULL, &scale);
+	navit_zoom_out(co, 2);
 }
 
 static void
@@ -74,36 +70,46 @@ quit_action (GtkWidget *w, struct action *ac)
 static void
 visible_blocks_action(GtkWidget *w, struct container *co)
 {
+#if 0
 	co->data_window[data_window_type_block]=data_window("Visible Blocks",co->win,NULL);
 	graphics_redraw(co);
+#endif
 }
 
 static void
 visible_towns_action(GtkWidget *w, struct container *co)
 {
+#if 0
 	co->data_window[data_window_type_town]=data_window("Visible Towns",co->win,NULL);
 	graphics_redraw(co);
+#endif
 }
 
 static void
 visible_polys_action(GtkWidget *w, struct container *co)
 {
+#if 0
 	co->data_window[data_window_type_street]=data_window("Visible Polys",co->win,NULL);
 	graphics_redraw(co);
+#endif
 }
 
 static void
 visible_streets_action(GtkWidget *w, struct container *co)
 {
+#if 0
 	co->data_window[data_window_type_street]=data_window("Visible Streets",co->win,NULL);
 	graphics_redraw(co);
+#endif
 }
 
 static void
 visible_points_action(GtkWidget *w, struct container *co)
 {
+#if 0
 	co->data_window[data_window_type_point]=data_window("Visible Points",co->win,NULL);
 	graphics_redraw(co);
+#endif
 }
 
 
@@ -238,6 +244,7 @@ static struct {
 	{"flag_icon", flag_xpm }
 };
 
+
 static gint n_stock_icons = G_N_ELEMENTS (stock_icons);
 
 
@@ -265,12 +272,6 @@ register_my_stock_icons (void)
 	g_object_unref(icon_factory);
 }
 
-static void
-action_add_widget (GtkUIManager *ui, GtkWidget *widget, GtkContainer *container)
-{
-	gtk_box_pack_start (GTK_BOX (container), widget, FALSE, FALSE, 0);
-	gtk_widget_show (widget);
-}
 
 static char layout[] =
 	"<ui>\
@@ -301,7 +302,7 @@ static char layout[] =
 			<menu name=\"LayoutMenu\" action=\"LayoutMenuAction\">\
 			</menu>\
 		</menubar>\
-	 	<toolbar action=\"BaseToolbar\" action=\"BaseToolbarAction\">\
+	 	<toolbar name=\"ToolBar\" action=\"BaseToolbar\" action=\"BaseToolbarAction\">\
 			<placeholder name=\"ToolItems\">\
 				<separator/>\
 				<toolitem name=\"Zoom in\" action=\"ZoomInAction\"/>\
@@ -317,8 +318,10 @@ static char layout[] =
 	</ui>";
 			
 void *
-gui_add_menu(struct action *ac, char *name)
+gui_add_menu(GtkUIManager *menu_manager, char *name)
 {
+#if 0
+	GtkAction *action;
 #if 0
 	GtkWidget *item;
 	GtkWidget *mi;
@@ -331,66 +334,59 @@ gui_add_menu(struct action *ac, char *name)
 
 	return me;
 #endif
+	action=gtk_action_new(name, name, NULL, NULL);
+	gtk_action_group_add_action(base_group, action);
+	gtk_ui_manager_add_ui( menu_manager, gtk_ui_manager_new_merge_id(menu_manager), "/ui/MenuBar/MapMenu", name, name, GTK_UI_MANAGER_MENUITEM, FALSE);
+#endif
 		
 }
 
-void *
-gui_add_menu_entry(void *ptr, char *name)
+static void
+box_add_widget (struct gui_priv *this, char *path, struct container *co)
 {
+	GError *error;
+	GtkWidget *widget;
+
+	if (! this->menu_manager) {
+		this->base_group = gtk_action_group_new ("BaseActions");
+		this->debug_group = gtk_action_group_new ("DebugActions");
+		this->dyn_group = gtk_action_group_new ("DynamicActions");
+		register_my_stock_icons();
+		this->menu_manager = gtk_ui_manager_new ();
+		gtk_action_group_add_actions (this->base_group, entries, n_entries, co);
+		gtk_action_group_add_toggle_actions (this->base_group, toggleentries, n_toggleentries, co);
+		gtk_ui_manager_insert_action_group (this->menu_manager, this->base_group, 0);
+		gtk_action_group_add_actions (this->debug_group, debug_entries, n_debug_entries, co);
+		gtk_ui_manager_insert_action_group (this->menu_manager, this->debug_group, 0);
+		gtk_ui_manager_add_ui_from_string (this->menu_manager, layout, strlen(layout), &error);
+		error=NULL;
+		if (error) {
+			g_message ("building menus failed: %s", error->message);
+			g_error_free (error);
+		}
+	}
+	widget=gtk_ui_manager_get_widget(this->menu_manager, path);
+	gtk_box_pack_start (this->vbox, widget, FALSE, FALSE, 0);
+	gtk_widget_show (widget);
+}
+
+struct menu_priv *
+gui_gtk_toolbar_new(struct gui_priv *this, struct menu_methods *meth, struct container *co)
+{
+	box_add_widget(this, "/ui/ToolBar", co);
 #if 0
-	GtkWidget *mi;
-	mi=gtk_menu_item_new_with_label(name);
-	gtk_menu_append(ptr, mi);
+	strcpy(buffer, "Test");
+	gui_add_menu(menu_manager, buffer);
+	strcpy(buffer, "Test1");
+	gui_add_menu(menu_manager, buffer);
+	strcpy(buffer, "Test2");
+	gui_add_menu(menu_manager, buffer);
 #endif
 }
 
-void
-gui_add_submenu(void *ptr, char *name)
+struct menu_priv *
+gui_gtk_menubar_new(struct gui_priv *this, struct menu_methods *meth, struct container *co)
 {
-}
-
-
-struct action *
-gui_gtk_actions_new(struct container *co, GtkWidget **vbox)
-{
-	GtkActionGroup      *base_group,*debug_group;
-	GtkUIManager        *menu_manager;
-	GError              *error;
-
-	struct action *this=g_new0(struct action, 1);
-
-	this->gui=g_new0(struct action_gui, 1);
-	this->gui->co=co;
-
-	register_my_stock_icons();
-
-	base_group = gtk_action_group_new ("BaseActions");
-	debug_group = gtk_action_group_new ("DebugActions");
-	menu_manager = gtk_ui_manager_new ();
-	this->gui->menu_manager=menu_manager;
-
-	gtk_action_group_add_actions (base_group, entries, n_entries, this);
-	gtk_action_group_add_toggle_actions (base_group, toggleentries, n_toggleentries, this);
-	gtk_ui_manager_insert_action_group (menu_manager, base_group, 0);
-
-	gtk_action_group_add_actions (debug_group, debug_entries, n_debug_entries, co);
-	gtk_ui_manager_insert_action_group (menu_manager, debug_group, 0);
-
-	error = NULL;
-	gtk_ui_manager_add_ui_from_string (menu_manager, layout, strlen(layout), &error);
-
-	if (error) {
-		g_message ("building menus failed: %s", error->message);
-		g_error_free (error);
-	}
-	g_signal_connect ( menu_manager, "add_widget", G_CALLBACK (action_add_widget), *vbox);
-
-	{
-	gtk_ui_manager_add_ui( menu_manager, gtk_ui_manager_new_merge_id(menu_manager), "/ui/MenuBar/MapMenu", "Test", "Test", GTK_UI_MANAGER_MENUITEM, FALSE);
-	}
-#if 0
-	gui_add_menu_entry(gui_add_menu(this, "Map"), "Test");
-#endif
-	return this;
+	box_add_widget(this, "/ui/MenuBar", co);
 }
 

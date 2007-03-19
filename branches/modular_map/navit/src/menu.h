@@ -1,5 +1,9 @@
+struct menu_methods {
+};
+
 struct menu {
-	struct menu_gui *gui;
+	struct menu_priv *priv;
+	struct menu_methods meth;
 };
 
 struct container;

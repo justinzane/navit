@@ -118,7 +118,7 @@ start_element (GMarkupParseContext *context,
 
 	if(!g_ascii_strcasecmp("navit", element_name)) {
 		if (parent(parent_token, NULL, error)) {
-			elem = navit_new();
+			elem = navit_new("gtk","gtk_drawing_area");
 		}
 	}
 	else if(!g_ascii_strcasecmp("vehicle", element_name)) {
@@ -130,12 +130,6 @@ start_element (GMarkupParseContext *context,
 				elem = vehicle_new(s);
 				navit_vehicle_add(co, elem, &color);
 			}
-#if 0
-		elem = config_add_vehicle(data->config,
-				find_attribute("name", attribute_names, attribute_values),
-				find_attribute("source", attribute_names, attribute_values),
-				find_attribute("color", attribute_names, attribute_values));
-#endif
 		}
 	}
 	else if(!g_ascii_strcasecmp("mapset", element_name)) {

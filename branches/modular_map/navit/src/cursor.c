@@ -18,6 +18,7 @@
 #include "compass.h"
 #include "track.h"
 
+#if 0
 
 #include "route.h"
 
@@ -207,3 +208,4 @@ cursor_new(struct container *co, struct vehicle *v, struct color *c)
 	vehicle_callback(v, cursor_update, this);
 	return this;
 }
+#endif

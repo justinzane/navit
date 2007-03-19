@@ -1469,8 +1469,6 @@ static struct map_priv *
 map_new_garmin_img(struct map_methods *meth, char *filename)
 {
 	struct map_priv *m;
-	if (debug)
-		printf("map_new_garmin_img %s\n",filename);	
 	*meth=map_methods_garmin_img;
 	m=g_new(struct map_priv, 1);
 	m->id=++map_id;
@@ -1481,8 +1479,6 @@ map_new_garmin_img(struct map_methods *meth, char *filename)
 void
 plugin_init(void)
 {
-	if (debug)
-		printf("garmin_img: plugin_init\n");
-	maptype_register("garmin_img", map_new_garmin_img);
+	plugin_register_map_type("garmin_img", map_new_garmin_img);
 }
 

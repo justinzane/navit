@@ -151,7 +151,6 @@ map_new_mg(struct map_methods *meth, char *dirname)
 	int i,maybe_missing,submap=0,len=strlen(dirname);
 	char filename[len+16];
 	
-	printf("mg_map_new %s\n",dirname);
 	*meth=map_methods_mg;
 	m=g_new(struct map_priv, 1);
 	m->id=++map_id;
@@ -175,6 +174,5 @@ map_new_mg(struct map_methods *meth, char *dirname)
 void
 plugin_init(void)
 {
-	printf("mg: plugin_init\n");
-	maptype_register("mg", map_new_mg);
+	plugin_register_map_type("mg", map_new_mg);
 }

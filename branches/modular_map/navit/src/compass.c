@@ -11,6 +11,7 @@
 #include "compass.h"
 #include "compass.h"
 
+#if 0
 struct compass {
 	struct graphics *gr;
 	struct graphics_gc *bg;
@@ -133,3 +134,4 @@ compass_new(struct container *co)
 	compass_draw(this, co);
 	return this;	
 }
+#endif

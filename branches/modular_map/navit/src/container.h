@@ -17,16 +17,17 @@ struct layout;
 struct container {
 	GList *mapsets;
 	GList *layouts;
+	struct gui *gui;
 	struct layout *layout_current;
-	struct window *win;
+	struct graphics *gra;
 	struct action *action;
 	struct transformation *trans;
-	struct graphics *gra;
 	struct compass *compass;
 	struct map_data *map_data;
 	struct menu *menu;
 	struct toolbar *toolbar;
 	struct statusbar *statusbar;
+	struct menu *menubar;
 	struct route *route;
 	struct cursor *cursor;
 	struct speech *speech;
@@ -35,4 +36,6 @@ struct container {
         struct data_window *data_window[data_window_type_end];
 	struct map_flags *flags;
 	int ready;
+	struct window *win;
+	GHashTable *display_list;
 };

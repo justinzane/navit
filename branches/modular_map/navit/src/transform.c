@@ -123,6 +123,13 @@ transform_set_angle(struct transformation *t,int angle)
 }
 
 void
+transform_set_size(struct transformation *t, int width, int height)
+{
+	t->width=width;
+	t->height=height;
+}
+
+void
 transform_setup(struct transformation *t, int x, int y, int scale, int angle)
 {
         t->center.x=x;

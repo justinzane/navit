@@ -5,6 +5,7 @@
 #include "maptype.h"
 #include "transform.h"
 #include "item.h"
+#include "plugin.h"
 
 struct map {
 	struct map_methods meth;
@@ -22,15 +23,15 @@ struct map *
 map_new(char *type, char *filename)
 {
 	struct map *m;
-	struct maptype *mt;
+	struct map_priv *(*maptype_new)(struct map_methods *meth, char *name);
 
-	mt=maptype_get(type);
-	if (! mt)
+	maptype_new=plugin_get_map_type(type);
+	if (! maptype_new)
 		return NULL;
 
 	m=g_new0(struct map, 1);
 
-	m->priv=mt->map_new(&m->meth, filename);
+	m->priv=maptype_new(&m->meth, filename);
 	m->charset=m->meth.map_charset(m->priv);
 	m->projection=m->meth.map_projection(m->priv);
 	return m;

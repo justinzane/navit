@@ -329,6 +329,6 @@ plugin_init(void)
 {
 	if (debug)
 		printf("textfile: plugin_init\n");
-	maptype_register("textfile", map_new_textfile);
+	plugin_register_map_type("textfile", map_new_textfile);
 }
 

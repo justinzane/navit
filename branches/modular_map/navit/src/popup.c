@@ -275,6 +275,7 @@ popup_destroy(GtkObject *obj, void *parm)
 void
 popup(struct container *co, int x, int y, int button)
 {
+	printf("popup\n");
 #if 0
 	GtkWidget *menu;
 	struct popup *popup=g_new(struct popup,1);
