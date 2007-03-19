@@ -38,7 +38,6 @@ navit_new(char *ui, char *graphics, struct coord_geo *center, double zoom)
 {
 	struct container *co=g_new0(struct container, 1);
 
-	printf("container=%p\n", co);
 	co->trans=g_new0(struct transformation, 1);	
 
 	transform_setup(co->trans, 1300000,7000000,8192,0);

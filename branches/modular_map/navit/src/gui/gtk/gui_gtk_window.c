@@ -77,7 +77,6 @@ gui_gtk_set_graphics(struct gui_priv *this, struct graphics *gra)
 {
 	GtkWidget *graphics;
 
-	printf("gui_gtk_set_graphics\n");
 	graphics=graphics_get_data(gra, "gtk_widget");
 	gtk_box_pack_end(this->vbox, graphics, TRUE, TRUE, 0);
 	gtk_widget_show_all(graphics);

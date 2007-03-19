@@ -27,7 +27,6 @@ graphics_new(char *type)
 		return NULL;	
 	this=g_new0(struct graphics, 1);
 	this->priv=(*new)(&this->meth);
-	printf("this=%p\n", this);
 	return this;
 }
 
@@ -53,8 +52,6 @@ graphics_init(struct graphics *this)
 void *
 graphics_get_data(struct graphics *this, char *type)
 {
-	printf("this=%p\n", this);
-	printf("graphics_get_data %p\n", this->meth.get_data);
 	return (this->meth.get_data(this->priv, type));
 }
 
