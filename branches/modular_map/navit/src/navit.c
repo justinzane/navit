@@ -25,7 +25,6 @@ struct navit {
 	struct speech *speech;
 	struct vehicle *vehicle;
 	struct track *track;
-        struct data_window *data_window[data_window_type_end];
 	struct map_flags *flags;
 	int ready;
 	struct window *win;
@@ -98,7 +97,7 @@ navit_new(char *ui, char *graphics, struct coord_geo *center, double zoom)
 	this->trans=g_new0(struct transformation, 1);	
 
 	transform_setup(this->trans, 1300000,7000000,8192,0);
-	this->flags=g_new0(struct map_flags, 1);
+	/* this->flags=g_new0(struct map_flags, 1); */
 	this->display_list=g_hash_table_new(NULL,NULL);
 	this->gui=gui_new(ui, 792, 547);
 	if (! this->gui) {
