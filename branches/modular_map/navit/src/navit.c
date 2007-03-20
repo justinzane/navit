@@ -1,5 +1,4 @@
 #include <glib.h>
-#include "container.h"
 #include "navit.h"
 #include "gui.h"
 #include "coord.h"

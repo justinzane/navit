@@ -1,5 +1,8 @@
-struct color;
+struct navit;
 struct coord_geo;
+struct vehicle;
+struct color;
 
-struct container * navit_new(char *ui, char *graphics, struct coord_geo *center, double zoom);
-void navit_vehicle_add(struct container *co, struct vehicle *v, struct color *c);
+struct navit;
+struct navit * navit_new(char *ui, char *graphics, struct coord_geo *center, double zoom);
+void navit_vehicle_add(struct navit *nav, struct vehicle *v, struct color *c);

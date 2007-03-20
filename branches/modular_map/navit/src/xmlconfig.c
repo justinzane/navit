@@ -1,10 +1,10 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <string.h>
-#include "container.h"
 #include "xmlconfig.h"
-#include "map.h"
+#include "navit.h"
 #include "mapset.h"
+#include "map.h"
 #include "layout.h"
 
 
@@ -118,7 +118,7 @@ start_element (GMarkupParseContext *context,
 
 	if(!g_ascii_strcasecmp("navit", element_name)) {
 		if (parent(parent_token, NULL, error)) {
-			elem = navit_new("gtk","gtk_drawing_area");
+			elem = navit_new("gtk","gtk_drawing_area", NULL, 0);
 		}
 	}
 	else if(!g_ascii_strcasecmp("vehicle", element_name)) {
@@ -136,7 +136,7 @@ start_element (GMarkupParseContext *context,
 		struct container *co=parent_object;
 		if (parent(parent_token, "navit", error)) {
 			elem = mapset_new();
-			co->mapsets = g_list_append(co->mapsets, elem);
+			navit_add_mapset(co, elem);
 		}
 	}
 	else if(!g_ascii_strcasecmp("map", element_name)) {
@@ -155,7 +155,7 @@ start_element (GMarkupParseContext *context,
 		struct container *co=parent_object;
 		if(parent(parent_token, "navit", error)) {
 			elem =layout_new(find_attribute("name", attribute_names, attribute_values));
-			co->layouts = g_list_append(co->layouts, elem);
+			navit_add_layout(co, elem);
 		}
 	}
 	else if(!g_ascii_strcasecmp("layer", element_name)) {
@@ -251,6 +251,8 @@ end_element (GMarkupParseContext *context,
 
 	/* g_printf("end_element: %s\n",element_name); */
 
+	if(!g_ascii_strcasecmp("navit", element_name)) 
+		navit_init(data->elem_stack->data);
 	data->token_stack = g_list_delete_link (data->token_stack, data->token_stack);
 	data->elem_stack = g_list_delete_link (data->elem_stack, data->elem_stack);
 

@@ -12,7 +12,7 @@
 #include "route.h"
 #include "cursor.h"
 #include "statusbar.h"
-#include "container.h"
+#include "navit.h"
 #include "graphics.h"
 #include "transform.h"
 
