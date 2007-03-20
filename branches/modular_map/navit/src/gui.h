@@ -1,11 +1,14 @@
+struct navit;
 struct gui_priv;
 struct menu_methods;
+struct statusbar_methods;
+struct graphics;
 
 struct gui_methods {
-	struct menubar_priv *(*menubar_new)(struct gui_priv *priv, struct menu_methods *meth, struct container *co);
-	struct toolbar_priv *(*toolbar_new)(struct gui_priv *priv, struct menu_methods *meth, struct container *co);
-	struct statusbar_priv *(*statusbar_new)(struct gui_priv *priv, struct statusbar_methods *meth, struct container *co);
-	void (*set_graphics)(struct gui_priv *priv, struct graphics *gra);
+	struct menubar_priv *(*menubar_new)(struct gui_priv *priv, struct menu_methods *meth, struct navit *nav);
+	struct toolbar_priv *(*toolbar_new)(struct gui_priv *priv, struct menu_methods *meth, struct navit *nav);
+	struct statusbar_priv *(*statusbar_new)(struct gui_priv *priv, struct statusbar_methods *meth, struct navit *nav);
+	int (*set_graphics)(struct gui_priv *priv, struct graphics *gra);
 };
 
 

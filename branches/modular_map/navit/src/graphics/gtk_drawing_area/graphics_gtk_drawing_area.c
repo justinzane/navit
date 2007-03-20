@@ -27,6 +27,10 @@ struct graphics_priv {
 	enum draw_mode_num mode;
 	void (*resize_callback)(void *data, int w, int h);
 	void *resize_callback_data;
+	void (*motion_callback)(void *data, struct point *p);
+	void *motion_callback_data;
+	void (*button_callback)(void *data, int press, int button, struct point *p);
+	void *button_callback_data;
 };
 
 struct graphics_font_priv {
@@ -530,6 +534,7 @@ expose(GtkWidget * widget, GdkEventExpose * event, gpointer user_data)
 	return FALSE;
 }
 
+#if 0
 static gint
 button_timeout(gpointer user_data)
 {
@@ -545,70 +550,44 @@ button_timeout(gpointer user_data)
 	return FALSE;
 #endif
 }
+#endif
 
 static gint
 button_press(GtkWidget * widget, GdkEventButton * event, gpointer user_data)
 {
-#if 0
-	struct container *co=user_data;
-	int x=event->x;
-	int y=event->y;
-	int button=event->button;
-	int border=16;
-	long map_x,map_y,x_new,y_new;
-	unsigned long scale;
+	struct graphics_priv *this=user_data;
+	struct point p;
 
-	if (button == 3)
-		popup(co, x, y, button);
-	if (button == 1) {
-		graphics_get_view(co, &map_x, &map_y, &scale);
-		if (x < border) {
-			x_new=map_x-co->trans->width*scale/32;	
-			graphics_set_view(co, &x_new, NULL, NULL);
-		} else if (x >= co->trans->width-border) {
-			x_new=map_x+co->trans->width*scale/32;
-			graphics_set_view(co, &x_new, NULL, NULL);
-		} else if (y < border) {
-			y_new=map_y+co->trans->height*scale/32;
-			graphics_set_view(co, NULL, &y_new, NULL);
-		} else if (y >= co->trans->height-border) {
-			y_new=map_y-co->trans->height*scale/32;
-			graphics_set_view(co, NULL, &y_new, NULL);
-		} else {
-			co->gra->button_event=*event;
-			co->gra->button_timeout=g_timeout_add(500, button_timeout, co);
-		}
-	}			
-#endif
+	p.x=event->x;
+	p.y=event->y;
+	if (this->button_callback) 
+		(*this->button_callback)(this->button_callback_data, 1, event->button, &p);
 	return FALSE;
 }
 
 static gint
 button_release(GtkWidget * widget, GdkEventButton * event, gpointer user_data)
 {
-#if 0
-	struct container *co=user_data;
-	if (co->gra->gra->button_timeout)
-		g_source_remove(co->gra->gra->button_timeout);
+	struct graphics_priv *this=user_data;
+	struct point p;
+
+	p.x=event->x;
+	p.y=event->y;
+	if (this->button_callback) 
+		(*this->button_callback)(this->button_callback_data, 0, event->button, &p);
 	return FALSE;
-#endif
 }
 
 static gint
 motion_notify(GtkWidget * widget, GdkEventMotion * event, gpointer user_data)
 {
-#if 0
-	struct container *co=user_data;
+	struct graphics_priv *this=user_data;
 	struct point p;
 
-	if (co->gui && co->statusbar->statusbar_mouse_update) {
-		p.x=event->x;
-		p.y=event->y;
-#if 0
-		statusbar_mouse_update(co->statusbar, co->trans, &p);
-#endif
-	}
-#endif
+	p.x=event->x;
+	p.y=event->y;
+	if (this->motion_callback) 
+		(*this->motion_callback)(this->motion_callback_data, &p);
 	return FALSE;
 }
 
@@ -646,6 +625,20 @@ register_resize_callback(struct graphics_priv *this, void (*callback)(void *data
 	this->resize_callback_data=data;
 }
 
+static void
+register_motion_callback(struct graphics_priv *this, void (*callback)(void *data, struct point *p), void *data)
+{
+	this->motion_callback=callback;
+	this->motion_callback_data=data;
+}
+
+static void
+register_button_callback(struct graphics_priv *this, void (*callback)(void *data, int press, int button, struct point *p), void *data)
+{
+	this->button_callback=callback;
+	this->button_callback_data=data;
+}
+
 static struct graphics_methods graphics_methods = {
  	graphics_destroy,
 	draw_mode,
@@ -658,11 +651,13 @@ static struct graphics_methods graphics_methods = {
 	draw_restore,
 	font_new,
 	gc_new,
+	background_gc,
 	overlay_new,
 	image_new,
 	get_data,
 	register_resize_callback,
-	background_gc,
+	register_button_callback,
+	register_motion_callback,
 };
 
 static struct graphics_priv *
@@ -690,11 +685,9 @@ graphics_gtk_drawing_area_new(struct graphics_methods *meth)
 #if 0
         g_signal_connect(G_OBJECT(draw), "realize_event", G_CALLBACK(realize), co);
 #endif
-#if 0
-	g_signal_connect(G_OBJECT(draw), "button_press_event", G_CALLBACK(button_press), co);
-	g_signal_connect(G_OBJECT(draw), "button_release_event", G_CALLBACK(button_release), co);
-	g_signal_connect(G_OBJECT(draw), "motion_notify_event", G_CALLBACK(motion_notify), co);
-#endif
+	g_signal_connect(G_OBJECT(draw), "button_press_event", G_CALLBACK(button_press), this);
+	g_signal_connect(G_OBJECT(draw), "button_release_event", G_CALLBACK(button_release), this);
+	g_signal_connect(G_OBJECT(draw), "motion_notify_event", G_CALLBACK(motion_notify), this);
 	return this;
 }
 

@@ -7,8 +7,7 @@
 #include "transform.h"
 #include "route.h"
 #include "vehicle.h"
-#include "container.h"
-#include "compass.h"
+#include "navit.h"
 #include "compass.h"
 
 #if 0

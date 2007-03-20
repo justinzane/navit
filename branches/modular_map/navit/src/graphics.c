@@ -7,7 +7,6 @@
 #include "coord.h"
 #include "param.h"	/* FIXME */
 #include "transform.h"
-#include "container.h"
 #include "plugin.h"
 #include "data_window.h"
 #include "profile.h"
@@ -59,6 +58,18 @@ void
 graphics_register_resize_callback(struct graphics *this, void (*callback)(void *data, int w, int h), void *data)
 {
 	this->meth.register_resize_callback(this->priv, callback, data);
+}
+
+void
+graphics_register_button_callback(struct graphics *this, void (*callback)(void *data, int pressed, int button, struct point *p), void *data)
+{
+	this->meth.register_button_callback(this->priv, callback, data);
+}
+
+void
+graphics_register_motion_callback(struct graphics *this, void (*callback)(void *data, struct point *p), void *data)
+{
+	this->meth.register_motion_callback(this->priv, callback, data);
 }
 
 struct graphics_font *
@@ -406,8 +417,8 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 
 	r=t->r;
 	ms=mapsets->data;
-	h=mapset_open(ms);
-	while ((m=mapset_get(h))) {
+	mapset_open(ms, &h);
+	while ((m=mapset_next(ms, &h))) {
 		pro=map_projection(m);
 		mr=map_rect_new(m, &r, NULL, order);
 		while ((item=map_rect_get_item(mr))) {
@@ -415,7 +426,6 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 		}
 		map_rect_destroy(mr);
 	}
-	mapset_close(h);
 }
 
 void

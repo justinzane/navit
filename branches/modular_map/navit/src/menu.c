@@ -1,20 +1,5 @@
 #include <glib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>
-#include <time.h>
-#include "coord.h"
-#include "data_window.h"
-#include "route.h"
-#include "cursor.h"
 #include "menu.h"
-#include "transform.h"
-#include "statusbar.h"
-#include "destination.h"
-#include "main.h"
-#include "container.h"
-#include "graphics.h"
 
 void
 menu_route_do_update(struct container *co)
@@ -38,4 +23,14 @@ menu_route_update(struct container *co)
 	menu_route_do_update(co);
 	graphics_redraw(co);
 #endif
+}
+
+struct menu *
+menu_add(struct menu *menu, char *name, enum menu_type type, void (*callback)(void *data), void *data)
+{
+	struct menu *this;
+        this=g_new0(struct menu, 1);
+        this->priv=(*menu->meth.add)(menu->priv, &this->meth, name, type, callback, data);
+
+	return this;	
 }

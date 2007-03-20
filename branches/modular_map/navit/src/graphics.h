@@ -38,11 +38,13 @@ struct graphics_methods {
 	void (*draw_restore)(struct graphics_priv *gr, struct point *p, int w, int h);
 	struct graphics_font_priv *(*font_new)(struct graphics_priv *gr, struct graphics_font_methods *meth, int size);
 	struct graphics_gc_priv *(*gc_new)(struct graphics_priv *gr, struct graphics_gc_methods *meth);
+	void (*background_gc)(struct graphics_priv *gr, struct graphics_gc_priv *gc);
 	struct graphics_priv *(*overlay_new)(struct graphics_priv *gr, struct graphics_methods *meth, struct point *p, int w, int h);
 	struct graphics_image_priv *(*image_new)(struct graphics_priv *gr, struct graphics_image_methods *meth, char *path, int *w, int *h);
 	void *(*get_data)(struct graphics_priv *gr, char *type);
 	void (*register_resize_callback)(struct graphics_priv *gr, void (*callback)(void *data, int w, int h), void *data);
-	void (*background_gc)(struct graphics_priv *gr, struct graphics_gc_priv *gc);
+	void (*register_button_callback)(struct graphics_priv *gr, void (*callback)(void *data, int pressed, int button, struct point *p), void *data);
+	void (*register_motion_callback)(struct graphics_priv *gr, void (*callback)(void *data, struct point *p), void *data);
 };
 
 struct graphics

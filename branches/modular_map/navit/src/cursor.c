@@ -12,7 +12,7 @@
 #include "statusbar.h"
 #include "menu.h"
 #include "vehicle.h"
-#include "container.h"
+#include "navit.h"
 #include "color.h"
 #include "cursor.h"
 #include "compass.h"

@@ -1,4 +1,5 @@
 struct cursor;
+struct color;
 struct container;
 struct vehicle;
 

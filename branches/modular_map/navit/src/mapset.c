@@ -2,13 +2,8 @@
 #include <glib/gprintf.h>
 #include "mapset.h"
 
-struct mapset_item {
-	struct mapset_item *next;
-	struct map *map;
-};
 struct mapset {
-	
-	struct mapset_item *first;
+	GList *maps;
 };
 
 struct mapset *mapset_new(void)
@@ -22,15 +17,12 @@ struct mapset *mapset_new(void)
 
 void mapset_add(struct mapset *ms, struct map *m)
 {
-	struct mapset_item *msi;
-	msi=g_new0(struct mapset_item, 1);
-	msi->next=ms->first;
-	msi->map=m;
-	ms->first=msi;
+	ms->maps=g_list_append(ms->maps, m);
 }
 
 static void mapset_maps_free(struct mapset *ms)
 {
+	/* todo */
 }
 
 void mapset_destroy(struct mapset *ms)
@@ -38,31 +30,17 @@ void mapset_destroy(struct mapset *ms)
 	g_free(ms);
 }
 
-void *
-mapset_open(struct mapset *ms)
+void 
+mapset_open(struct mapset *ms, void **handle)
 {
-	struct mapset_item **iter;
-	iter=g_new(struct mapset_item *,1);
-	g_printf("ms=%p ms->first=%p\n", ms, ms->first);
-	*iter=ms->first;
-	return iter;	
+	*handle=ms->maps;
 }
 
-struct map * mapset_get(void *h)
+struct map * mapset_next(struct mapset *ms, void **handle)
 {
-	struct mapset_item **iter=h;
-	struct mapset_item *i=*iter;
-	struct map *ret;
-
-	if (! i)
+	GList *l=*handle;
+	if (!l)
 		return NULL;
-	ret=i->map;
-	*iter=i->next;
-	return ret;
-}
-
-void
-mapset_close(void *h)
-{
-	g_free(h);
+	*handle=g_list_next(l);
+	return l->data;
 }

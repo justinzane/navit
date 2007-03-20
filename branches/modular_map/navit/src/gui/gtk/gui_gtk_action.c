@@ -1,24 +1,18 @@
 #include <string.h>
 #include <gtk/gtk.h>
+#include "navit.h"
 #include "graphics.h"
 #include "gui_gtk.h"
-#include "container.h"
 #include "menu.h"
-#include "data_window.h"
 #include "coord.h"
-#include "destination.h"
 
 struct menu_priv {
-	
+	char *path;	
+	struct gui_priv *gui;
+	enum menu_type type;
+	void (*callback)(void *data);
+	void *callback_data;
 };
-
-struct action_gui {
-	GtkUIManager        *menu_manager;
-	struct container *co;
-};
-
-#include "action.h"
-
 
 /* Create callbacks that implement our Actions */
 
@@ -37,19 +31,25 @@ zoom_out_action(GtkWidget *w, struct container *co)
 static void
 refresh_action(GtkWidget *w, struct action *ac)
 {
+#if 0
 	menu_route_update(ac->gui->co);
+#endif
 }
 
 static void
 cursor_action(GtkWidget *w, struct action *ac)
 {
+#if 0
 	ac->gui->co->flags->track=gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(w));
+#endif
 }
 
 static void
 orient_north_action(GtkWidget *w, struct action *ac)
 {
+#if 0
 	ac->gui->co->flags->orient_north=gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(w));
+#endif
 }
 
 static void
@@ -117,7 +117,7 @@ static GtkActionEntry entries[] =
 {
 	{ "DisplayMenuAction", NULL, "Display" },
 	{ "RouteMenuAction", NULL, "Route" },
-	{ "MapMenuAction", NULL, "Map" },
+	{ "Map", NULL, "Map" },
 	{ "LayoutMenuAction", NULL, "Layout" },
 	{ "ZoomOutAction", GTK_STOCK_ZOOM_OUT, "ZoomOut", NULL, NULL, G_CALLBACK(zoom_out_action) },
 	{ "ZoomInAction", GTK_STOCK_ZOOM_IN, "ZoomIn", NULL, NULL, G_CALLBACK(zoom_in_action) },
@@ -297,10 +297,6 @@ static char layout[] =
 				<menuitem name=\"Destination\" action=\"DestinationAction\" />\
 				<placeholder name=\"RouteMenuAdditions\" />\
 			</menu>\
-			<menu name=\"MapMenu\" action=\"MapMenuAction\">\
-			</menu>\
-			<menu name=\"LayoutMenu\" action=\"LayoutMenuAction\">\
-			</menu>\
 		</menubar>\
 	 	<toolbar name=\"ToolBar\" action=\"BaseToolbar\" action=\"BaseToolbarAction\">\
 			<placeholder name=\"ToolItems\">\
@@ -316,37 +312,64 @@ static char layout[] =
 			</placeholder>\
 		</toolbar>\
 	</ui>";
-			
-void *
-gui_add_menu(GtkUIManager *menu_manager, char *name)
+	
+
+void test(void *x)
 {
-#if 0
+	printf("test\n");
+}
+
+void activate(void *dummy, struct menu_priv *menu)
+{
+	if (menu->callback)
+		(*menu->callback)(menu->callback_data);
+}	
+
+struct menu_methods menu_methods;
+
+static struct menu_priv *
+add_menu(struct menu_priv *menu, struct menu_methods *meth, char *name, enum menu_type type, void (*callback)(void *data), void *data)
+{
+	struct menu_priv *ret;
+	char *dynname;
 	GtkAction *action;
-#if 0
-	GtkWidget *item;
-	GtkWidget *mi;
-	GtkWidget *me=gtk_menu_new();
 
-	item = gtk_ui_manager_get_widget( ac->gui->menu_manager, "/ui/MenuBar" );
-	mi=gtk_menu_item_new_with_label(name);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mi), me);
-	gtk_menu_bar_append(item, mi);
-
-	return me;
-#endif
-	action=gtk_action_new(name, name, NULL, NULL);
-	gtk_action_group_add_action(base_group, action);
-	gtk_ui_manager_add_ui( menu_manager, gtk_ui_manager_new_merge_id(menu_manager), "/ui/MenuBar/MapMenu", name, name, GTK_UI_MANAGER_MENUITEM, FALSE);
-#endif
+	printf("add_menu %s\n", name);
+	ret=g_new0(struct menu_priv, 1);
+	*meth=menu_methods;
+	dynname=g_strdup_printf("%d", menu->gui->dyn_counter++);
+	if (type == menu_type_toggle)
+		action=gtk_toggle_action_new(dynname, name, NULL, NULL);
+	else
+		action=gtk_action_new(dynname, name, NULL, NULL);
+	if (callback)
+		g_signal_connect(action, "activate", activate, ret);
+	gtk_action_group_add_action(menu->gui->dyn_group, action);
+	gtk_ui_manager_add_ui( menu->gui->menu_manager, gtk_ui_manager_new_merge_id(menu->gui->menu_manager), menu->path, dynname, dynname, type == menu_type_submenu ? GTK_UI_MANAGER_MENU : GTK_UI_MANAGER_MENUITEM, FALSE);
+	ret->gui=menu->gui;
+	ret->path=g_strdup_printf("%s/%s", menu->path, dynname);
+	ret->type=type;
+	ret->callback=callback;
+	ret->callback_data=data;
+	return ret;
 		
 }
 
-static void
-box_add_widget (struct gui_priv *this, char *path, struct container *co)
+struct menu_methods menu_methods = {
+	add_menu,
+};
+
+static struct menu_priv *
+gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, struct container *co)
 {
+	struct menu_priv *ret;
 	GError *error;
 	GtkWidget *widget;
 
+	*meth=menu_methods;
+	ret=g_new0(struct menu_priv, 1);
+	ret->path=g_strdup(path);
+	ret->gui=this;
 	if (! this->menu_manager) {
 		this->base_group = gtk_action_group_new ("BaseActions");
 		this->debug_group = gtk_action_group_new ("DebugActions");
@@ -359,6 +382,7 @@ box_add_widget (struct gui_priv *this, char *path, struct container *co)
 		gtk_action_group_add_actions (this->debug_group, debug_entries, n_debug_entries, co);
 		gtk_ui_manager_insert_action_group (this->menu_manager, this->debug_group, 0);
 		gtk_ui_manager_add_ui_from_string (this->menu_manager, layout, strlen(layout), &error);
+		gtk_ui_manager_insert_action_group (this->menu_manager, this->dyn_group, 0);
 		error=NULL;
 		if (error) {
 			g_message ("building menus failed: %s", error->message);
@@ -368,25 +392,18 @@ box_add_widget (struct gui_priv *this, char *path, struct container *co)
 	widget=gtk_ui_manager_get_widget(this->menu_manager, path);
 	gtk_box_pack_start (this->vbox, widget, FALSE, FALSE, 0);
 	gtk_widget_show (widget);
+	return ret;
 }
 
 struct menu_priv *
-gui_gtk_toolbar_new(struct gui_priv *this, struct menu_methods *meth, struct container *co)
+gui_gtk_toolbar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
 {
-	box_add_widget(this, "/ui/ToolBar", co);
-#if 0
-	strcpy(buffer, "Test");
-	gui_add_menu(menu_manager, buffer);
-	strcpy(buffer, "Test1");
-	gui_add_menu(menu_manager, buffer);
-	strcpy(buffer, "Test2");
-	gui_add_menu(menu_manager, buffer);
-#endif
+	return gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav);
 }
 
 struct menu_priv *
-gui_gtk_menubar_new(struct gui_priv *this, struct menu_methods *meth, struct container *co)
+gui_gtk_menubar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
 {
-	box_add_widget(this, "/ui/MenuBar", co);
+	return gui_gtk_ui_new(this, meth, "/ui/MenuBar", nav);
 }
 
