@@ -10,12 +10,29 @@ fi
 
 # CFLAGS="$CFLAGS -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED"
 
+AC_ARG_ENABLE(unaligned,
+[  --disable-unaligned          avoid unaligned accesses],
+USE_UNALIGNED=$enableval, USE_UNALIGNED=yes)
+test x"${USE_UNALIGNED}" = xyes && AC_DEFINE(USE_UNALIGNED,[],Define to allow unaligned access)
+
+AC_ARG_ENABLE(float,
+[  --disable-float              avoid floating point calculations],
+USE_FLOAT=$enableval, USE_FLOAT=yes)
+test x"${USE_FLOAT}" = xyes && AC_DEFINE(USE_FLOAT,[],Define to use floating point)
+
+AC_ARG_ENABLE(libgps,
+[  --disable-libgps             don't use libgps],
+USE_LIBGPS=$enableval, USE_LIBGPS=yes)
+
 pkg_modules="glib-2.0 gtk+-2.0 ORBit-2.0 freetype2"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 AC_SUBST(PACKAGE_CFLAGS)
 AC_SUBST(PACKAGE_LIBS)
 AC_CHECK_HEADER(libspeechd.h, AC_DEFINE([HAVE_LIBSPEECHD],[],Define to 1 if you have the <libspeechd.h> header file.) LIBS="$LIBS -lspeechd",  AC_MSG_WARN([*** no libspeechd.h -- Speech output disabled]))
-AC_CHECK_HEADER(gps.h, AC_DEFINE([HAVE_LIBGPS],[],Define to 1 if you have the <gps.h> header file.) LIBS="$LIBS -lgps",  AC_MSG_WARN([*** no gps.h -- gpsd support disabled]))
+if test x"${USE_LIBGPS}" = xyes
+then
+	AC_CHECK_HEADER(gps.h, AC_DEFINE([HAVE_LIBGPS],[],Define to 1 if you have the <gps.h> header file.) LIBS="$LIBS -lgps",  AC_MSG_WARN([*** no gps.h -- gpsd support disabled]))
+fi
 
 if test "$cross_compiling" = no; then
 	AC_PATH_PROG(_PATH_PYTHON,[python])
