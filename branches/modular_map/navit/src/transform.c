@@ -3,8 +3,11 @@
 #include <math.h>
 #include <limits.h>
 #include <glib.h>
+#include "config.h"
 #include "coord.h"
 #include "transform.h"
+#include "projection.h"
+#include "point.h"
 
 struct transformation {
         int width;		/* Height of destination rectangle */
@@ -12,6 +15,7 @@ struct transformation {
         long scale;		/* Scale factor */
 	int angle;		/* Rotation angle */
 	double cos_val,sin_val;	/* cos and sin of rotation angle */
+	enum projection pro;
 	struct coord_rect r;	/* Source rectangle */
 	struct coord center;	/* Center of source rectangle */
 };
@@ -26,29 +30,61 @@ transform_new(void)
 	return this;
 }
 
+void
+transform_to_geo(enum projection pro, struct coord *c, struct coord_geo *g)
+{
+	double f;
+
+	switch (pro) {
+	case projection_mg:
+		g->lng=c->x/6371000.0/M_PI*180;
+		g->lat=atan(exp(c->y/6371000.0))/M_PI*360-90;
+		break;
+	case projection_garmin:
+		f=360.0/(1<<24);
+		g->lng=c->x*f;
+		g->lat=c->y*f;	
+		break;
+	}
+}
+
+void
+transform_from_geo(enum projection pro, struct coord_geo *g, struct coord *c)
+{
+	double f;
+
+	switch (pro) {
+	case projection_mg:
+		c->x=g->lng*6371000.0*M_PI/180;
+		c->y=log(tan(M_PI_4+g->lat*M_PI/360))*6371000.0;
+		break;
+	case projection_garmin:
+		f=360.0/(1<<24);
+		c->x=g->lng/f;
+		c->y=g->lat/f;	
+		break;
+	}
+}
+
 int
 transform(struct transformation *t, enum projection pro, struct coord *c, struct point *p)
 {
+	struct coord c1;
 #ifndef USE_FLOAT
 	int xc,yc;
 #else
         double xc,yc;
 #endif
 	int ret;
+	if (pro != t->pro) {
+		struct coord_geo g;
+		transform_to_geo(pro, c, &g);
+		transform_from_geo(t->pro, &g, &c1);
+		c=&c1;
+	}
         xc=c->x;
         yc=c->y;
-	if (pro == projection_garmin) {
-		struct coord c1;
-		double f=360.0/(1<<24);
-		xc*=f;
-		yc*=f;
-		transform_mercator(&xc,&yc,&c1);
-		xc=c1.x;
-		yc=c1.y;
-		ret=1;
-	} else {
-		ret=coord_rect_contains(&t->r, c);
-	}
+	ret=coord_rect_contains(&t->r, c);
         xc-=t->center.x;
         yc-=t->center.y;
 	yc=-yc;
@@ -116,6 +152,17 @@ transform_reverse(struct transformation *t, struct point *p, struct coord *c)
 	c->y=t->center.y+yc;
 }
 
+enum projection
+transform_get_projection(struct transformation *this)
+{
+	return this->pro;
+}
+
+void
+transform_set_projection(struct transformation *this, enum projection pro)
+{
+	this->pro=pro;
+}
 
 static int
 min4(int v1,int v2, int v3, int v4)
@@ -146,7 +193,18 @@ max4(int v1,int v2, int v3, int v4)
 void
 transform_rect(struct transformation *this, enum projection pro, struct coord_rect *r)
 {
-	*r=this->r;
+	struct coord_geo g;
+	if (0 && this->pro == pro) {
+		*r=this->r;
+	} else {
+		transform_to_geo(this->pro, &this->r.lu, &g);
+		transform_from_geo(pro, &g, &r->lu);
+		printf("%f,%f", g.lat, g.lng);
+		transform_to_geo(this->pro, &this->r.rl, &g);
+		printf(" - %f,%f\n", g.lat, g.lng);
+		transform_from_geo(pro, &g, &r->rl);
+	}
+	printf("transform rect for %d is %d,%d - %d,%d\n", pro, r->lu.x, r->lu.y, r->rl.x, r->rl.y);
 }
 
 struct coord *
@@ -159,6 +217,17 @@ int
 transform_contains(struct transformation *this, enum projection pro, struct coord_rect *r)
 {
 	return 1;
+	struct coord_geo g;
+	struct coord_rect r1;
+	if (this->pro != pro) {
+		transform_to_geo(pro, &r->lu, &g);
+		transform_from_geo(this->pro, &g, &r1.lu);
+		transform_to_geo(pro, &r->rl, &g);
+		transform_from_geo(this->pro, &g, &r1.rl);
+		r=&r1;
+	}
+	return coord_rect_overlap(&this->r, r);
+	
 }
 
 void
@@ -257,16 +326,6 @@ transform_get_order(struct transformation *t)
 
 
 void
-transform_lng_lat(struct coord *c, struct coord_geo *g)
-{
-	g->lng=c->x/6371000.0/M_PI*180;
-	g->lat=atan(exp(c->y/6371000.0))/M_PI*360-90;
-#if 0
-	printf("y=%d vs %f\n", c->y, log(tan(M_PI_4+*lat*M_PI/360))*6371020.0);
-#endif
-}
-
-void
 transform_geo_text(struct coord_geo *g, char *buffer)
 {
 	double lng=g->lng;
@@ -287,13 +346,6 @@ transform_geo_text(struct coord_geo *g, char *buffer)
 
 }
 
-void
-transform_mercator(double *lng, double *lat, struct coord *c)
-{
-	c->x=*lng*6371000.0*M_PI/180;
-	c->y=log(tan(M_PI_4+*lat*M_PI/360))*6371000.0;
-}
-
 double
 transform_scale(int y)
 {
@@ -301,7 +353,7 @@ transform_scale(int y)
 	struct coord_geo g;
 	c.x=0;
 	c.y=y;
-	transform_lng_lat(&c, &g);
+	transform_to_geo(projection_mg, &c, &g);
 	return 1/cos(g.lat/180*M_PI);
 }
 

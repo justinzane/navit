@@ -35,11 +35,13 @@ statusbar_mouse_update(struct statusbar_priv *this, struct transformation *tr, s
 	struct coord_geo g;
 	char buffer[128];
 
+#if 0
 	transform_reverse(tr, p, &c);
 	transform_lng_lat(&c, &g);
 	transform_geo_text(&g, buffer);
 	sprintf(this->mouse_text,"M: %s", buffer);
 	gtk_label_set_text(GTK_LABEL(this->mouse), this->mouse_text);
+#endif
 }
 
 static void

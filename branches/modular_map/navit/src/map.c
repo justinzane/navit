@@ -4,6 +4,7 @@
 #include "map.h"
 #include "maptype.h"
 #include "transform.h"
+#include "projection.h"
 #include "item.h"
 #include "plugin.h"
 

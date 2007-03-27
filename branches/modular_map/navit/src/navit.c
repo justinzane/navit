@@ -5,6 +5,7 @@
 #include "mapset.h"
 #include "coord.h"
 #include "transform.h"
+#include "projection.h"
 #include "menu.h"
 #include "graphics.h"
 #include "cursor.h"
@@ -140,6 +141,21 @@ navit_map_toggle(struct menu *menu, void *this_p, void *map_p)
 	}
 }
 
+static void
+navit_projection_set(struct menu *menu, void *this_p, void *pro_p)
+{
+	struct navit *this=this_p;
+	enum projection pro=(enum projection) pro_p;
+	struct coord_geo g;
+	struct coord *c;
+
+	c=transform_center(this->trans);
+	transform_to_geo(transform_get_projection(this->trans), c, &g);
+	transform_set_projection(this->trans, pro);
+	transform_from_geo(pro, &g, c);
+	navit_draw(this);
+}
+
 void
 navit_init(struct navit *this)
 {
@@ -159,8 +175,8 @@ navit_init(struct navit *this)
 	men=menu_add(this->menubar, "Layout", menu_type_submenu, NULL, NULL, NULL);
 	menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
 	men=menu_add(this->menubar, "Projection", menu_type_submenu, NULL, NULL, NULL);
-	menu_add(men, "M&G", menu_type_menu, NULL, NULL, NULL);
-	menu_add(men, "Garmin", menu_type_menu, NULL, NULL, NULL);
+	menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, projection_mg);
+	menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, projection_garmin);
 
 }
 

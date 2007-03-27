@@ -12,6 +12,7 @@
 #endif
 #include "coord.h"
 #include "transform.h"
+#include "projection.h"
 #include "statusbar.h"
 #include "vehicle.h"
 
@@ -32,7 +33,7 @@ struct vehicle {
 	int timer_count;
 	int qual;
 	int sats;
-	double lat,lng;
+	struct coord_geo geo;
 	double height;
 	double dir,speed;
 	double time;
@@ -148,20 +149,20 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 		}
 
 		sscanf(item[2],"%lf",&lat);
-		this->lat=floor(lat/100);
-		lat-=this->lat*100;
-		this->lat+=lat/60;
+		this->geo.lat=floor(lat/100);
+		lat-=this->geo.lat*100;
+		this->geo.lat+=lat/60;
 
 		sscanf(item[4],"%lf",&lng);
-		this->lng=floor(lng/100);
-		lng-=this->lng*100;
-		this->lng+=lng/60;
+		this->geo.lng=floor(lng/100);
+		lng-=this->geo.lng*100;
+		this->geo.lng+=lng/60;
 
 		sscanf(item[6],"%d",&this->qual);
 		sscanf(item[7],"%d",&this->sats);
 		sscanf(item[9],"%lf",&this->height);
 		
-		transform_mercator(&this->lng, &this->lat, &this->current_pos);
+		transform_from_geo(projection_mg, &this->geo, &this->current_pos);
 			
 		this->curr.x=this->current_pos.x;
 		this->curr.y=this->current_pos.y;
@@ -281,9 +282,9 @@ vehicle_gps_callback(struct gps_data_t *data, char *buf, size_t len, int level)
 		data->set &= ~TRACK_SET;
 	}
 	if (data->set & LATLON_SET) {
-		this->lat=data->fix.latitude;
-		this->lng=data->fix.longitude;
-		transform_mercator(&this->lng, &this->lat, &this->current_pos);
+		this->geo.lat=data->fix.latitude;
+		this->geo.lng=data->fix.longitude;
+		transform_from_geo(projection_mg, &this->geo, &this->current_pos);
 		this->curr.x=this->current_pos.x;
 		this->curr.y=this->current_pos.y;
 		this->timer_count=0;

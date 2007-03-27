@@ -11,6 +11,7 @@
 #include "attr.h"
 #include "coord.h"
 #include "transform.h"
+#include "projection.h"
 #include <stdio.h>
 #include "attr.h"
 #include "coord.h"

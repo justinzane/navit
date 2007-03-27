@@ -7,6 +7,8 @@
 #include "coord.h"
 #include "param.h"	/* FIXME */
 #include "transform.h"
+#include "projection.h"
+#include "point.h"
 #include "plugin.h"
 #include "profile.h"
 #include "mapset.h"

@@ -10,6 +10,7 @@
 #include "attr.h"
 #include "coord.h"
 #include "transform.h"
+#include "projection.h"
 
 #include "textfile.h"
 

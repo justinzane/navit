@@ -8,6 +8,8 @@
 #include <glib.h>
 #include "coord.h"
 #include "transform.h"
+#include "projection.h"
+#include "point.h"
 #include "graphics.h"
 #include "statusbar.h"
 #include "menu.h"
