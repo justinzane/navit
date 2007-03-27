@@ -480,7 +480,7 @@ dump_triple_u(struct triple *t)
 
 struct tcoord {
 	struct triple lng,lat;
-};
+} __attribute((packed));
 
 static void
 dump_tcoord(struct tcoord *t)
