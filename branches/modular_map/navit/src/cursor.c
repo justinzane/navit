@@ -21,7 +21,7 @@
 /* #include "track.h" */
 
 struct callback {
-        void (*func)(struct vehicle *, void *data);
+        void (*func)(struct cursor *, void *data);
         void *data;
 };
 
@@ -31,16 +31,16 @@ struct cursor {
 	struct graphics_gc *cursor_gc;
 	struct transformation *trans;
 	struct point cursor_pnt;
+	struct callback callback;
+	struct vehicle *v;
 	void *vehicle_callback;
 };
 
-#if 0
 struct coord *
 cursor_pos_get(struct cursor *this)
 {
-	return vehicle_pos_get(this->co->vehicle);
+	return vehicle_pos_get(this->v);
 }
-#endif
 
 static void
 cursor_draw(struct cursor *this, struct point *pnt, int dir, int draw_dir)
@@ -190,7 +190,8 @@ cursor_update(struct vehicle *v, void *data)
 		route_set_position(this->co->route, cursor_pos_get(this->co->cursor));
 #endif
 		if (!transform(this->trans, pro, pos, &pnt) || !transform_within_border(this->trans, &pnt, border)) {
-			printf("offscreen\n");
+			if (this->callback.func) 
+				(*this->callback.func)(this, this->callback.data);
 		}
 		cursor_draw(this, &pnt, *dir-transform_get_angle(this->trans, 0), *speed > 2.5);
 	}
@@ -207,8 +208,16 @@ cursor_new(struct graphics *gra, struct vehicle *v, struct color *c, struct tran
 	this->gra=gra;
 	this->trans=t;
 	this->cursor_gc=graphics_gc_new(gra);
+	this->v=v;
 	graphics_gc_set_foreground(this->cursor_gc, c);
 	graphics_gc_set_linewidth(this->cursor_gc, 2);
 	this->vehicle_callback=vehicle_callback_register(v, cursor_update, this);
 	return this;
+}
+
+void
+cursor_register_offscreen_callback(struct cursor *this, void (*func)(struct cursor *cursor, void *data), void *data)
+{
+	this->callback.func=func;
+	this->callback.data=data;
 }

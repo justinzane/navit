@@ -180,11 +180,22 @@ navit_init(struct navit *this)
 
 }
 
+static void
+navit_cursor_offscreen(struct cursor *cursor, void *this_p)
+{
+	struct navit *this=this_p;
+	struct coord *c=transform_center(this->trans);
+	struct coord *cursor_c=cursor_pos_get(cursor);
+	*c=*cursor_c;
+	navit_draw(this);
+}
+
 void
 navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c)
 {
 	this->vehicle=v;
 	this->cursor=cursor_new(this->gra, v, c, this->trans);
+	cursor_register_offscreen_callback(this->cursor, navit_cursor_offscreen, this);
 }
 
 
