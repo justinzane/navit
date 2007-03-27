@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include "plugin.h"
+#include "data.h"
 #include "map.h"
 #include "maptype.h"
 #include "item.h"
@@ -776,7 +777,7 @@ static int
 get_bits(struct map_rect_priv *mr, int bits)
 {
 	unsigned long ret;
-	ret=*((unsigned long *)(mr->ply_data+mr->ply_bitpos/8));
+	ret=L(*((unsigned long *)(mr->ply_data+mr->ply_bitpos/8)));
 	ret >>= (mr->ply_bitpos & 7);
 	ret &= (1 << bits)-1;
 	mr->ply_bitpos+=bits;
