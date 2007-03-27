@@ -6,6 +6,26 @@
 #include "coord.h"
 #include "transform.h"
 
+struct transformation {
+        int width;		/* Height of destination rectangle */
+        int height;		/* Width of destination rectangle */
+        long scale;		/* Scale factor */
+	int angle;		/* Rotation angle */
+	double cos_val,sin_val;	/* cos and sin of rotation angle */
+	struct coord_rect r;	/* Source rectangle */
+	struct coord center;	/* Center of source rectangle */
+};
+
+struct transformation *
+transform_new(void)
+{
+	struct transformation *this;
+
+	this=g_new0(struct transformation, 1);
+
+	return this;
+}
+
 int
 transform(struct transformation *t, enum projection pro, struct coord *c, struct point *p)
 {
@@ -115,11 +135,35 @@ max4(int v1,int v2, int v3, int v4)
 }
 
 void
+transform_rect(struct transformation *this, enum projection pro, struct coord_rect *r)
+{
+	*r=this->r;
+}
+
+struct coord *
+transform_center(struct transformation *this)
+{
+	return &this->center;
+}
+
+int
+transform_contains(struct transformation *this, enum projection pro, struct coord_rect *r)
+{
+	return 1;
+}
+
+void
 transform_set_angle(struct transformation *t,int angle)
 {
         t->angle=angle;
         t->cos_val=cos(M_PI*t->angle/180);
         t->sin_val=sin(M_PI*t->angle/180);
+}
+
+int
+transform_get_angle(struct transformation *this,int angle)
+{
+	return this->angle;
 }
 
 void
@@ -174,10 +218,16 @@ transform_setup_source_rect(struct transformation *t)
 	t->r.lu.y=max4(screen[0].y,screen[1].y,screen[2].y,screen[3].y);
 }
 
-int
+long
 transform_get_scale(struct transformation *t)
 {
-	return t->scale/16;
+	return t->scale;
+}
+
+void
+transform_set_scale(struct transformation *t, long scale)
+{
+	t->scale=scale;
 }
 
 
@@ -392,7 +442,7 @@ void transform_limit_extend(struct coord *rect, struct coord *c)
 
 
 int
-transform_get_angle(struct coord *c, int dir)
+transform_get_angle_delta(struct coord *c, int dir)
 {
 	double angle;
 	int dx=c[1].x-c[0].x;
@@ -404,6 +454,14 @@ transform_get_angle(struct coord *c, int dir)
 	if (angle < 0)
 		angle+=360;
 	return angle;
+}
+
+int
+transform_within_border(struct transformation *this, struct point *p, int border)
+{
+	if (p->x < border || p->x > this->width-border || p->y < border || p->y > this->height-border)
+		return 0;
+	return 1;
 }
 
 /*
@@ -444,6 +502,5 @@ e = the first eccentricity of the ellipsoid
 
 
 */
-
 
 

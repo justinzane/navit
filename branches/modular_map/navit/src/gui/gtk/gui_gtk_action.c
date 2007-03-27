@@ -8,24 +8,27 @@
 
 struct menu_priv {
 	char *path;	
+	GtkAction *action;
 	struct gui_priv *gui;
 	enum menu_type type;
-	void (*callback)(void *data);
-	void *callback_data;
+	void (*callback)(struct menu *menu, void *data1, void *data2);
+	struct menu *callback_menu;
+	void *callback_data1;
+	void *callback_data2;
 };
 
 /* Create callbacks that implement our Actions */
 
 static void
-zoom_in_action(GtkWidget *w, struct container *co)
+zoom_in_action(GtkWidget *w, struct navit *nav, void *dummy)
 {
-	navit_zoom_in(co, 2);
+	navit_zoom_in(nav, 2);
 }
 
 static void
-zoom_out_action(GtkWidget *w, struct container *co)
+zoom_out_action(GtkWidget *w, struct navit *nav, void *dummy)
 {
-	navit_zoom_out(co, 2);
+	navit_zoom_out(nav, 2);
 }
 
 static void
@@ -322,45 +325,59 @@ void test(void *x)
 void activate(void *dummy, struct menu_priv *menu)
 {
 	if (menu->callback)
-		(*menu->callback)(menu->callback_data);
+		(*menu->callback)(menu->callback_menu, menu->callback_data1, menu->callback_data2);
 }	
 
-struct menu_methods menu_methods;
+static struct menu_methods menu_methods;
 
 static struct menu_priv *
-add_menu(struct menu_priv *menu, struct menu_methods *meth, char *name, enum menu_type type, void (*callback)(void *data), void *data)
+add_menu(struct menu_priv *menu, struct menu_methods *meth, char *name, enum menu_type type, void (*callback)(struct menu *data_menu, void *data1, void *data2), struct menu *data_menu, void *data1, void *data2)
 {
 	struct menu_priv *ret;
 	char *dynname;
-	GtkAction *action;
 
-	printf("add_menu %s\n", name);
 	ret=g_new0(struct menu_priv, 1);
 	*meth=menu_methods;
 	dynname=g_strdup_printf("%d", menu->gui->dyn_counter++);
 	if (type == menu_type_toggle)
-		action=gtk_toggle_action_new(dynname, name, NULL, NULL);
+		ret->action=gtk_toggle_action_new(dynname, name, NULL, NULL);
 	else
-		action=gtk_action_new(dynname, name, NULL, NULL);
+		ret->action=gtk_action_new(dynname, name, NULL, NULL);
 	if (callback)
-		g_signal_connect(action, "activate", activate, ret);
-	gtk_action_group_add_action(menu->gui->dyn_group, action);
+		g_signal_connect(ret->action, "activate", activate, ret);
+	gtk_action_group_add_action(menu->gui->dyn_group, ret->action);
 	gtk_ui_manager_add_ui( menu->gui->menu_manager, gtk_ui_manager_new_merge_id(menu->gui->menu_manager), menu->path, dynname, dynname, type == menu_type_submenu ? GTK_UI_MANAGER_MENU : GTK_UI_MANAGER_MENUITEM, FALSE);
 	ret->gui=menu->gui;
 	ret->path=g_strdup_printf("%s/%s", menu->path, dynname);
 	ret->type=type;
 	ret->callback=callback;
-	ret->callback_data=data;
+	ret->callback_menu=data_menu;
+	ret->callback_data1=data1;
+	ret->callback_data2=data2;
 	return ret;
 		
 }
 
-struct menu_methods menu_methods = {
+static void
+set_toggle(struct menu_priv *menu, int active)
+{
+	gtk_toggle_action_set_active(menu->action, active);
+}
+
+static  int
+get_toggle(struct menu_priv *menu)
+{
+	return gtk_toggle_action_get_active(menu->action);
+}
+
+static struct menu_methods menu_methods = {
 	add_menu,
+	set_toggle,
+	get_toggle,
 };
 
 static struct menu_priv *
-gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, struct container *co)
+gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, struct navit *nav)
 {
 	struct menu_priv *ret;
 	GError *error;
@@ -376,10 +393,10 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 		this->dyn_group = gtk_action_group_new ("DynamicActions");
 		register_my_stock_icons();
 		this->menu_manager = gtk_ui_manager_new ();
-		gtk_action_group_add_actions (this->base_group, entries, n_entries, co);
-		gtk_action_group_add_toggle_actions (this->base_group, toggleentries, n_toggleentries, co);
+		gtk_action_group_add_actions (this->base_group, entries, n_entries, nav);
+		gtk_action_group_add_toggle_actions (this->base_group, toggleentries, n_toggleentries, nav);
 		gtk_ui_manager_insert_action_group (this->menu_manager, this->base_group, 0);
-		gtk_action_group_add_actions (this->debug_group, debug_entries, n_debug_entries, co);
+		gtk_action_group_add_actions (this->debug_group, debug_entries, n_debug_entries, nav);
 		gtk_ui_manager_insert_action_group (this->menu_manager, this->debug_group, 0);
 		gtk_ui_manager_add_ui_from_string (this->menu_manager, layout, strlen(layout), &error);
 		gtk_ui_manager_insert_action_group (this->menu_manager, this->dyn_group, 0);

@@ -6,13 +6,7 @@ struct graphics;
 struct graphics_gc;
 struct graphics_font;
 struct graphics_image;
-
-void graphics_get_view(struct container *co, long *x, long *y, unsigned long *scale);
-void graphics_set_view(struct container *co, long *x, long *y, unsigned long *scale);
-void graphics_resize(struct container *co, int w, int h);
-void graphics_redraw(struct container *co);
-struct graphics_font *graphics_font_new(struct graphics *gra, int size);
-struct graphics_gc *graphics_gc_new(struct graphics *gra);
+struct transformation;
 
 enum draw_mode_num {
 	draw_mode_begin, draw_mode_end, draw_mode_cursor
@@ -47,14 +41,6 @@ struct graphics_methods {
 	void (*register_motion_callback)(struct graphics_priv *gr, void (*callback)(void *data, struct point *p), void *data);
 };
 
-struct graphics
-{
-	struct graphics_priv *priv;
-	struct graphics_methods meth;
-	struct graphics_font *font[3];
-	struct graphics_gc *gc[3];
-
-};
 
 struct graphics_font_methods {
 	void (*font_destroy)(struct graphics_font_priv *font);
@@ -89,4 +75,29 @@ struct graphics_image {
 	int height;
 };
 
-
+/* prototypes */
+struct color;
+struct graphics;
+struct graphics_font;
+struct graphics_gc;
+struct graphics_image;
+struct point;
+struct transformation;
+struct graphics *graphics_new(char *type);
+void graphics_init(struct graphics *this);
+void *graphics_get_data(struct graphics *this, char *type);
+void graphics_register_resize_callback(struct graphics *this, void (*callback)(void *data, int w, int h), void *data);
+void graphics_register_button_callback(struct graphics *this, void (*callback)(void *data, int pressed, int button, struct point *p), void *data);
+void graphics_register_motion_callback(struct graphics *this, void (*callback)(void *data, struct point *p), void *data);
+struct graphics_font *graphics_font_new(struct graphics *gra, int size);
+struct graphics_gc *graphics_gc_new(struct graphics *gra);
+void graphics_gc_set_foreground(struct graphics_gc *gc, struct color *c);
+void graphics_gc_set_background(struct graphics_gc *gc, struct color *c);
+void graphics_gc_set_linewidth(struct graphics_gc *gc, int width);
+struct graphics_image *graphics_image_new(struct graphics *gra, char *path);
+void graphics_draw_restore(struct graphics *this, struct point *p, int w, int h);
+void graphics_draw_mode(struct graphics *this, enum draw_mode_num mode);
+void graphics_draw_lines(struct graphics *this, struct graphics_gc *gc, struct point *p, int count);
+void graphics_draw_circle(struct graphics *this, struct graphics_gc *gc, struct point *p, int r);
+int graphics_ready(struct graphics *this);
+void graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, struct transformation *trans, GList *layouts);

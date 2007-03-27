@@ -20,30 +20,30 @@ gui_new(char *type, int w, int h)
 }
 
 struct statusbar *
-gui_statusbar_new(struct gui *gui, struct container *co)
+gui_statusbar_new(struct gui *gui, struct navit *nav)
 {
 	struct statusbar *this;
 	this=g_new0(struct statusbar, 1);
-	this->priv=gui->meth.statusbar_new(gui->priv, &this->meth, co);
+	this->priv=gui->meth.statusbar_new(gui->priv, &this->meth, nav);
 	return this;
 }
 
 struct menu *
-gui_menubar_new(struct gui *gui, struct container *co)
+gui_menubar_new(struct gui *gui, struct navit *nav)
 {
 	struct menu *this;
 	this=g_new0(struct menu, 1);
-	this->priv=gui->meth.menubar_new(gui->priv, &this->meth, co);
+	this->priv=gui->meth.menubar_new(gui->priv, &this->meth, nav);
 	return this;
 }
 
 
 struct menu *
-gui_toolbar_new(struct gui *gui, struct container *co)
+gui_toolbar_new(struct gui *gui, struct navit *nav)
 {
 	struct menu *this;
 	this=g_new0(struct menu, 1);
-	this->priv=gui->meth.toolbar_new(gui->priv, &this->meth, co);
+	this->priv=gui->meth.toolbar_new(gui->priv, &this->meth, nav);
 	return this;
 }
 

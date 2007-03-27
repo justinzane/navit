@@ -28,7 +28,10 @@ int main(int argc, char **argv)
 	python_init();
 #endif
 	plugin_init();
-	config_load("navit.xml", &error);
+	if (argc > 1) 
+		config_load(argv[1], &error);
+	else
+		config_load("navit.xml", &error);
 	gtk_main();
 	return 0;
 }

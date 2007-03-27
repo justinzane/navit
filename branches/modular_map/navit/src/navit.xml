@@ -12,7 +12,7 @@
 		<map type="textfile" enabled="no" data="/tmp/roadbook.txt" /> 
 		<map type="textfile" enabled="no" data="data.txt" /> 
 		<map type="textfile" enabled="no" data="/tmp/bbbike.txt" />
-		<map type="garmin_img" enabled="no" data="/tmp/11112229.img" />
+		<map type="garmin_img" enabled="yes" data="/tmp/11112229.img" />
 	</mapset>
 	<layout name="Tag">
 		<layer name="sea" details="0">

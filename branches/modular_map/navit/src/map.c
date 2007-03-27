@@ -10,7 +10,10 @@
 struct map {
 	struct map_methods meth;
 	struct map_priv *priv;
+	char *filename;
+	char *type;
 	char *charset;
+	int active;
 	enum projection projection;
 };
 
@@ -30,11 +33,37 @@ map_new(char *type, char *filename)
 		return NULL;
 
 	m=g_new0(struct map, 1);
-
+	m->active=1;
+	m->filename=g_strdup(filename);
+	m->type=g_strdup(type);
 	m->priv=maptype_new(&m->meth, filename);
 	m->charset=m->meth.map_charset(m->priv);
 	m->projection=m->meth.map_projection(m->priv);
 	return m;
+}
+
+char *
+map_get_filename(struct map *this)
+{
+	return this->filename;
+}
+
+char *
+map_get_type(struct map *this)
+{
+	return this->type;
+}
+
+int
+map_get_active(struct map *this)
+{
+	return this->active;
+}
+
+void
+map_set_active(struct map *this, int active)
+{
+	this->active=active;
 }
 
 enum projection

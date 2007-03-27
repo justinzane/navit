@@ -3,17 +3,25 @@
 #include "string.h"
 #include "draw_info.h"
 #include "graphics.h"
-#include "map_data.h"
+#include "map.h"
 #include "coord.h"
 #include "param.h"	/* FIXME */
 #include "transform.h"
 #include "plugin.h"
-#include "data_window.h"
 #include "profile.h"
 #include "mapset.h"
 
 
 #include "layout.h"
+
+struct graphics
+{
+	struct graphics_priv *priv;
+	struct graphics_methods meth;
+	struct graphics_font *font[3];
+	struct graphics_gc *gc[3];
+	int ready;
+};
 
 struct graphics *
 graphics_new(char *type)
@@ -104,6 +112,12 @@ graphics_gc_set_background(struct graphics_gc *gc, struct color *c)
 	gc->meth.gc_set_background(gc->priv, c);
 }
 
+void
+graphics_gc_set_linewidth(struct graphics_gc *gc, int width)
+{
+	gc->meth.gc_set_linewidth(gc->priv, width);
+}
+
 struct graphics_image *
 graphics_image_new(struct graphics *gra, char *path)
 {
@@ -114,28 +128,30 @@ graphics_image_new(struct graphics *gra, char *path)
 	return this;
 }
 
-#if 0
-
 void
-graphics_get_view(struct container *co, long *x, long *y, unsigned long *scale)
+graphics_draw_restore(struct graphics *this, struct point *p, int w, int h)
 {
-	struct transformation *t=co->trans;
-	if (x) *x=t->center.x;
-	if (y) *y=t->center.y;
-	if (scale) *scale=t->scale;
+	this->meth.draw_restore(this->priv, p, w, h);
 }
 
 void
-graphics_set_view(struct container *co, long *x, long *y, unsigned long *scale)
+graphics_draw_mode(struct graphics *this, enum draw_mode_num mode)
 {
-	struct transformation *t=co->trans;
-	if (x) t->center.x=*x;
-	if (y) t->center.y=*y;
-	if (scale) t->scale=*scale;
-	graphics_redraw(co);
+	this->meth.draw_mode(this->priv, mode);
 }
 
-#endif
+void
+graphics_draw_lines(struct graphics *this, struct graphics_gc *gc, struct point *p, int count)
+{
+	this->meth.draw_lines(this->priv, gc->priv, p, count);
+}
+
+void
+graphics_draw_circle(struct graphics *this, struct graphics_gc *gc, struct point *p, int r)
+{
+	this->meth.draw_circle(this->priv, gc->priv, p, r);
+}
+
 
 #include "attr.h"
 #include "popup.h"
@@ -372,7 +388,7 @@ do_draw_poly(GHashTable *display_list, struct transformation *t, enum projection
 			
 	}
 	g_assert(count < max);
-	if (1 || coord_rect_overlap(&t->r, &r)) {
+	if (transform_contains(t, pro, &r)) {	
 		attr.u.str=NULL;
 		item_attr_get(item, attr_label, &attr);
 		xdisplay_add(display_list, item, count, pnt, attr.u.str);
@@ -415,25 +431,31 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 	enum projection pro;
 	void *h;
 
-	r=t->r;
 	ms=mapsets->data;
 	mapset_open(ms, &h);
 	while ((m=mapset_next(ms, &h))) {
-		pro=map_projection(m);
-		mr=map_rect_new(m, &r, NULL, order);
-		while ((item=map_rect_get_item(mr))) {
-			do_draw_item(display_list, t, pro, item);
+		if (map_get_active(m)) {
+			pro=map_projection(m);
+			transform_rect(t, pro, &r);
+			mr=map_rect_new(m, &r, NULL, order);
+			while ((item=map_rect_get_item(mr))) {
+				do_draw_item(display_list, t, pro, item);
+			}
+			map_rect_destroy(mr);
 		}
-		map_rect_destroy(mr);
 	}
+}
+
+int
+graphics_ready(struct graphics *this)
+{
+	return this->ready;
 }
 
 void
 graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, struct transformation *trans, GList *layouts)
 {
-	int scale=transform_get_scale(trans);
 	int order=transform_get_order(trans);
-	int i;
 
 #if 0
 	printf("scale=%d center=0x%x,0x%x mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
@@ -457,5 +479,5 @@ graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, st
 		data_window_end(co->data_window[i]);	
 	}
 #endif
-	/* co->ready=1; */
+	gra->ready=1;
 }

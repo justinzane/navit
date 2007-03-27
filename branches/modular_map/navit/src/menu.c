@@ -26,11 +26,23 @@ menu_route_update(struct container *co)
 }
 
 struct menu *
-menu_add(struct menu *menu, char *name, enum menu_type type, void (*callback)(void *data), void *data)
+menu_add(struct menu *menu, char *name, enum menu_type type, void (*callback)(struct menu *menu, void *data1, void *data2), void *data1, void *data2)
 {
 	struct menu *this;
         this=g_new0(struct menu, 1);
-        this->priv=(*menu->meth.add)(menu->priv, &this->meth, name, type, callback, data);
+        this->priv=(*menu->meth.add)(menu->priv, &this->meth, name, type, callback, this, data1, data2);
 
 	return this;	
+}
+
+void
+menu_set_toggle(struct menu *menu, int active)
+{
+	(*menu->meth.set_toggle)(menu->priv, active);
+}
+
+int
+menu_get_toggle(struct menu *menu)
+{
+	return (*menu->meth.get_toggle)(menu->priv);
 }

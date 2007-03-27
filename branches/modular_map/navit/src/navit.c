@@ -1,9 +1,12 @@
 #include <glib.h>
 #include "navit.h"
 #include "gui.h"
+#include "map.h"
+#include "mapset.h"
 #include "coord.h"
 #include "transform.h"
 #include "menu.h"
+#include "graphics.h"
 #include "cursor.h"
 
 struct navit {
@@ -30,8 +33,6 @@ struct navit {
 	struct window *win;
 	GHashTable *display_list;
 };
-
-#define nav xyz[3]
 
 void
 navit_add_mapset(struct navit *this, struct mapset *ms)
@@ -66,8 +67,10 @@ navit_button(struct navit *this, int pressed, int button, struct point *p)
 	if (pressed && button == 1) {
 		int border=16;
 		struct transformation *t=this->trans;
-		if (p->x < border || p->x > t->width-border || p->y < border || p->y > t->height-border) {
-			transform_reverse(t, p, &t->center);
+		struct coord *c;
+		if (! transform_within_border(t, p, border)) {
+			c=transform_center(t);
+			transform_reverse(t, p, c);
 			navit_draw(this);
 		}
 	}
@@ -76,16 +79,18 @@ navit_button(struct navit *this, int pressed, int button, struct point *p)
 void
 navit_zoom_in(struct navit *this, int factor)
 {
-	this->trans->scale=this->trans->scale/factor;
-	if (this->trans->scale < 1)
-		this->trans->scale=1;
+	long scale=transform_get_scale(this->trans)/factor;
+	if (scale < 1)
+		scale=1;
+	transform_set_scale(this->trans, scale);
 	navit_draw(this);
 }
 
 void
 navit_zoom_out(struct navit *this, int factor)
 {
-	this->trans->scale=this->trans->scale*factor;
+	long scale=transform_get_scale(this->trans)*factor;
+	transform_set_scale(this->trans,scale);
 	navit_draw(this);
 }
 
@@ -94,7 +99,7 @@ navit_new(char *ui, char *graphics, struct coord_geo *center, double zoom)
 {
 	struct navit *this=g_new0(struct navit, 1);
 
-	this->trans=g_new0(struct transformation, 1);	
+	this->trans=transform_new();
 
 	transform_setup(this->trans, 1300000,7000000,8192,0);
 	/* this->flags=g_new0(struct map_flags, 1); */
@@ -126,23 +131,44 @@ navit_new(char *ui, char *graphics, struct coord_geo *center, double zoom)
 	return this;
 }
 
+static void
+navit_map_toggle(struct menu *menu, void *this_p, void *map_p)
+{
+	if ((menu_get_toggle(menu) != 0) != (map_get_active(map_p) != 0)) {
+		map_set_active(map_p, (menu_get_toggle(menu) != 0));
+		navit_draw(this_p);
+	}
+}
+
 void
 navit_init(struct navit *this)
 {
-	struct menu *map, *layout;
-	map=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL);
-	menu_add(map, "Test", menu_type_menu, NULL, NULL);
-	layout=menu_add(this->menubar, "Layout", menu_type_submenu, NULL, NULL);
-	menu_add(layout, "Test", menu_type_menu, NULL, NULL);
+	struct menu *men,*men2;
+	struct map *map;
+	void *handle;
+	struct mapset *ms=this->mapsets->data;
+	men=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
+	mapset_open(ms, &handle);
+	while ((map=mapset_next(ms, &handle))) {
+		char *s=g_strdup_printf("%s:%s", map_get_type(map), map_get_filename(map));
+		men2=menu_add(men, s, menu_type_toggle, navit_map_toggle, this, map);
+		menu_set_toggle(men2, 1);
+		g_free(s);
+	}	
+	// menu_add(map, "Test", menu_type_menu, NULL, NULL);
+	men=menu_add(this->menubar, "Layout", menu_type_submenu, NULL, NULL, NULL);
+	menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
+	men=menu_add(this->menubar, "Projection", menu_type_submenu, NULL, NULL, NULL);
+	menu_add(men, "M&G", menu_type_menu, NULL, NULL, NULL);
+	menu_add(men, "Garmin", menu_type_menu, NULL, NULL, NULL);
+
 }
 
 void
 navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c)
 {
-#if 0
-	co->vehicle=v;
-	co->cursor=cursor_new(co,co->vehicle,c);
-#endif
+	this->vehicle=v;
+	this->cursor=cursor_new(this->gra, v, c, this->trans);
 }
 
 

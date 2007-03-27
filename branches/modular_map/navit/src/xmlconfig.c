@@ -128,7 +128,8 @@ start_element (GMarkupParseContext *context,
 			struct color color;
 			if (s && find_color(attribute_names, attribute_values, &color)) {
 				elem = vehicle_new(s);
-				navit_vehicle_add(co, elem, &color);
+				if (elem)
+					navit_vehicle_add(co, elem, &color);
 			}
 		}
 	}

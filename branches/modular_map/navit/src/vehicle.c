@@ -20,6 +20,11 @@ static void enable_watch(struct vehicle *this);
 
  /* #define INTERPOLATION_TIME 50 */
 
+struct callback {
+	void (*func)(struct vehicle *, void *data);
+	void *data;
+};
+
 struct vehicle {
 	GIOChannel *iochan;
 	guint watch;
@@ -39,8 +44,7 @@ struct vehicle {
 #ifdef HAVE_LIBGPS
 	struct gps_data_t *gps;
 #endif
-	void (*callback_func)(struct vehicle *, void *data);
-	void *callback_data;
+	GList *callbacks;
 };
 
 struct vehicle *vehicle_last;
@@ -63,6 +67,23 @@ vehicle_timer(gpointer t)
 	return TRUE; 
 }
 #endif
+
+enum projection
+vehicle_projection(struct vehicle *this)
+{
+	return projection_mg;
+}
+
+static void
+vehicle_call_callbacks(struct vehicle *this)
+{
+	GList *item=g_list_first(this->callbacks);
+	while (item) {
+		struct callback *cb=item->data;
+		(*cb->func)(this, cb->data);
+		item=g_list_next(item);
+	}
+}
 
 struct coord *
 vehicle_pos_get(struct vehicle *this)
@@ -90,8 +111,7 @@ vehicle_set_position(struct vehicle *this, struct coord *pos)
 	this->curr.y=this->current_pos.y;
 	this->delta.x=0;
 	this->delta.y=0;
-	if (this->callback_func)
-		(*this->callback_func)(this, this->callback_data);
+	vehicle_call_callbacks(this);
 }
 
 static int
@@ -146,9 +166,7 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 		this->curr.x=this->current_pos.x;
 		this->curr.y=this->current_pos.y;
 		this->timer_count=0;
-		if (this->callback_func) {
-			(*this->callback_func)(this, this->callback_data);
-		}
+		vehicle_call_callbacks(this);
 		if (this->is_file) {
 			disable_watch(this);
 			g_timeout_add(1000, enable_watch_timer, this);
@@ -269,8 +287,7 @@ vehicle_gps_callback(struct gps_data_t *data, char *buf, size_t len, int level)
 		this->curr.x=this->current_pos.x;
 		this->curr.y=this->current_pos.y;
 		this->timer_count=0;
-		if (this->callback_func)
-			(*this->callback_func)(this, this->callback_data);
+		vehicle_call_callbacks(this);
 		data->set &= ~LATLON_SET;
 	}
 	if (data->set & ALTITUDE_SET) {
@@ -352,11 +369,21 @@ vehicle_new(const char *url)
 	return this;
 }
 
-void
-vehicle_callback(struct vehicle *this, void (*func)(void *data), void *data)
+void *
+vehicle_callback_register(struct vehicle *this, void (*func)(struct vehicle *, void *data), void *data)
 {
-	this->callback_func=func;
-	this->callback_data=data;
+	struct callback *cb;
+	cb=g_new(struct callback, 1);
+	cb->func=func;
+	cb->data=data;
+	this->callbacks=g_list_prepend(this->callbacks, cb);
+	return cb;
+}
+
+void
+vehicle_callback_unregister(struct vehicle *this, void *handle)
+{
+	g_list_remove(this->callbacks, handle);
 }
 
 void

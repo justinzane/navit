@@ -1,7 +1,7 @@
-struct cursor;
+/* prototypes */
 struct color;
-struct container;
+struct cursor;
+struct graphics;
+struct transformation;
 struct vehicle;
-
-struct coord * cursor_pos_get(struct cursor *this);
-struct cursor *cursor_new(struct container *co, struct vehicle *v, struct color *c);
+struct cursor *cursor_new(struct graphics *gra, struct vehicle *v, struct color *c, struct transformation *t);

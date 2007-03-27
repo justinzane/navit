@@ -5,15 +5,7 @@
 
 #include "projection.h"
 
-struct transformation {
-        int width;		/* Height of destination rectangle */
-        int height;		/* Width of destination rectangle */
-        long scale;		/* Scale factor */
-	int angle;		/* Rotation angle */
-	double cos_val,sin_val;	/* cos and sin of rotation angle */
-	struct coord_rect r;	/* Source rectangle */
-	struct coord center;	/* Center of source rectangle */
-};
+struct transformation;
 
 int transform(struct transformation *t, enum projection pro, struct coord *c, struct point *p);
 int transform_contains(struct transformation *t, enum projection pro, struct coord_rect *r);
@@ -30,7 +22,7 @@ int transform_distance_line_sq(struct coord *l0, struct coord *l1, struct coord 
 
 void transform_mercator(double *lng, double *lat, struct coord *c);
 int is_point_visible(struct transformation *t, struct coord *c);
-int transform_get_scale(struct transformation *t);
+long transform_get_scale(struct transformation *t);
 int transform_get_order(struct transformation *t);
 void transform_setup_source_rect(struct transformation *t);
 void transform_set_angle(struct transformation *t,int angle);
@@ -38,6 +30,8 @@ void transform_setup(struct transformation *t, int x, int y, int scale, int angl
 void transform_setup_source_rect_limit(struct transformation *t, struct coord *center, int limit);
 void transform_geo_text(struct coord_geo *g, char *buffer);
 void transform_limit_extend(struct coord *rect, struct coord *c);
-int transform_get_angle(struct coord *c, int dir);
+void transform_rect(struct transformation *this, enum projection pro, struct coord_rect *r);
+
+int transform_get_angle_delta(struct coord *c, int dir);
 
 #endif

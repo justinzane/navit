@@ -17,5 +17,14 @@ struct gui {
 	struct gui_priv *priv;		
 };
 
-void gui_register(char *name, struct gui_priv *(*gui_new)(struct gui_methods *meth));
-struct gui * gui_new(char *name, int w, int h);
+/* prototypes */
+struct graphics;
+struct gui;
+struct menu;
+struct navit;
+struct statusbar;
+struct gui *gui_new(char *type, int w, int h);
+struct statusbar *gui_statusbar_new(struct gui *gui, struct navit *nav);
+struct menu *gui_menubar_new(struct gui *gui, struct navit *nav);
+struct menu *gui_toolbar_new(struct gui *gui, struct navit *nav);
+int gui_set_graphics(struct gui *this, struct graphics *gra);
