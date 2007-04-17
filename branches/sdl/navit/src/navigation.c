@@ -12,7 +12,8 @@
 #include "speech.h"
 #include "navigation.h"
 #include "data_window.h"
-#include "osd.h"
+
+#include "gui/sdl/sdl.h"
 
 struct data_window *navigation_window;
 
@@ -153,6 +154,7 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 	int delta,navmode=1,add_dir,level;
 	struct param_list param_list[20];
 	
+	//extern struct container *co;
 	char roadname[256];
 
 	char angle_old[30],angle_new[30],angle_delta[30],cross_roads[30],position[30],distance[30];
@@ -196,6 +198,13 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 			param_list[9].value=distance;
 			add_dir=1;
 			dir=gettext("rechts");
+			extern struct SDL_osd_content GL_osd;
+
+			if (flag) {
+	
+				GL_osd.next_angle=delta;
+			}
+
 			if (delta < 0) {
 				dir=gettext("links");
 				delta=-delta;
@@ -247,7 +256,7 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 			param_list[10].value=command;
 			if (flag) {
 				sprintf(roadname,"%s %s",old->name1,old->name2);
-				osd_set_next_command(command,roadname);
+				strcpy(GL_osd.command_1,command);
 				if (level != old_level) {
 					printf("command='%s'\n", command);
 					if (speech_handle)

@@ -424,7 +424,7 @@ street_get_by_id(struct map_data *mdat, int country, int id, struct block_info *
 	struct street_header_type hdr_type;
 	struct street_str *str;
 
-	if (debug)
+	if (0)
 		printf("street_get_by_id country 0x%x id %d\n", country, id);
 	if (tree_search_hv_map(mdat, file_street_str, (id >> 8) | (country << 24), id & 0xff, &res, &mdat_res)) {
 		if (debug)
@@ -434,7 +434,7 @@ street_get_by_id(struct map_data *mdat, int country, int id, struct block_info *
 
 	block=res >> 12;
 	num=res & 0xfff;
-	if (debug) {
+	if (0) {
 		printf("block=0x%x\n", block);
 		printf("num=0x%x\n", num);	
 	}
@@ -442,7 +442,7 @@ street_get_by_id(struct map_data *mdat, int country, int id, struct block_info *
 	res_blk_inf->mdata=mdat_res;
 	res_blk_inf->file=mdat_res->file[file_street_str];
 	res_blk_inf->block=blk;
-	if (debug) {
+	if (0) {
 		printf("blk->count=0x%x\n", blk->count);
 	}
 	street_header_type_get(blk, &p, &hdr_type);

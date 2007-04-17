@@ -21,7 +21,10 @@
 #include "container.h"
 #include "debug.h"
 
-#include "osd.h"
+#include "gui/sdl/sdl.c"
+#include "SDL/SDL_gfxPrimitives.h"
+
+// #define DEBUG 1
 
 void *speech_handle;
 
@@ -58,7 +61,7 @@ int main(int argc, char **argv)
 
 	map_data_default=load_maps(NULL);
 	plugin_load();
-	co=gui_gtk_window(1300000,7000000,8192);
+	co=gui_gtk_window(1300000,7000000,32);
 	
 	co->route=route_new();
 	route_mapdata_set(co->route, co->map_data); 
@@ -67,6 +70,7 @@ int main(int argc, char **argv)
 		co->vehicle=vehicle_new(gps);
 		if (co->vehicle) {
 			co->cursor=cursor_new(co,co->vehicle);
+			sdl_gui_new(co->vehicle);
 		}
 	} else {
 		g_warning(gettext("Environment-Variable GPSDATA not set - No gps tracking. Set it to file:filename or gpsd://host[:port]"));
@@ -77,8 +81,6 @@ int main(int argc, char **argv)
 	speech_handle=co->speech;
 	if (co->vehicle)
 		co->compass=compass_new(co);
-	if (co->vehicle)
-		co->osd=osd_new(co);
 	if (co->vehicle)
 		co->track=track_new(co->map_data);
 
@@ -101,6 +103,7 @@ int main(int argc, char **argv)
         CORBA_free(retval);
 #endif
 
+	initSDL();
 	gtk_main();
 	return 0;
 }

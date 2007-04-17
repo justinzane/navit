@@ -6,6 +6,11 @@
 #include "display.h"
 #include "graphics.h"
 
+#include "gui/sdl/sdl.h"
+// #include "SDL/SDL_opengl.h"
+
+#define PI 3.14159265
+
 struct graphics_image *icons;
 
 static struct graphics_image *
@@ -128,34 +133,107 @@ display_add(struct display_list **head, int type, int attr, char *label, int cou
 	*head=new;
 	return new->data;
 }
+/*
 
-void
-display_draw(struct display_list *list, struct graphics *gr, struct graphics_gc *gc_fill, struct graphics_gc *gc_line)
-{
+void SDL_print(char *label,int x, int y,int angle){
+// 	if(angle==0){
+	if(1){
+    		glColor3f( 0.0f,0.0f,0.0f);
+    		glRasterPos2f( x,y );
+    		glPrint( label );
+	} else {
+		// We need to find a way to draw a rotated text.
+		
+	}
+}
+*/
+void SDL_display_lines(struct display_list *list,int fill,int line, int linewidth,int alpha){ 
+	SDL_display_lines_labelled( list, fill, line,  linewidth, alpha,"");
+}
+
+
+void SDL_display_lines_labelled(struct display_list *list,int fill,int line, int linewidth,int alpha,char * label){ 
+
+	int i;
+// 	linewidth=3;
+	for(i=0;i<list->count-1;i++){
+		switch (list->type) {
+		case 0:
+// 			lineRGBA(Navigation_Screen,list->p[i].x,list->p[i].y,list->p[i+1].x,list->p[i+1].y,r,v,b,255);
+			GLDrawLineRGBA_labelled( list->p[i].x,list->p[i].y,list->p[i+1].x,list->p[i+1].y,fill,alpha,linewidth,label);
+			break;
+		case 2:
+// 			lineRGBA(Navigation_Screen,list->p[i].x,list->p[i].y,list->p[i+1].x,list->p[i+1].y,0,0,0,255);
+			GLDrawLineRGBA_labelled( list->p[i].x,list->p[i].y,list->p[i+1].x,list->p[i+1].y,fill,alpha,linewidth,label);
+			break;
+		default:
+// 			printf("undefined color for %i\n",list->type);
+// 			lineRGBA(Navigation_Screen,list->p[i].x,list->p[i].y,list->p[i+1].x,list->p[i+1].y,r,v,b,255);
+			GLDrawLineRGBA_labelled( list->p[i].x,list->p[i].y,list->p[i+1].x,list->p[i+1].y,fill,alpha,linewidth,label);
+			break;
+		}
+	}
+}
+
+void display_poly(struct display_list *list,int fill){
+	int i;
+	extern int color[][3];
+	float r=(float)(color[fill][0])/65535;
+	float g=(float)(color[fill][1])/65535;
+	float b=(float)(color[fill][2])/65535;
+// 	printf("%0.2f,%0.2f,%0.2f\n",r,g,b);
+	if(fill==4){
+		return 1;
+	}
+// 	printf("fill=%i\n",fill);	
+	glColor3f(r,g,b);
+	glBegin( GL_POLYGON );
+	for(i=0;i<list->count-1;i++){
+		glVertex2i( list->p[i].x, list->p[i].y );
+	}
+	glEnd();
+// 	filledPolygonRGBA(Navigation_Screen,
+//                   x, y,
+//                   list->count-1,
+//                   255, 200, 149, 255);
+}
+
+void SDL_display_draw(struct display_list *list,int fill, int line, int linewidth){
+	SDL_display_draw_alpha(list,fill,line,linewidth,255);
+}
+
+
+void SDL_display_draw_alpha(struct display_list *list,int fill, int line, int linewidth, int alpha){
 	struct graphics_image *icon;
 	int r=3;
 	struct point p;
 	while (list) {
 		switch (list->type) {
 		case 0:
-			gr->draw_polygon(gr, gc_fill, list->p, list->count);
-			if (gc_line) 
-				gr->draw_lines(gr, gc_line, list->p, list->count);
+// 			gr->draw_polygon(gr, gc_fill, list->p, list->count);
+			display_poly(list,fill);
+			if (line) 
+//  				gr->draw_lines(gr, gc_line, list->p, list->count);
+				printf("Drawing seg for %s\n",list->label);
+				SDL_display_lines(list,fill,line, linewidth,alpha);
 			break;
 		case 1:
 		case 2:
-			gr->draw_lines(gr, gc_fill, list->p, list->count);
+//  			gr->draw_lines(gr, gc_fill, list->p, list->count);
+// 				printf("Drawing seg for %s\n",list->label);
+			SDL_display_lines_labelled(list,fill,line, linewidth,alpha,list->label);
 			break;
 		case 3:
 		case 4:
-			gr->draw_circle(gr, gc_fill, list->p, r);
+// 			gr->draw_circle(gr, gc_fill, list->p, r);
 			break;
 		case 5:
-			icon=get_icon(gr, list->label);
+// 			icon=get_icon(gr, list->label);
 			if (icon) {
 				p.x=list->p[0].x - icon->width/2;
 				p.y=list->p[0].y - icon->height/2;
-				gr->draw_image(gr, gc_fill, &p, icon);
+// 				gr->draw_image(gr, gc_fill, &p, icon);
+				printf("i'am drawing %s\n",list->label);
 			}
 			else
 				printf("invalid icon '%s'\n", list->label);
@@ -208,22 +286,23 @@ display_find(struct point *p, struct display_list **in, int in_count, int maxdis
 		out[i]=NULL;
 }
 
-
+/*
 static void
 label_line(struct graphics *gr, struct graphics_gc *fg, struct graphics_gc *bg, struct graphics_font *font, struct point *p, int count, char *label)
 {
 	int i,x,y,tl;
-	double dx,dy,l;
+	
+	double dx,dy,l,angle;
 	struct point p_t;
 	char *utf8;
-
+// 	printf("New loop, count=%i\n",count);
 	tl=strlen(label)*400;
 	for (i = 0 ; i < count-1 ; i++) {
 		dx=p[i+1].x-p[i].x;
 		dx*=100;
 		dy=p[i+1].y-p[i].y;
 		dy*=100;
-		l=(int)sqrt((float)(dx*dx+dy*dy));	
+		l=(int)sqrt((float)(dx*dx+dy*dy));
 		if (l > tl) {
 			x=p[i].x;
 			y=p[i].y;
@@ -239,16 +318,26 @@ label_line(struct graphics *gr, struct graphics_gc *fg, struct graphics_gc *bg, 
 			y+=dx*45/l/10;
 			p_t.x=x;
 			p_t.y=y;
-#if 0
-			printf("display_text: '%s', %d, %d, %d, %d %d\n", label, x, y, dx*0x10000/l, dy*0x10000/l, l);
-#endif
-			if(!g_utf8_validate(label,-1,NULL)){
-				gr->draw_text(gr, fg, bg, font, label, &p_t, dx*0x10000/l, dy*0x10000/l);
-			} else {
-				utf8=g_convert(label, -1, "utf8", "iso8859-1", NULL, NULL, NULL);		
-				gr->draw_text(gr, fg, bg, font, utf8, &p_t, dx*0x10000/l, dy*0x10000/l);
-				g_free(utf8);
-			}
+
+		dx=p[i+1].x-p[i].x;
+		dy=p[i+1].y-p[i].y;
+			angle=atan (dy/dx) * 180 / PI;
+
+// #if 1
+// 			printf("display_text: '%s', %d, %d, %d, %d %d -> %i\n", label, x, y, dx*0x10000/l, dy*0x10000/l, l,(int)angle);
+// #endif
+
+ 			SDL_print(label,x,y,(int)(angle*-1));
+
+// 			if(!g_utf8_validate(label,-1,NULL)){
+// 				gr->draw_text(gr, fg, bg, font, label, &p_t, dx*0x10000/l, dy*0x10000/l);
+// 				SDL_print(label,x,y,round(rand * 180));
+// 			} else {
+// 				utf8=g_convert(label, -1, "utf8", "iso8859-1", NULL, NULL, NULL);		
+// 				gr->draw_text(gr, fg, bg, font, utf8, &p_t, dx*0x10000/l, dy*0x10000/l);
+// 				SDL_print(utf8,x,y);
+// 				g_free(utf8);
+// 			}
 		}
 	}	
 }
@@ -271,10 +360,10 @@ display_labels(struct display_list *list, struct graphics *gr, struct graphics_g
 
 				if(g_utf8_validate(list->label,-1, NULL)){
 					utf8=g_convert(list->label, -1, "utf8", "iso8859-1", NULL, NULL, NULL);		
-					gr->draw_text(gr, fg, bg, font, utf8, &p, 0x10000, 0);
+					SDL_print(list->label,p.x,p.y,0);
 					g_free(utf8);
 				} else {
-					gr->draw_text(gr, fg, bg, font, list->label, &p, 0x10000, 0);
+					SDL_print(list->label,p.x,p.y,0);
 				}
 				break;
 			}
@@ -282,3 +371,4 @@ display_labels(struct display_list *list, struct graphics *gr, struct graphics_g
 		list=list->next;
 	}
 }
+*/

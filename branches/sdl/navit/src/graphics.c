@@ -16,6 +16,7 @@
 #include "data_window.h"
 #include "profile.h"
 
+#include "gui/sdl/sdl.h"
 
 #define GC_BACKGROUND 0
 #define GC_WOOD 1
@@ -42,6 +43,8 @@
 #define GC_STREET_NO_PASS 22
 #define GC_STREET_ROUTE 23
 #define GC_LAST	24
+
+// #define DEBUG 0
 
 
 int color[][3]={
@@ -124,11 +127,16 @@ graphics_draw(struct map_data *mdata, int file, struct container *co, int displa
 void
 graphics_redraw(struct container *co)
 {
+
+
 	int scale=transform_get_scale(co->trans);
 	int i,slimit=255,tlimit=255,plimit=255;
 	int bw[4],w[4],t[4];
 	struct display_list **disp=co->disp;
 	struct graphics *gra=co->gra;
+
+	Empty_Scene();
+	Start_3D_View();
 
 #if 0
 	printf("scale=%d center=0x%lx,0x%lx mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
@@ -138,11 +146,11 @@ graphics_redraw(struct container *co)
 
 	transform_setup_source_rect(co->trans);
 
-	gra->draw_mode(gra, draw_mode_begin);
+// 	gra->draw_mode(gra, draw_mode_begin);
 	for (i = 0 ; i < data_window_type_end; i++) {
 		data_window_begin(co->data_window[i]);	
 	}
-	gra->gc_set_linewidth(gra->gc[GC_RAIL], 3);
+// 	gra->gc_set_linewidth(gra->gc[GC_RAIL], 3);
 
 	bw[0]=0;
 	bw[1]=0;
@@ -297,33 +305,36 @@ graphics_redraw(struct container *co)
 		t[0]=0x1;
 		t[1]=0x4;
 	}
-	gra->gc_set_linewidth(gra->gc[GC_STREET_SMALL], w[0]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_NO_PASS], w[0]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_SMALL_B], bw[0]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_MID], w[1]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_MID_B], bw[1]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG], w[2]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG_B], bw[2]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2], w[3]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2_B], bw[3]);
-	gra->gc_set_linewidth(gra->gc[GC_STREET_ROUTE], w[3]+7+w[3]/2);
+	
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_SMALL], w[0]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_NO_PASS], w[0]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_SMALL_B], bw[0]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_MID], w[1]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_MID_B], bw[1]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG], w[2]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG_B], bw[2]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2], w[3]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_BIG2_B], bw[3]);
+// 	gra->gc_set_linewidth(gra->gc[GC_STREET_ROUTE], w[3]+7+w[3]/2);
 
 #ifdef DEBUG
 	profile_timer(NULL);
 #endif
-	graphics_draw(co->map_data, file_border_ply, co, display_rail, plimit, 48, poly_draw_block);
-	graphics_draw(co->map_data, file_woodland_ply, co, display_wood, plimit, 48, poly_draw_block);
-	graphics_draw(co->map_data, file_other_ply, co, display_other, plimit, 48, poly_draw_block);
-	graphics_draw(co->map_data, file_town_twn, co, display_town, tlimit, 48, town_draw_block);
-	graphics_draw(co->map_data, file_water_ply, co, display_water, plimit, 48, poly_draw_block);
-	graphics_draw(co->map_data, file_sea_ply, co, display_sea, plimit, 48, poly_draw_block);
+// 	graphics_draw(co->map_data, file_border_ply, co, display_rail, plimit, 48, poly_draw_block);
+// 	graphics_draw(co->map_data, file_woodland_ply, co, display_wood, plimit, 48, poly_draw_block);
+// 	graphics_draw(co->map_data, file_other_ply, co, display_other, plimit, 48, poly_draw_block);
+// 	graphics_draw(co->map_data, file_town_twn, co, display_town, tlimit, 48, town_draw_block);
+// 	graphics_draw(co->map_data, file_water_ply, co, display_water, plimit, 48, poly_draw_block);
+// 	graphics_draw(co->map_data, file_sea_ply, co, display_sea, plimit, 48, poly_draw_block);
+
+
 	/* todo height, tunnel, bridge, street_bti ??? */
 #if 0
 	graphics_draw(co->map_data, file_height_ply, co, display_other1, plimit, 48, poly_draw_block);
 #endif
-	if (scale < 256) {
-		graphics_draw(co->map_data, file_rail_ply, co, display_rail, plimit, 48, poly_draw_block);
-	}
+// 	if (scale < 256) {
+// 		graphics_draw(co->map_data, file_rail_ply, co, display_rail, plimit, 48, poly_draw_block);
+// 	}
 #ifdef DEBUG
 	profile_timer("map_draw");
 #endif
@@ -337,40 +348,45 @@ graphics_redraw(struct container *co)
 #endif
 	graphics_draw(co->map_data, file_street_str, co, display_street, slimit, 7, street_draw_block);
   
-	display_draw(disp[display_sea], gra, gra->gc[GC_WATER_FILL], NULL); 
-	display_draw(disp[display_wood], gra, gra->gc[GC_WOOD], NULL); 
-	display_draw(disp[display_other], gra, gra->gc[GC_TOWN_FILL], gra->gc[GC_TOWN_LINE]); 
-	display_draw(disp[display_other1], gra, gra->gc[GC_BUILDING], NULL); 
-	display_draw(disp[display_other2], gra, gra->gc[GC_BUILDING_2], NULL); 
-	display_draw(disp[display_other3], gra, gra->gc[GC_PARK], NULL); 
-	display_draw(disp[display_water], gra, gra->gc[GC_WATER_FILL], gra->gc[GC_WATER_LINE]); 
-	display_draw(disp[display_rail], gra, gra->gc[GC_RAIL], NULL); 
+	SDL_display_draw(disp[display_sea],GC_WATER_FILL, NULL,1); 
+	SDL_display_draw(disp[display_wood],GC_WOOD, NULL,1); 
+	SDL_display_draw(disp[display_other],GC_TOWN_FILL,GC_TOWN_LINE,1); 
+	SDL_display_draw(disp[display_other1],GC_BUILDING, NULL,1); 
+	SDL_display_draw(disp[display_other2],GC_BUILDING_2, NULL,1); 
+	SDL_display_draw(disp[display_other3],GC_PARK, NULL,1); 
+	SDL_display_draw(disp[display_water],GC_WATER_FILL,GC_WATER_LINE,1); 
+	SDL_display_draw(disp[display_rail],GC_RAIL, NULL,1); 
 	street_route_draw(co);
-	display_draw(disp[display_street_route], gra, gra->gc[GC_STREET_ROUTE], NULL); 
+
+	SDL_display_draw_alpha(disp[display_street_route], GC_STREET_ROUTE,NULL,bw[3]+7+w[3],255); 
+
+
+
 	if (bw[0]) {
-		display_draw(disp[display_street_no_pass], gra, gra->gc[GC_STREET_SMALL_B], NULL); 
-		display_draw(disp[display_street], gra, gra->gc[GC_STREET_SMALL_B], NULL); 
+		SDL_display_draw(disp[display_street_no_pass],GC_STREET_SMALL_B, NULL,bw[0]); 
+		SDL_display_draw(disp[display_street],GC_STREET_SMALL_B, NULL,bw[0]); 
 	}
 	if (bw[1]) 
-		display_draw(disp[display_street1], gra, gra->gc[GC_STREET_MID_B], NULL); 
+		SDL_display_draw(disp[display_street1],GC_STREET_MID_B, NULL,bw[1]); 
 	if (bw[2])
-		display_draw(disp[display_street2], gra, gra->gc[GC_STREET_BIG_B], NULL); 
+		SDL_display_draw(disp[display_street2],GC_STREET_BIG_B, NULL,bw[2]); 
 	if (bw[3])
-		display_draw(disp[display_street3], gra, gra->gc[GC_STREET_BIG2_B], NULL); 
+		SDL_display_draw(disp[display_street3],GC_STREET_BIG2_B, NULL,bw[3]); 
 	if (w[0]) {
-		display_draw(disp[display_street_no_pass], gra, gra->gc[GC_STREET_NO_PASS], NULL); 
-		display_draw(disp[display_street], gra, gra->gc[GC_STREET_SMALL], NULL); 
+		SDL_display_draw(disp[display_street_no_pass],GC_STREET_NO_PASS, NULL,1); 
+		SDL_display_draw(disp[display_street],GC_STREET_SMALL, NULL,1); 
 	}
 	if (w[1]) 
-		display_draw(disp[display_street1], gra, gra->gc[GC_STREET_MID], gra->gc[GC_BLACK]); 
-	display_draw(disp[display_street2], gra, gra->gc[GC_STREET_BIG], gra->gc[GC_BLACK]); 
-	display_draw(disp[display_street3], gra, gra->gc[GC_STREET_BIG2], gra->gc[GC_BLACK]); 
+		SDL_display_draw(disp[display_street1],GC_STREET_MID,GC_BLACK,w[1]); 
+	SDL_display_draw(disp[display_street2],GC_STREET_BIG,GC_BLACK,w[2]); 
+	SDL_display_draw(disp[display_street3],GC_STREET_BIG2,GC_BLACK,w[3]);
 	if (w[3] > 1) 
-		display_draw(disp[display_street3], gra, gra->gc[GC_STREET_BIG2_L], NULL); 
+		SDL_display_draw(disp[display_street3],GC_STREET_BIG2_L, NULL,w[3]); 
 
-	display_draw(disp[display_poi], gra, gra->gc[GC_BLACK], NULL); 
+// 	SDL_display_draw(disp[display_poi], gra, gra->gc[GC_BLACK], NULL); 
 
 
+/*
 #ifdef DEBUG
 	profile_timer("display_draw");
 #endif
@@ -390,21 +406,25 @@ graphics_redraw(struct container *co)
 	for (i = display_town+t[0] ; i < display_town+t[1] ; i++) 
 		display_labels(disp[i], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[1]);
 	for (i = display_town ; i < display_town+t[0] ; i++) 
-		display_labels(disp[i], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[2]);
+		display_labels(disp[i], gra, gra->gc[GC_TEXT_FG], gra->gc[GC_TEXT_BG], gra->font[2]);*/
 
-	for (i = display_town ; i < display_town+0x10 ; i++) 
-		display_draw(disp[i], gra, gra->gc[GC_BLACK], NULL); 
-	display_draw(disp[display_bti], gra, gra->gc[GC_BLACK], NULL); 
+// 	for (i = display_town ; i < display_town+0x10 ; i++) 
+// 		display_draw(disp[i], gra, gra->gc[GC_BLACK], NULL); 
+// 	display_draw(disp[display_bti], gra, gra->gc[GC_BLACK], NULL); 
+/*
 #ifdef DEBUG
 	profile_timer("labels");
 #endif
 	gra->draw_mode(gra, draw_mode_end);
 	for (i = 0 ; i < data_window_type_end; i++) {
 		data_window_end(co->data_window[i]);	
-	}
+	}*/
 #if 0
 	map_scrollbars_update(map);
 #endif
+
+
+	End_3D_View();
 }
 
 void

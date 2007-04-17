@@ -458,7 +458,7 @@ static void changed(GtkWidget *widget, struct search_param *search)
 
 	str=g_convert(gtk_entry_get_text(GTK_ENTRY(widget)),-1,"iso8859-1","utf-8",NULL,NULL,NULL);
 	/*FIXME free buffers with g_free() after search or when the dialog gets closed. */
-
+	printf("partial %s\n",str);
 	if (widget == entry_country) {
 		if (search->country_hash) g_hash_table_destroy(search->country_hash);
 		search->country_hash=NULL;
@@ -512,7 +512,7 @@ static void changed(GtkWidget *widget, struct search_param *search)
 				str = tmp;
 				i++;
 			}
-			printf("\"%s\"\n",str);
+			printf("Changed to \"%s\"\n",str);
 		}
 		printf("Town: '%s'\n", str);
 		if (strlen(str) > 1) {
@@ -579,7 +579,7 @@ int destination_address(struct container *co)
 	gchar *text[9]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 	struct search_param *search=&search_param2;
 
-#if 0
+#if 1
 	if (co->cursor) {
 		struct coord *c;
 		struct route_info *rt;

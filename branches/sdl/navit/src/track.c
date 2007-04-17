@@ -3,6 +3,7 @@
 #include "coord.h"
 #include "block.h"
 #include "street.h"
+#include "street_name.h"
 #include "profile.h"
 #include "track.h"
 
@@ -202,7 +203,7 @@ track_update(struct track *tr, struct coord *c, int angle)
 		t=t->next;
 	}
 	dist=transform_distance_sq(&tm->lpnt, c);
-	if (debug) printf("dist=%d id=0x%lx\n", dist, tm->segid);
+// 	if (1) printf("dist=%d id=0x%lx\n", dist, tm->segid);
 	*c=tm->lpnt;
 	tr->curr[0]=tm->c[0];
 	tr->curr[1]=tm->c[1];
@@ -210,6 +211,7 @@ track_update(struct track *tr, struct coord *c, int angle)
 
 	// printf("pos 0x%lx,0x%lx value %d dist %d angle %d vs %d (%d)\n", c->x, c->y, tm->value, dist, angle, tm->angle, track_angle_delta(angle, tm->angle, 0));
 	g_assert(dist < 10000);
+
 #if 0
 	profile_timer("track_update end");
 #endif

@@ -12,7 +12,7 @@ plugin_load(void)
 	void (*init)(void);
 
 	if (! h) {
-		/* printf("can't load '%s', Error '%s'\n", plugin, dlerror()); */
+		printf("can't load '%s', Error '%s'\n", plugin, dlerror());
 	} else {
 		init=dlsym(h,"plugin_init");
 		if (init) 

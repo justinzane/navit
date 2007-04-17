@@ -219,11 +219,16 @@ route_set_destination(struct route *this, struct coord *dest)
 	struct route_info *rt;
 
 	rt=route_find_nearest_street(this->map_data, dest);
+	// Crashes here
 	route_find_point_on_street(rt);
+	printf("&4\n");
 	if (this->dst)
 		g_free(this->dst);
+	printf("&5\n");
 	this->dst=rt;
+	printf("&6\n");
 	route_do_start(this, this->pos, this->dst);
+	printf("&7\n");
 }
 
 struct coord *
@@ -411,6 +416,23 @@ route_time(int type, int len)
 			type=1;
 		}
 	}
+
+	// The following types are unknow (for France at least) for the moment. We assign a high cost.
+	if(	
+		(type==0x22)||
+		(type==0x23)||
+		(type==0x25)||
+		(type==0x26)||
+		(type==0x63)||
+		(type==0x64)||
+		(type==0x65)||
+		(type==0x66)||
+		(type==0x68))
+		{
+			return len*36;
+	}
+
+
 	if(speed_list[type & 0x3f]<1 || speed_list[type & 0x3f]>150){
 		// The road here hasn't its speed correctly set up.
 		// I think it's best to assign it a high cost for the moment.
@@ -865,7 +887,6 @@ route_find_point_on_street(struct route_info *rt_inf)
 	p=rt_inf->str_inf.p;
 	end=(unsigned char *)rt_inf->blk_inf.block;
 	end+=rt_inf->blk_inf.block->size;
-
 	route_process_street3(&rt_inf->blk_inf, &rt_inf->str_inf, &p, end, rt_inf);
 }
 

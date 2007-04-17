@@ -8,15 +8,18 @@
 #include "data.h"
 #include "tree.h"
 
-void
+int
 street_name_get_by_id(struct street_name *name, struct map_data *mdat, unsigned long id)
 {
 	unsigned char *p;
         if (id) {
 		p=mdat->file[file_strname_stn]->begin+id+0x2000;
 		street_name_get(name, &p);
+		return 1;
+	} else {
+		return 0;
 	}
-}            
+}
 
 void
 street_name_get(struct street_name *name, unsigned char **p)

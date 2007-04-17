@@ -33,7 +33,7 @@ cursor_pos_get(struct cursor *this)
 }
 
 static void
-cursor_draw(struct cursor *this, struct point *pnt, double *speed, double *dir)
+cursor_draw(struct cursor *this, struct point *pnt, double speed, double *dir)
 {
 	int x=this->cursor_pnt.x;
 	int y=this->cursor_pnt.y;
@@ -58,7 +58,7 @@ cursor_draw(struct cursor *this, struct point *pnt, double *speed, double *dir)
 		cpnt[0].x=x;
 		cpnt[0].y=y;
 		gra->draw_circle(gra, this->cursor_gc, &cpnt[0], r*2);
-		if (*speed > 2.5) {
+		if (speed > 2.5) {
 			dx=sin(M_PI*dir_i/180);
 			dy=-cos(M_PI*dir_i/180);
 
@@ -162,6 +162,7 @@ cursor_update(struct vehicle *v, void *t)
 	double *dir;
 
 	if (v) {
+	
 		pos=vehicle_pos_get(v);	
 		dir=vehicle_dir_get(v);
 		track_update(this->co->track, pos, (int)(*dir));
@@ -176,15 +177,16 @@ cursor_update(struct vehicle *v, void *t)
 			cursor_map_reposition(this, pos, dir);
 			transform(this->co->trans, pos, &pnt);
 		}
-		if (cursor_map_reposition_boundary(this, pos, dir, &pnt))
+		if (cursor_map_reposition_boundary(this, pos, dir, &pnt)){
 			transform(this->co->trans, pos, &pnt);
-		cursor_draw(this, &pnt, vehicle_speed_get(v), vehicle_dir_get(v));
+		}
+ 		cursor_draw(this, &pnt, vehicle_speed_get(v), vehicle_dir_get(v));
 	}
 	compass_draw(this->co->compass, this->co);
-	osd_draw(this->co->osd, this->co);
+
 }
 
-extern void *vehicle;
+// extern void *vehicle;
 
 struct cursor *
 cursor_new(struct container *co, struct vehicle *v)
