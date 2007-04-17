@@ -461,8 +461,8 @@ void GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alph
 	glPushMatrix();
 	glTranslatef(cx,cy,0);
 // 	glColor4f( 0,0,0,1);
-// 	glRasterPos2f( 1,1 );
-// 	glPrint(label);
+ 	glRasterPos2f( 1,1 );
+ 	glPrint(label);
 	glRotatef(angle,0.0,0.0,1.0);
 
 	extern int color[][3];
@@ -473,7 +473,7 @@ void GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alph
 
 // 	DrawText(label,w,h);
 
-//  	printf("Drawing %s\n",label);
+  	printf("Drawing %s\n",label);
 //  	printf ("Seg (%i,%i) -> (%i,%i) len : %i, angle = %.2f drawn at (%.2f,%.2f)\n",x1,y1,x2,y2,w,angle,cx+w/2,cy+h/2);
 
 	maxx=1;
@@ -481,18 +481,15 @@ void GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alph
 
 //   	Load_texture("./gfx/zoomin.png");
 //  	glLoadIdentity();
-	glBegin( GL_QUADS );
-		glTexCoord2i(0,0);
+	glBegin( GL_POLYGON );
 			glVertex2f( -w/2,-h/2 );
-		glTexCoord2i(0,maxy);
+			glVertex2f( -w/2-4,0 );
 			glVertex2f( -w/2,+h/2 );
-		glTexCoord2i(maxx,maxy);
 			glVertex2f( +w/2,+h/2 );
-		glTexCoord2i(maxx,0);
+			glVertex2f( +w/2+4,0 );
 			glVertex2f( +w/2,-h/2 );
+			glVertex2f( -w/2,+h/2 );
 	glEnd();
-
- 	glDisable(GL_TEXTURE_2D);
 
 
 	glPopMatrix();
