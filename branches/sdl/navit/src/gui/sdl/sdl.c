@@ -13,7 +13,6 @@
 #include "town.h"
 #include "block.h"
 
-#include "sdl_drawing.h"
 #include "coord.h"
 
 #include <GL/gl.h>
@@ -24,14 +23,7 @@
 #define false 0
 #define true 1
 
-char * old_message;
 
-SDL_Color Tcolor;
-SDL_Rect rectsrc;
-SDL_Rect rectdest;
-GLuint surface;
-float maxx, maxy;
-float loop=0;
 
 struct button_item button_list[]={
 	{10,560,32,32,SDLK_PAGEUP,"./gfx/zoomin.png"},
@@ -222,13 +214,14 @@ void Load_texture(char picto[256]){
 	if(button_texture = IMG_Load (picto )){
 // 		printf("Loaded %s\n",picto);
 	} else {
-		printf("Cannot load button texture %s : \n",picto);
+		printf("Cannot load texture %s : \n",picto);
 	}
 	
 	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, button_texture->w, button_texture->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, button_texture-> pixels);
 	SDL_FreeSurface(button_texture);
 
 }
+
 
 void draw_destination_dialog(){
 	
@@ -261,11 +254,11 @@ static int puissance2sup(int i)
  
 
  
-void SetPosition(int x, int y)
-{
-	rectdest.x = x;
-	rectdest.y = y;
-}
+// void SetPosition(int x, int y)
+// {
+// 	rectdest.x = x;
+// 	rectdest.y = y;
+// }
  
 void SDL_osd(double speed){
 
@@ -329,9 +322,9 @@ void SDL_osd(double speed){
 		blk=route_info_get_block(rt);
 		printf("segid 0x%lx nameid 0x%lx\n", st->segid, st->nameid);
 		if(street_name_get_by_id(&name, blk->mdata, st->nameid)){
- 			sprintf(osd_data,"%s %s",name.name1,name.name2);
+ 			sprintf(osd_data,"(%s %s)",name.name1,name.name2);
 		} else {
-			sprintf(osd_data,"");
+			sprintf(osd_data,"<?>");
 		}
 		glRasterPos2f( 125,545 );
 		glPrintBig( osd_data );
@@ -348,7 +341,7 @@ void SDL_osd(double speed){
 
 
 
-// 	draw_arrow(GL_osd.next_angle);
+//  	draw_arrow(GL_osd.next_angle);
 
 	glEnable(GL_BLEND);
 	Draw_buttons();
@@ -358,12 +351,7 @@ void SDL_osd(double speed){
 }
 
 void Start_3D_View(){
-//  	glViewport( 0, 0, 512, 512);
-// 	glLoadIdentity();
-	loop+=0.1;
 	glLoadIdentity();
-	printf("loop is now %i\n",loop);
-// 	glRotatef(loop,1.0f,0,0);
 }
 
 
@@ -415,35 +403,14 @@ void Display_Scene(){
 // 	glFlush();
 }
 
-void GLDrawLineRGBA_OLD( const Sint32 x1, const Sint32 y1, const Sint32 x2, const Sint32 y2, GLint fill, GLint alpha, const Uint16 width ) { 
-	glLineWidth( width );
-	if(width>2){
-		glEnable( GL_LINE_SMOOTH );
- 		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
- 		glEnable( GL_BLEND );
-	}
-	extern int color[][3];
-	float r=(float)(color[fill][0])/65535;
-	float g=(float)(color[fill][1])/65535;
-	float b=(float)(color[fill][2])/65535;
-
-	glColor4f( r, g, b, (float)alpha/255);
-
-	glBegin( GL_LINES );
-		glVertex2i( x1, y1 );
-		glVertex2i( x2, y2 );
-	glEnd();
- 	glDisable( GL_BLEND );
-// 	GLDrawLineRGBA_new(x1,y1,x2,y2,fill,alpha,width);
-}
 
 void GLDrawLineRGBA( int x1, int y1, int x2, int y2, int fill, int alpha, int h) { 
 	GLDrawLineRGBA_labelled(x1,y1,x2,y2,fill,alpha,h,"");
 }
 
-void GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alpha, int h,char * label) { 
+void GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alpha, int linewidth,char * label) { 
 
-// 	glEnable( GL_POLYGON_SMOOTH );
+//  	glEnable( GL_POLYGON_SMOOTH );
 
 	float dx=x2-x1;
 	float dy=y2-y1;
@@ -456,13 +423,13 @@ void GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alph
 
 	float angle=atan (dy/dx) * 180 / PI;
 
-	h=8;
+// 	h=8;
 
 	glPushMatrix();
 	glTranslatef(cx,cy,0);
-// 	glColor4f( 0,0,0,1);
+ 	glColor4f( 0,0,0,1);
  	glRasterPos2f( 1,1 );
- 	glPrint(label);
+//  	glPrint(label);
 	glRotatef(angle,0.0,0.0,1.0);
 
 	extern int color[][3];
@@ -473,22 +440,20 @@ void GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alph
 
 // 	DrawText(label,w,h);
 
-  	printf("Drawing %s\n",label);
+//   	printf("Drawing %s\n",label);
 //  	printf ("Seg (%i,%i) -> (%i,%i) len : %i, angle = %.2f drawn at (%.2f,%.2f)\n",x1,y1,x2,y2,w,angle,cx+w/2,cy+h/2);
 
-	maxx=1;
-	maxy=1;
 
 //   	Load_texture("./gfx/zoomin.png");
 //  	glLoadIdentity();
 	glBegin( GL_POLYGON );
-			glVertex2f( -w/2,-h/2 );
+			glVertex2f( -w/2,-linewidth/2 );
 			glVertex2f( -w/2-4,0 );
-			glVertex2f( -w/2,+h/2 );
-			glVertex2f( +w/2,+h/2 );
+			glVertex2f( -w/2,+linewidth/2 );
+			glVertex2f( +w/2,+linewidth/2 );
 			glVertex2f( +w/2+4,0 );
-			glVertex2f( +w/2,-h/2 );
-			glVertex2f( -w/2,+h/2 );
+			glVertex2f( +w/2,-linewidth/2 );
+			glVertex2f( -w/2,+linewidth/2 );
 	glEnd();
 
 

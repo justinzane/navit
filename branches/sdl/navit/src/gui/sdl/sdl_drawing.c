@@ -6,7 +6,6 @@ void gl_cursor(int x,int y){
 
 	float cursor_size=15.0f;
 	glColor4f(0.0f,1.0f,0.0f,0.5f);
-	
 
 	glBegin(GL_TRIANGLES);
 		glVertex3f( x, y-cursor_size, 0.0f);
@@ -36,5 +35,4 @@ void draw_arrow(int angle){
 	glEnd();
 // 	glDisable(GL_BLEND);
 }
-
 
