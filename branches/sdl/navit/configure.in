@@ -14,9 +14,9 @@ pkg_modules="glib-2.0 gtk+-2.0 ORBit-2.0 freetype2"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 AC_SUBST(PACKAGE_CFLAGS)
 AC_SUBST(PACKAGE_LIBS)
-AC_CHECK_HEADER(libspeechd.h, AC_DEFINE([HAVE_LIBSPEECHD],[],Define to 1 if you have the <libspeechd.h> header file.) LIBS="$LIBS -lspeechd",  AC_MSG_WARN([*** no libspeechd.h -- Speech output disabled]))
+#AC_CHECK_HEADER(libspeechd.h, AC_DEFINE([HAVE_LIBSPEECHD],[],Define to 1 if you have the <libspeechd.h> header file.) LIBS="$LIBS -lspeechd",  AC_MSG_WARN([*** no libspeechd.h -- Speech output disabled]))
 AC_CHECK_HEADER(gps.h, AC_DEFINE([HAVE_LIBGPS],[],Define to 1 if you have the <gps.h> header file.) LIBS="$LIBS -lgps",  AC_MSG_WARN([*** no gps.h -- gpsd support disabled]))
-
+AC_CHECK_HEADER(SDL/SDL.h, AC_DEFINE([HAVE_LIBSDL],[],Define to 1 if you have the <sdl.h> header file.) LIBS="$LIBS -lSDL -lpthread  -lSDL_image -lSDL_gfx -lSDL_ttf -lGL -lGLU -lfreetype -lz", AC_MSG_WARN([*** no sdl.h -- SDL support disabled]))
 
 AC_CONFIG_SUBDIRS(src/fib-1.0)
 
@@ -27,4 +27,7 @@ src/gui/Makefile
 src/gui/gtk/Makefile
 src/graphics/Makefile
 src/graphics/gtk_drawing_area/Makefile
+src/plugins/Makefile
+src/plugins/poi_geodownload/Makefile
+src/plugins/poi_geodownload/libmdb/Makefile
 ])
