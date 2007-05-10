@@ -70,7 +70,7 @@ int
 transform(struct transformation *t, enum projection pro, struct coord *c, struct point *p)
 {
 	struct coord c1;
-#ifndef USE_FLOAT
+#ifdef AVOID_FLOAT
 	int xc,yc;
 #else
         double xc,yc;
@@ -95,7 +95,7 @@ transform(struct transformation *t, enum projection pro, struct coord *c, struct
 	  	xc=xcn;
 	  	yc=ycn;
 	}
-#ifndef USE_FLOAT
+#ifdef AVOID_FLOAT
         xc=xc*16.0/(double)(t->scale);
         yc=yc*16.0/(double)(t->scale);
 #else
