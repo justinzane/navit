@@ -49,11 +49,11 @@ plugin_init(void)
 	if (! g_module_supported()) {
 		g_error("plugins not supported");
 	}
-	plugin_load("gui/gtk/gtk.so");
-	plugin_load("graphics/gtk_drawing_area/gtk_drawing_area.so");
-	plugin_load("data/mg/mg.so");
-	plugin_load("data/textfile/textfile.so");
-	plugin_load("data/garmin_img/garmin_img.so");
+	plugin_load("gui/gtk/.libs/libgui_gtk.so.0");
+	plugin_load("graphics/gtk_drawing_area/.libs/libgraphics_gtk_drawing_area.so.0");
+	plugin_load("data/mg/.libs/libdata_mg.so.0");
+	plugin_load("data/textfile/.libs/libdata_textfile.so.0");
+	plugin_load("data/garmin_img/.libs/libdata_garmin_img.so.0");
 }
 
 

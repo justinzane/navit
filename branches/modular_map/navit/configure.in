@@ -10,6 +10,9 @@ fi
 
 # CFLAGS="$CFLAGS -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DGDK_PIXBUF_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED"
 
+AC_DISABLE_STATIC
+AC_PROG_LIBTOOL
+
 AC_ARG_ENABLE(avoid-unaligned,
 [  --enable-avoid-unaligned          avoid unaligned accesses],
 AVOID_UNALIGNED=$enableval, AVOID_UNALIGNED=no)
@@ -26,8 +29,14 @@ USE_LIBGPS=$enableval, USE_LIBGPS=yes)
 
 pkg_modules="glib-2.0 gtk+-2.0 ORBit-2.0 freetype2"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
+PKG_CHECK_MODULES(IMLIB2, [imlib2], [imlib2_pkgconfig=yes], [imlib2_pkgconfig=no])
+if test "x$imlib2_pkgconfig" = "xyes"; then
+   AC_DEFINE(HAVE_IMLIB2, 1, [Define to 1 if you have imlib2])
+fi
 AC_SUBST(PACKAGE_CFLAGS)
 AC_SUBST(PACKAGE_LIBS)
+AC_SUBST(IMLIB2_CFLAGS)
+AC_SUBST(IMLIB2_LIBS)
 AC_CHECK_HEADER(libspeechd.h, AC_DEFINE([HAVE_LIBSPEECHD],[],Define to 1 if you have the <libspeechd.h> header file.) LIBS="$LIBS -lspeechd",  AC_MSG_WARN([*** no libspeechd.h -- Speech output disabled]))
 if test x"${USE_LIBGPS}" = xyes
 then

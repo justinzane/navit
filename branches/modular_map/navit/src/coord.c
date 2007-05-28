@@ -1,5 +1,6 @@
 #include <glib.h>
 #include "coord.h"
+#include "projection.h"
 /**
  * @defgroup coord Coordinate handling functions
  * @{
@@ -103,6 +104,93 @@ coord_rect_extend(struct coord_rect *r, struct coord *c)
 		r->rl.y=c->y;
 	if (c->y > r->lu.y)
 		r->lu.y=c->y;
+}
+
+	/* [Proj:][Ð]DMM.ss[S][S]... N/S [D][D]DMM.ss[S][S]... E/W */
+	/* [Proj:][-][D]D.d[d]... [-][D][D]D.d[d]... */
+	/* [Proj:][-]0xX [-]0xX */
+
+int
+coord_parse(const char *c_str, enum projection pro, struct coord *c_ret)
+{
+	int debug=0;
+	char *proj=NULL,*s,*co;
+	const char *str=c_str;
+	int args,ret;
+	struct coord_geo g;
+	struct coord c;
+	enum projection str_pro=projection_none;
+
+	if (debug)	
+		printf("coord_parse %s\n", str);
+	s=index(str,' ');
+	co=index(str,':');
+	if (co && co < s) {
+		proj=malloc(co-str+1);
+		strncpy(proj, str, co-str);
+		proj[co-str]='\0';
+		if (debug)
+			printf("projection=%s\n", proj);
+		str=co+1;
+		s=index(str,' ');
+	}
+	while (*s == ' ') {
+		s++;
+	}
+	if (!strncmp(str, "0x", 2) || !strncmp(str,"-0x", 3)) {
+		args=sscanf(str, "%i %i%n",&c.x, &c.y, &ret);
+		if (args < 2)
+			return 0;
+		if (debug) {
+			printf("str='%s' x=0x%x y=0x%x c=%d\n", str, c.x, c.y, ret);
+			printf("rest='%s'\n", str+ret);
+		}
+
+		if (str_pro == projection_none) 
+			str_pro=projection_mg;
+		if (str_pro == projection_mg) {
+			*c_ret=c;
+		} else {
+			printf("help\n");
+		}
+	} else if (*s == 'N' || *s == 'n' || *s == 'S' || *s == 's') {
+		printf("str='%s'\n", str);
+		double lng, lat;
+		char ns, ew;
+		args=sscanf(str, "%lf %c %lf %c%n", &lat, &ns, &lng, &ew, &ret);
+		if (args < 4)
+			return 0;
+		if (str_pro == projection_none) {
+			g.lat=floor(lat/100);
+			lat-=g.lat*100;
+			g.lat+=lat/60;
+			g.lng=floor(lng/100);
+			lng-=g.lng*100;
+			g.lng+=lng/60;
+			transform_from_geo(pro, &g, c_ret);
+		}
+		if (debug) {
+			printf("str='%s' x=%f ns=%c y=%f ew=%c c=%d\n", str, lng, ns, lat, ew, ret);
+			printf("rest='%s'\n", str+ret);
+		}
+	} else {
+		double lng, lat;
+		args=sscanf(str, "%lf %lf%n", &lng, &lat, &ret);
+		if (args < 2)
+			return 0;
+		printf("str='%s' x=%f y=%f  c=%d\n", str, lng, lat, ret);
+		printf("rest='%s'\n", str+ret);
+	}
+	if (debug)
+		printf("rest='%s'\n", str+ret);
+	ret+=str-c_str;
+	if (debug) {
+		printf("args=%d\n", args);
+		printf("ret=%d delta=%d ret_str='%s'\n", ret, str-c_str, c_str+ret);
+	}
+	if (proj)
+		free(proj);
+	return ret;
 }
 
 /** @} */

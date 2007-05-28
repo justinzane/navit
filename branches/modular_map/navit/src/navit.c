@@ -9,6 +9,7 @@
 #include "menu.h"
 #include "graphics.h"
 #include "cursor.h"
+#include "popup.h"
 
 struct navit {
 	GList *mapsets;
@@ -21,7 +22,7 @@ struct navit {
 	struct compass *compass;
 	struct map_data *map_data;
 	struct menu *menu;
-	struct toolbar *toolbar;
+	struct menu *toolbar;
 	struct statusbar *statusbar;
 	struct menu *menubar;
 	struct route *route;
@@ -56,15 +57,17 @@ navit_draw(struct navit *this)
 }
 
 static void
-navit_resize(struct navit *this, int w, int h)
+navit_resize(void *data, int w, int h)
 {
+	struct navit *this=data;
 	transform_set_size(this->trans, w, h);
 	navit_draw(this);
 }
 
 static void
-navit_button(struct navit *this, int pressed, int button, struct point *p)
+navit_button(void *data, int pressed, int button, struct point *p)
 {
+	struct navit *this=data;
 	if (pressed && button == 1) {
 		int border=16;
 		struct transformation *t=this->trans;
@@ -75,6 +78,8 @@ navit_button(struct navit *this, int pressed, int button, struct point *p)
 			navit_draw(this);
 		}
 	}
+	if (pressed && button == 3)
+		popup(this, button, p);
 }
 
 void
@@ -96,13 +101,15 @@ navit_zoom_out(struct navit *this, int factor)
 }
 
 struct navit *
-navit_new(char *ui, char *graphics, struct coord_geo *center, double zoom)
+navit_new(char *ui, char *graphics, struct coord *center, enum projection pro, int zoom)
 {
 	struct navit *this=g_new0(struct navit, 1);
+	struct coord c;
 
 	this->trans=transform_new();
+	transform_set_projection(this->trans, pro);
 
-	transform_setup(this->trans, 1300000,7000000,8192,0);
+	transform_setup(this->trans, center, zoom, 0);
 	/* this->flags=g_new0(struct map_flags, 1); */
 	this->display_list=g_hash_table_new(NULL,NULL);
 	this->gui=gui_new(ui, 792, 547);
@@ -168,15 +175,15 @@ navit_init(struct navit *this)
 	while ((map=mapset_next(ms, &handle))) {
 		char *s=g_strdup_printf("%s:%s", map_get_type(map), map_get_filename(map));
 		men2=menu_add(men, s, menu_type_toggle, navit_map_toggle, this, map);
-		menu_set_toggle(men2, 1);
+		menu_set_toggle(men2, map_get_active(map));
 		g_free(s);
 	}	
 	// menu_add(map, "Test", menu_type_menu, NULL, NULL);
 	men=menu_add(this->menubar, "Layout", menu_type_submenu, NULL, NULL, NULL);
 	menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
 	men=menu_add(this->menubar, "Projection", menu_type_submenu, NULL, NULL, NULL);
-	menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, projection_mg);
-	menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, projection_garmin);
+	menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, (void *)projection_mg);
+	menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, (void *)projection_garmin);
 
 }
 
@@ -199,8 +206,27 @@ navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c)
 }
 
 
+struct gui *
+navit_get_gui(struct navit *this)
+{
+	return this->gui;
+}
+
+struct transformation *
+navit_get_trans(struct navit *this)
+{
+	return this->trans;
+}
+
+GHashTable *
+navit_get_display_list(struct navit *this)
+{
+	return this->display_list;
+}
+
 void
 navit_destroy(struct navit *this)
 {
 	g_free(this);
 }
+

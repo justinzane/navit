@@ -1,1 +1,4 @@
 SUBDIRS=src
+pkglib_DATA = README
+EXTRA_DIST = README
+

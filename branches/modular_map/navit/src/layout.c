@@ -106,3 +106,14 @@ icon_new(char *src)
 	return e;	
 }
 
+struct element *
+image_new(void)
+{
+	struct element *e;
+
+	e = g_malloc0(sizeof(*e));
+	e->type=element_image;
+
+	return e;	
+}
+

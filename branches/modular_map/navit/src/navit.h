@@ -1,16 +1,22 @@
 /* prototypes */
+enum projection;
 struct color;
-struct coord_geo;
+struct coord;
+struct gui;
 struct layout;
 struct mapset;
 struct navit;
+struct transformation;
 struct vehicle;
 void navit_add_mapset(struct navit *this, struct mapset *ms);
 void navit_add_layout(struct navit *this, struct layout *lay);
 void navit_draw(struct navit *this);
 void navit_zoom_in(struct navit *this, int factor);
 void navit_zoom_out(struct navit *this, int factor);
-struct navit *navit_new(char *ui, char *graphics, struct coord_geo *center, double zoom);
+struct navit *navit_new(char *ui, char *graphics, struct coord *center, enum projection pro, int zoom);
 void navit_init(struct navit *this);
 void navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c);
+struct gui *navit_get_gui(struct navit *this);
+struct transformation *navit_get_trans(struct navit *this);
+GHashTable *navit_get_display_list(struct navit *this);
 void navit_destroy(struct navit *this);

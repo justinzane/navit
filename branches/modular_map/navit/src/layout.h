@@ -5,7 +5,7 @@ struct element_line;
 struct element_text;
 
 struct element {
-	enum { element_point, element_polyline, element_polygon, element_circle, element_icon } type;
+	enum { element_point, element_polyline, element_polygon, element_circle, element_icon, element_image } type;
 	struct color color;
 	int label_size;
 	union {
@@ -37,16 +37,21 @@ struct layer { char *name; int details; GList *itemtypes; };
 
 struct layout { char *name; GList *layers; };
 
-
-
-struct layout * layout_new(char *name);
-struct layer * layer_new(char *name, int datails);
+/* prototypes */
+struct color;
+struct element;
+struct itemtype;
+struct layer;
+struct layout;
+struct layout *layout_new(char *name);
+struct layer *layer_new(char *name, int details);
 void layout_add_layer(struct layout *layout, struct layer *layer);
-struct itemtype * itemtype_new(int zoom_min, int zoom_max);
-void layer_add_itemtype(struct layer *layer, struct itemtype * itemtype);
-void itemtype_add_element(struct itemtype *itemtype, struct element *element);
+struct itemtype *itemtype_new(int zoom_min, int zoom_max);
 void itemtype_add_type(struct itemtype *this, enum item_type type);
-struct element * polygon_new(struct color *color);
-struct element * polyline_new(struct color *color, int width);
-struct element * circle_new(struct color *color, int radius, int width, int label_size);
-struct element * icon_new(char *src);
+void layer_add_itemtype(struct layer *layer, struct itemtype *itemtype);
+void itemtype_add_element(struct itemtype *itemtype, struct element *element);
+struct element *polygon_new(struct color *color);
+struct element *polyline_new(struct color *color, int width);
+struct element *circle_new(struct color *color, int radius, int width, int label_size);
+struct element *icon_new(char *src);
+struct element *image_new(void);

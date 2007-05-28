@@ -47,6 +47,15 @@ gui_toolbar_new(struct gui *gui, struct navit *nav)
 	return this;
 }
 
+struct menu *
+gui_popup_new(struct gui *gui, struct navit *nav)
+{
+	struct menu *this;
+	this=g_new0(struct menu, 1);
+	this->priv=gui->meth.popup_new(gui->priv, &this->meth, nav);
+	return this;
+}
+
 int
 gui_set_graphics(struct gui *this, struct graphics *gra)
 {

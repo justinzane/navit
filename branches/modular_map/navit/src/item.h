@@ -27,12 +27,14 @@ struct item {
 	void *priv_data;
 };
 
-
+/* prototypes */
+struct attr;
+struct coord;
+struct item;
 void item_coord_rewind(struct item *it);
 int item_coord_get(struct item *it, struct coord *c, int count);
 void item_attr_rewind(struct item *it);
 int item_attr_get(struct item *it, enum attr_type attr_type, struct attr *attr);
-struct item * item_new(char *type, int zoom);
-
+struct item *item_new(char *type, int zoom);
 enum item_type item_from_name(char *name);
-char * item_to_name(enum item_type item);
+char *item_to_name(enum item_type item);

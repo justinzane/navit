@@ -4,21 +4,24 @@ fib-1.0 fib-1.0/Makefile.in: fib-1.0/Makefile.am
 	cd fib-1.0
 	./configure
 
-AM_CPPFLAGS = @PACKAGE_CFLAGS@
+AM_CPPFLAGS = @PACKAGE_CFLAGS@ @IMLIB2_CFLAGS@
 
 
 bin_PROGRAMS = navit
+
+pkglib_DATA = navit.xml
+EXTRA_DIST = navit.xml
 
 navit_SOURCES = attr.c compass.c coord.c country.c cursor.c data_window.c debug.c destination.c \
 	file.c graphics.c gui.c item.c layout.c log.c main.c map.c \
 	mapset.c maptype.c menu.c navit.c navigation.c param.c phrase.c plugin.c popup.c \
 	profile.c python.c route.c search.c speech.c transform.c track.c \
-	util.c vehicle.c xmlconfig.c block.h compass.h container.h coord.h country.h \
-	cursor.h data.h data_window.h data_window_int.h debug.h destination.h display.h draw_info.h \
-	file.h graphics.h gtkext.h log.h layout.h main.h map-share.h map.h\
-	map_data.h mapset.h maptype.h menu.h navigation.h \
-	param.h phrase.h plugin.h point.h popup.h route.h search.h speech.h statusbar.h \
+	util.c vehicle.c xmlconfig.c attr.h attr_def.h color.h compass.h coord.h country.h \
+	cursor.h data.h data_window.h data_window_int.h debug.h destination.h draw_info.h \
+	file.h graphics.h gtkext.h gui.h item.h item_def.h log.h layout.h main.h map-share.h map.h\
+	map_data.h mapset.h maptype.h menu.h navigation.h navit.h \
+	param.h phrase.h plugin.h point.h plugin_def.h projection.h popup.h route.h search.h speech.h statusbar.h \
 	toolbar.h transform.h track.h util.h vehicle.h xmlconfig.h
 
-navit_LDADD = @PACKAGE_LIBS@ gui/gtk/gtk.so graphics/gtk_drawing_area/gtk_drawing_area.so -Lfib-1.0 -lfib
+navit_LDADD = @PACKAGE_LIBS@ @IMLIB2_LIBS@ -Lfib-1.0 -lfib
 

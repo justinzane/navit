@@ -10,13 +10,15 @@ void transform_to_geo(enum projection pro, struct coord *c, struct coord_geo *g)
 void transform_from_geo(enum projection pro, struct coord_geo *g, struct coord *c);
 int transform(struct transformation *t, enum projection pro, struct coord *c, struct point *p);
 void transform_reverse(struct transformation *t, struct point *p, struct coord *c);
+enum projection transform_get_projection(struct transformation *this);
+void transform_set_projection(struct transformation *this, enum projection pro);
 void transform_rect(struct transformation *this, enum projection pro, struct coord_rect *r);
 struct coord *transform_center(struct transformation *this);
 int transform_contains(struct transformation *this, enum projection pro, struct coord_rect *r);
 void transform_set_angle(struct transformation *t, int angle);
 int transform_get_angle(struct transformation *this, int angle);
 void transform_set_size(struct transformation *t, int width, int height);
-void transform_setup(struct transformation *t, int x, int y, int scale, int angle);
+void transform_setup(struct transformation *t, struct coord *c, int scale, int angle);
 void transform_setup_source_rect_limit(struct transformation *t, struct coord *center, int limit);
 void transform_setup_source_rect(struct transformation *t);
 long transform_get_scale(struct transformation *t);

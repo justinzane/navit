@@ -41,6 +41,15 @@ file_create(char *name)
         return file;
 }
 
+int
+file_exists(char *name)
+{
+	struct stat buf;
+	if (! stat(name, &buf))
+		return 1;
+	return 0;
+}
+
 void
 file_remap_readonly(struct file *f)
 {

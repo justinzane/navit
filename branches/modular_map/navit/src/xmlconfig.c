@@ -3,35 +3,47 @@
 #include <string.h>
 #include "xmlconfig.h"
 #include "navit.h"
+#include "vehicle.h"
 #include "mapset.h"
 #include "map.h"
 #include "layout.h"
+#include "projection.h"
+#include "coord.h"
 
 
-struct elem_data {
-	GList *elem_stack;
-	GList *token_stack;
-};
+struct xmlstate {
+	const gchar **attribute_names;
+	const gchar **attribute_values;
+	struct xmlstate *parent;
+	void *element_object;
+	const gchar *element;
+	GError **error;
+	struct element_func *func;
+} *xmlstate_root;
 
 
-static char * find_attribute(const char *attribute, const char **attribute_name, const char **attribute_value)
+static char * find_attribute(struct xmlstate *state, const char *attribute, int required)
 {
+	const gchar **attribute_name=state->attribute_names;
+	const gchar **attribute_value=state->attribute_values;
 	while(*attribute_name) {
 		if(! g_ascii_strcasecmp(attribute,*attribute_name))
 			return g_strdup(*attribute_value);
 		attribute_name++;
 		attribute_value++;
 	}
+	if (required) 
+		g_set_error(state->error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT, "element '%s' is missing attribute '%s'", state->element, attribute);
 	return NULL;
 }
 
 static int
-find_color(const char **attribute_name, const char **attribute_value, struct color *color)
+find_color(struct xmlstate *state, int required, struct color *color)
 {
 	char *value;
 	int r,g,b;
 
-	value=find_attribute("color", attribute_name, attribute_value);
+	value=find_attribute(state, "color", required);
 	if (! value)
 		return 0;
 
@@ -43,14 +55,14 @@ find_color(const char **attribute_name, const char **attribute_value, struct col
 }
 
 static int
-find_zoom(const char **attribute_name, const char **attribute_value, int *min, int *max)
+find_zoom(struct xmlstate *state, int required, int *min, int *max)
 {
 	char *value, *pos;
 	int ret;
 
 	*min=0;
 	*max=15;
-	value=find_attribute("zoom", attribute_name, attribute_value);
+	value=find_attribute(state, "zoom", required);
 	if (! value)
 		return 0;
 	pos=index(value, '-');
@@ -65,38 +77,255 @@ find_zoom(const char **attribute_name, const char **attribute_value, int *min, i
 }
 
 static int
+find_boolean(struct xmlstate *state, const char *attribute, int deflt, int required)
+{
+	char *value;
+
+	value=find_attribute(state, attribute, required);
+	if (! value)
+		return deflt;
+	if (g_ascii_strcasecmp(value,"no") && g_ascii_strcasecmp(value,"0") && g_ascii_strcasecmp(value,"false")) 
+		return 1;
+	return 0;
+}
+
+static int
 convert_number(const char *val)
 {
 	return g_ascii_strtoull(val,NULL,0);
 }
 
 static int
-parent(char *actual, char *required, GError **error)
+xmlconfig_navit(struct xmlstate *state)
 {
-	if (! actual && ! required)
-		return 1;
-	if (! actual || ! required || g_ascii_strcasecmp(actual, required) ) {
-		g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
-				"Element '%s' within unexpected context. Expected '%s'",
-				actual, required);
-		return 0;
+	char *value;
+	int zoom=0;
+	struct coord c;
+	enum projection pro=projection_mg;
+
+	value=find_attribute(state, "zoom", 0);
+	if (value) 
+		zoom=convert_number(value);
+	if (! zoom)
+		zoom=256;
+	value=find_attribute(state, "center", 0);
+	if (! value || ! coord_parse(value, pro, &c)) {
+		c.x=1300000;
+		c.y=7000000;
 	}
+
+	state->element_object = navit_new("gtk","gtk_drawing_area", &c, pro, zoom);
+	if (! state->element_object)
+		return 0;
 	return 1;
 }
 
-#if 0
-static struct vehile_data * config_add_vehicle(struct config_data *config, char *name, char *source, char *color)
+static int
+xmlconfig_vehicle(struct xmlstate *state)
 {
-	struct vehicle_data *v;
+	char *s=find_attribute(state, "source", 1);
+	struct color color;
 
-	v = g_new0(struct vehicle_data,1);
-	v->name = name;
-	v->source = source;
-	v->color = color;
-	config->vehicles =
-		g_list_append(config->vehicles, v);
+	if (! s)
+		return 0;
+	if (! find_color(state, 1, &color))
+		return 0;
+	state->element_object = vehicle_new(s);
+	if (! state->element_object)
+		return 0;
+	navit_vehicle_add(state->parent->element_object, state->element_object, &color);
+	return 1;
 }
-#endif
+
+static int
+xmlconfig_mapset(struct xmlstate *state)
+{
+	state->element_object = mapset_new();
+	if (! state->element_object)
+		return 0;
+	navit_add_mapset(state->parent->element_object, state->element_object);
+
+	return 1;
+}
+
+static int
+xmlconfig_map(struct xmlstate *state)
+{
+	char *type=find_attribute(state, "type", 1);
+	char *data=find_attribute(state, "data", 1);
+	if (! type || ! data)
+		return 0;
+	state->element_object = map_new(type, data);
+	if (! state->element_object)
+		return 0;
+	if (!find_boolean(state, "active", 1, 0))
+		map_set_active(state->element_object, 0);
+	mapset_add(state->parent->element_object, state->element_object);
+
+	return 1;
+}
+
+static int
+xmlconfig_layout(struct xmlstate *state)
+{
+	char *name=find_attribute(state, "name", 1);
+
+	if (! name)
+		return 0;
+	state->element_object = layout_new(name);
+	if (! state->element_object)
+		return 0;
+	navit_add_layout(state->parent->element_object, state->element_object);
+	return 1;
+}
+
+static int
+xmlconfig_layer(struct xmlstate *state)
+{
+	char *name=find_attribute(state, "name", 1);
+	if (! name)
+		return 0;
+	state->element_object = layer_new(name, convert_number(find_attribute(state, "details", 0)));
+	if (! state->element_object)
+		return 0;
+	layout_add_layer(state->parent->element_object, state->element_object);
+	return 1;
+}
+
+static int
+xmlconfig_item(struct xmlstate *state)
+{
+	char *type=find_attribute(state, "type", 1);
+	int min, max;
+	enum item_type itype;
+	char *saveptr, *tok, *type_str, *str;
+
+	if (! type)
+		return 0;
+	if (! find_zoom(state, 1, &min, &max))
+		return 0;
+	state->element_object=itemtype_new(min, max);
+	if (! state->element_object)
+		return 0;
+	type_str=g_strdup(type);
+	str=type_str;
+	layer_add_itemtype(state->parent->element_object, state->element_object);
+	while ((tok=strtok_r(str, ",", &saveptr))) {
+		itype=item_from_name(tok);
+		itemtype_add_type(state->element_object, itype);
+		str=NULL;
+	}
+	g_free(type_str);
+
+	return 1;
+}
+
+static int
+xmlconfig_polygon(struct xmlstate *state)
+{
+	struct color color;
+
+	if (! find_color(state, 1, &color))
+		return 0;
+	state->element_object=polygon_new(&color);
+	if (! state->element_object)
+		return 0;
+	itemtype_add_element(state->parent->element_object, state->element_object);
+
+	return 1;
+}
+
+static int
+xmlconfig_polyline(struct xmlstate *state)
+{
+	struct color color;
+	char *width;
+	int w=0;
+
+	if (! find_color(state, 1, &color))
+		return 0;
+	width=find_attribute(state, "width", 0);
+	if (width) 
+		w=convert_number(width);
+	state->element_object=polyline_new(&color, w);
+	if (! state->element_object)
+		return 0;
+	itemtype_add_element(state->parent->element_object, state->element_object);
+
+	return 1;
+}
+				int w=0;
+static int
+xmlconfig_circle(struct xmlstate *state)
+{
+	struct color color;
+	char *width, *radius, *label_size;
+	int w=0,r=0,ls=0;
+
+	if (! find_color(state, 1, &color))
+		return 0;
+	width=find_attribute(state, "width", 0);
+	if (width) 
+		w=convert_number(width);
+	radius=find_attribute(state, "radius", 0);
+	if (radius) 
+		r=convert_number(radius);
+	label_size=find_attribute(state, "label_size", 0);
+	if (label_size) 
+		ls=convert_number(label_size);
+	state->element_object=circle_new(&color, r, w, ls);
+	if (! state->element_object)
+		return 0;
+	itemtype_add_element(state->parent->element_object, state->element_object);
+
+	return 1;
+}
+
+static int
+xmlconfig_icon(struct xmlstate *state)
+{
+	char *src=find_attribute(state, "src", 1);
+
+	if (! src)
+		return 0;
+	state->element_object=icon_new(src);
+	if (! state->element_object)
+		return 0;
+	itemtype_add_element(state->parent->element_object, state->element_object);
+
+	return 1;
+}
+
+static int
+xmlconfig_image(struct xmlstate *state)
+{
+	state->element_object=image_new();
+	if (! state->element_object)
+		return 0;
+	itemtype_add_element(state->parent->element_object, state->element_object);
+
+	return 1;
+}
+
+struct element_func {
+	char *name;
+	char *parent;
+	int (*func)(struct xmlstate *state);
+} elements[] = {
+	{ "navit", NULL, xmlconfig_navit},
+	{ "vehicle", "navit", xmlconfig_vehicle},
+	{ "mapset", "navit", xmlconfig_mapset},
+	{ "map",  "mapset", xmlconfig_map},
+	{ "layout", "navit", xmlconfig_layout},
+	{ "layer", "layout", xmlconfig_layer},
+	{ "item", "layer", xmlconfig_item},
+	{ "polygon", "item", xmlconfig_polygon},
+	{ "polyline", "item", xmlconfig_polyline},
+	{ "circle", "item", xmlconfig_circle},
+	{ "icon", "item", xmlconfig_icon},
+	{ "image", "item", xmlconfig_image},
+	{},
+};
 
 static void
 start_element (GMarkupParseContext *context,
@@ -106,6 +335,46 @@ start_element (GMarkupParseContext *context,
 		gpointer             user_data,
 		GError             **error)
 {
+	struct xmlstate *new=NULL, **parent = user_data;
+	struct element_func *e=elements,*func=NULL;
+	const char *parent_name=NULL;
+	while (e->name) {
+		if (!g_ascii_strcasecmp(element_name, e->name)) {
+			func=e;
+		}
+		e++;
+	}
+	if (! func) {
+		g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+				"Unknown element '%s'", element_name);
+		return;
+	}
+	if (*parent)
+		parent_name=(*parent)->element;
+	if ((parent_name && func->parent && g_ascii_strcasecmp(parent_name, func->parent)) || 
+	    (!parent_name && func->parent) || (parent_name && !func->parent)) {
+		g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_INVALID_CONTENT,
+				"Element '%s' within unexpected context '%s'. Expected '%s'",
+				element_name, parent_name, func->parent);
+		return;
+	}
+
+	new=g_new(struct xmlstate, 1);
+	new->attribute_names=attribute_names;
+	new->attribute_values=attribute_values;
+	new->parent=*parent;
+	new->element_object=NULL;
+	new->element=element_name;
+	new->error=error;
+	new->func=func;
+	*parent=new;
+	if (!find_boolean(new, "enabled", 1, 0))
+		return;
+	if (!func->func(new)) {
+		return;
+	}
+	return;
+#if 0
 	struct elem_data *data = user_data;
 	void *elem=NULL;
 	void *parent_object;
@@ -116,128 +385,12 @@ start_element (GMarkupParseContext *context,
 	/* g_printf("start_element: %s AN: %s AV: %s\n",element_name,*attribute_names,*attribute_values); */
 
 
-	if(!g_ascii_strcasecmp("navit", element_name)) {
-		if (parent(parent_token, NULL, error)) {
-			elem = navit_new("gtk","gtk_drawing_area", NULL, 0);
-		}
-	}
-	else if(!g_ascii_strcasecmp("vehicle", element_name)) {
-		struct container *co=parent_object;
-		if (parent(parent_token, "navit", error)) {
-			char *s=find_attribute("source", attribute_names, attribute_values);
-			struct color color;
-			if (s && find_color(attribute_names, attribute_values, &color)) {
-				elem = vehicle_new(s);
-				if (elem)
-					navit_vehicle_add(co, elem, &color);
-			}
-		}
-	}
-	else if(!g_ascii_strcasecmp("mapset", element_name)) {
-		struct container *co=parent_object;
-		if (parent(parent_token, "navit", error)) {
-			elem = mapset_new();
-			navit_add_mapset(co, elem);
-		}
-	}
-	else if(!g_ascii_strcasecmp("map", element_name)) {
-		struct mapset *ms=parent_object;
-		if (parent(parent_token, "mapset", error)) {
-			char *enabled;
-			enabled=find_attribute("enabled", attribute_names, attribute_values);
-			if (! enabled || (g_ascii_strcasecmp(enabled,"no") && g_ascii_strcasecmp(enabled,"0"))) {
-				elem = map_new(find_attribute("type", attribute_names, attribute_values),
-						find_attribute("data", attribute_names, attribute_values));
-				mapset_add(ms, elem);
-			}
-		}
-	}
-	else if(!g_ascii_strcasecmp("layout", element_name)) {
-		struct container *co=parent_object;
-		if(parent(parent_token, "navit", error)) {
-			elem =layout_new(find_attribute("name", attribute_names, attribute_values));
-			navit_add_layout(co, elem);
-		}
-	}
-	else if(!g_ascii_strcasecmp("layer", element_name)) {
-		struct layout *layout=parent_object;
-		if(parent(parent_token, "layout", error)) {
-			elem =layer_new(find_attribute("name", attribute_names, attribute_values),
-					convert_number(find_attribute("details",attribute_names, attribute_values)));
-			layout_add_layer(layout, elem);
-		}
-	}
-	else if(!g_ascii_strcasecmp("item", element_name)) {
-		struct layer *layer=parent_object;
-		if(parent(parent_token, "layer", error)) {
-			char *s=g_strdup(find_attribute("type", attribute_names, attribute_values));
-			int min, max;
-			enum item_type type;
-			if (find_zoom(attribute_names, attribute_values, &min, &max)) {
-				char *saveptr, *tok, *str=s;
-				elem=itemtype_new(min, max);
-				layer_add_itemtype(layer, elem);
-				while ((tok=strtok_r(str, ",", &saveptr))) {
-					type=item_from_name(tok);
-					itemtype_add_type(elem, type);
-					str=NULL;
-				}
-				g_free(s);
-			}
-		}
-	}
-	else if(!g_ascii_strcasecmp("polygon", element_name) || !g_ascii_strcasecmp("polyline", element_name) || !g_ascii_strcasecmp("circle", element_name)) {
-		struct itemtype *itm=parent_object;
-		if(parent(parent_token, "item", error)) {
-			struct color color;
-			struct element *e=NULL;
-			if (find_color(attribute_names, attribute_values, &color)) {
-				int w=0;
-				if (!g_ascii_strcasecmp("polyline", element_name) || !g_ascii_strcasecmp("circle", element_name)) {
-					char *s=find_attribute("width",attribute_names, attribute_values);
-					if (s) 
-						w=convert_number(s);
-				}
-				if (!g_ascii_strcasecmp("polygon", element_name)) {
-					e=polygon_new(&color);
-				}
-				if (!g_ascii_strcasecmp("polyline", element_name)) {
-					e=polyline_new(&color, w);
-				}
-				if (!g_ascii_strcasecmp("circle", element_name)) {
-					int r=0,ls=0;
-					char *s;
-					s=find_attribute("radius",attribute_names, attribute_values);
-					if (s) 
-						r=convert_number(s);
-					s=find_attribute("label_size",attribute_names, attribute_values);
-					if (s) 
-						ls=convert_number(s);
-					e=circle_new(&color, r, w, ls);
-				}
-				itemtype_add_element(itm, e);
-			}
-		}
-	}
-	else if(!g_ascii_strcasecmp("icon", element_name)) {
-		struct itemtype *itm=parent_object;
-		if(parent(parent_token, "item", error)) {
-			struct element *e;
-			char *src;
-			src=find_attribute("src",attribute_names, attribute_values);
-			if (src) {
-				e=icon_new(src);
-				itemtype_add_element(itm, e);
-			}
-		}	
-	}
-	else  {
-		printf("Unknown element '%s'\n", element_name);
-		g_set_error(error,G_MARKUP_ERROR,G_MARKUP_ERROR_UNKNOWN_ELEMENT,
-				"Unknown element '%s'", element_name);
-	}
+	printf("Unknown element '%s'\n", element_name);
+#if 0
 	data->elem_stack = g_list_prepend(data->elem_stack, elem);
 	data->token_stack = g_list_prepend(data->token_stack, (gpointer)element_name);
+#endif
+#endif
 }
 
 
@@ -248,15 +401,13 @@ end_element (GMarkupParseContext *context,
 		gpointer             user_data,
 		GError             **error)
 {
-	struct elem_data *data = user_data;
+	struct xmlstate *curr, **state = user_data;
 
-	/* g_printf("end_element: %s\n",element_name); */
-
+	curr=*state;
 	if(!g_ascii_strcasecmp("navit", element_name)) 
-		navit_init(data->elem_stack->data);
-	data->token_stack = g_list_delete_link (data->token_stack, data->token_stack);
-	data->elem_stack = g_list_delete_link (data->elem_stack, data->elem_stack);
-
+		navit_init(curr->element_object);
+	*state=curr->parent;
+	g_free(curr);
 }
 
 
@@ -269,9 +420,9 @@ text (GMarkupParseContext *context,
 		gpointer                user_data,
 		GError               **error)
 {
-	struct elem_data *data = user_data;
+	struct xmlstate **state = user_data;
 
-	(void) data;
+	(void) state;
 }
 
 
@@ -292,13 +443,9 @@ gboolean config_load(char *filename, GError **error)
 	gsize len;
 	gboolean result;
 
-	struct elem_data data;
+	struct xmlstate *curr=NULL;
 	
-	data.elem_stack = NULL;
-	data.token_stack = NULL;
-	
-
-	context = g_markup_parse_context_new (&parser, 0, &data, NULL);
+	context = g_markup_parse_context_new (&parser, 0, &curr, NULL);
 
 	if (!g_file_get_contents (filename, &contents, &len, error))
 		return FALSE;

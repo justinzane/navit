@@ -45,6 +45,8 @@ transform_to_geo(enum projection pro, struct coord *c, struct coord_geo *g)
 		g->lng=c->x*f;
 		g->lat=c->y*f;	
 		break;
+	default:
+		break;
 	}
 }
 
@@ -62,6 +64,8 @@ transform_from_geo(enum projection pro, struct coord_geo *g, struct coord *c)
 		f=360.0/(1<<24);
 		c->x=g->lng/f;
 		c->y=g->lat/f;	
+		break;
+	default:
 		break;
 	}
 }
@@ -252,10 +256,9 @@ transform_set_size(struct transformation *t, int width, int height)
 }
 
 void
-transform_setup(struct transformation *t, int x, int y, int scale, int angle)
+transform_setup(struct transformation *t, struct coord *c, int scale, int angle)
 {
-        t->center.x=x;
-        t->center.y=y;
+        t->center=*c;
         t->scale=scale;
 	transform_set_angle(t, angle);
 }

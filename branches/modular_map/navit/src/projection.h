@@ -1,3 +1,3 @@
 enum projection {
-	projection_mg, projection_garmin
+	projection_none, projection_mg, projection_garmin
 };

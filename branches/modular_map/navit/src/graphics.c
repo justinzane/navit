@@ -199,8 +199,8 @@ graphics_popup(struct display_list *list, struct popup_item **popup)
 struct display_item {
 	struct item item;
 	char *label;
-	int count;
 	int displayed;
+	int count;
 	struct point pnt[0];
 };
 
@@ -307,6 +307,10 @@ xdisplay_draw_elements(struct graphics *gra, GList *es, GList *ls)
 				p.y=di->pnt[0].y - img->height/2;
 				gra->meth.draw_image(gra->priv, gra->gc[0]->priv, &p, img->priv);
 				break;
+			case element_image:
+				printf("image: '%s'\n", di->label);
+				gra->meth.draw_image_warp(gra->priv, gra->gc[0]->priv, di->pnt, di->count, di->label);
+				break;
 			default:
 				printf("Unhandled element type %d\n", e->type);
 			
@@ -392,8 +396,12 @@ do_draw_poly(GHashTable *display_list, struct transformation *t, enum projection
 	g_assert(count < max);
 	if (transform_contains(t, pro, &r)) {	
 		attr.u.str=NULL;
+		char *utf8=NULL;
 		item_attr_get(item, attr_label, &attr);
-		xdisplay_add(display_list, item, count, pnt, attr.u.str);
+		if (attr.u.str && attr.u.str[0]) 
+			utf8=g_convert(attr.u.str, -1,"utf-8","iso8859-1",NULL,NULL,NULL);
+		xdisplay_add(display_list, item, count, pnt, utf8);
+		g_free(utf8);
 	}
 }
 
@@ -407,8 +415,12 @@ do_draw_point(GHashTable *display_list, struct transformation *t, enum projectio
 	item_coord_get(item, &c, 1);
 	if (transform(t, pro, &c, &pnt)) {
 		attr.u.str=NULL;
+		char *utf8=NULL;
 		item_attr_get(item, attr_label, &attr); 
-		xdisplay_add(display_list, item, 1, &pnt, attr.u.str);
+		if (attr.u.str && attr.u.str[0]) 
+			utf8=g_convert(attr.u.str, -1,"utf-8","iso8859-1",NULL,NULL,NULL);
+		xdisplay_add(display_list, item, 1, &pnt, utf8);
+		g_free(utf8);
 	}
 }
 

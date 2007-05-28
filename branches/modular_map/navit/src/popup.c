@@ -1,20 +1,13 @@
-#include <string.h>
 #include <stdio.h>
-#include <assert.h>
-#include <gtk/gtk.h>
-#include "coord.h"
-#include "file.h"
-#include "map_data.h"
-#include "log.h"
+#include <glib.h>
 #include "popup.h"
-#include "plugin.h"
-#include "vehicle.h"
-#include "route.h"
-#include "cursor.h"
-#include "statusbar.h"
 #include "navit.h"
-#include "graphics.h"
+#include "coord.h"
+#include "gui.h"
+#include "menu.h"
+#include "point.h"
 #include "transform.h"
+#include "projection.h"
 
 #if 0
 static void
@@ -272,42 +265,139 @@ popup_destroy(GtkObject *obj, void *parm)
 }
 #endif
 
-void
-popup(struct container *co, int x, int y, int button)
+#include "item.h"
+struct display_item {
+        struct item item;
+        char *label;
+        int displayed;
+        int count;
+        struct point pnt[0];
+};
+
+struct point popup_pnt;
+
+static void
+popup_show_item(void *popup, struct display_item *di)
 {
-	printf("popup\n");
-#if 0
-	GtkWidget *menu;
-	struct popup *popup=g_new(struct popup,1);
-	struct popup_item *list=NULL;
-	struct popup_item *descr;
-	struct coord_geo g;
-	char buffer[256];
-
-	popup->co=co;
-	popup->pnt.x=x;
-	popup->pnt.y=y;
-	transform_reverse(co->trans, &popup->pnt, &popup->c);
-	popup_display_list(co, popup, &list);
-	plugin_call_popup(co, popup, &list);
-	transform_lng_lat(&popup->c, &g);
-	strcpy(buffer,"Map Point ");
-	transform_geo_text(&g, buffer+strlen(buffer));
-	sprintf(buffer+strlen(buffer), " (0x%x,0x%x)", popup->c.x, popup->c.y);
-	descr=popup_item_new_text(&list,buffer, 0);
-	descr->param=popup;
-
-	popup_item_new_func(&list,"Set as Position", 1000, popup_set_position, descr);
-	popup_item_new_func(&list,"Set as Destination", 1001, popup_set_destination, descr);
-
-	popup->items=list;
-	menu=popup_menu(list);
-	gtk_widget_show_all(menu);
-	popup->gui_data=menu;
-
-
-	gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, button, gtk_get_current_event_time());
-	g_signal_connect(G_OBJECT(menu), "selection-done", G_CALLBACK (popup_destroy), popup);
-#endif
+	char *str;
+	if (di->label) 
+		str=g_strdup_printf("%s '%s'", item_to_name(di->item.type), di->label);
+	else
+		str=g_strdup(item_to_name(di->item.type));
+	menu_add(popup, str, menu_type_menu, NULL, NULL, NULL);
+	g_free(str);
 }
 
+static int
+within_dist_point(struct point *p0, struct point *p1, int dist)
+{
+	if (p0->x == 32767 || p0->y == 32767 || p1->x == 32767 || p1->y == 32767)
+		return 0;
+	if (p0->x == -32768 || p0->y == -32768 || p1->x == -32768 || p1->y == -32768)
+		return 0;
+        if ((p0->x-p1->x)*(p0->x-p1->x) + (p0->y-p1->y)*(p0->y-p1->y) <= dist*dist) {
+                return 1;
+        }
+        return 0;
+}
+
+static int
+within_dist_line(struct point *p, struct point *line_p0, struct point *line_p1, int dist)
+{
+	int vx,vy,wx,wy;
+	int c1,c2;
+	struct point line_p;
+
+	vx=line_p1->x-line_p0->x;
+	vy=line_p1->y-line_p0->y;
+	wx=p->x-line_p0->x;
+	wy=p->y-line_p0->y;
+
+	c1=vx*wx+vy*wy;
+	if ( c1 <= 0 )
+		return within_dist_point(p, line_p0, dist);
+	c2=vx*vx+vy*vy;
+	if ( c2 <= c1 )
+		return within_dist_point(p, line_p1, dist);
+
+	line_p.x=line_p0->x+vx*c1/c2;
+	line_p.y=line_p0->y+vy*c1/c2;
+	return within_dist_point(p, &line_p, dist);
+}
+
+static int
+within_dist_polyline(struct point *p, struct point *line_pnt, int count, int dist, int close)
+{
+	int i;
+	for (i = 0 ; i < count-1 ; i++) {
+		if (within_dist_line(p,line_pnt+i,line_pnt+i+1,dist)) {
+			return 1;
+		}
+	}
+#if 0
+	if (close)
+		return (within_dist_line(p,line_pnt,line_pnt+count-1,dist));
+#endif
+	return 0;
+}
+
+static int
+within_dist(struct display_item *di, struct point *p, int dist)
+{
+	if (di->item.type < type_line) {
+		return within_dist_point(p, &di->pnt[0], dist);
+	}
+	if (di->item.type < type_area) {
+		return within_dist_polyline(p, di->pnt, di->count, dist, 0);
+	}
+	return 0;
+}
+
+static void
+popup_display_list(gpointer data, gpointer user_data)
+{
+	struct display_item *di=data;
+	if (within_dist(di, &popup_pnt, 5)) {
+		popup_show_item(user_data, di);
+	}
+}
+
+static void
+popup_display_hash(gpointer key, gpointer value, gpointer user_data)
+{
+	g_list_foreach(value, popup_display_list, user_data);
+}
+
+static void
+popup_display(struct navit *nav, void *popup, struct point *p)
+{
+	GHashTable *display;
+	display=navit_get_display_list(nav);
+        g_hash_table_foreach(display, popup_display_hash, popup);
+}
+
+void
+popup(struct navit *nav, int button, struct point *p)
+{
+	void *popup,*men;
+	char *str;
+	char buffer[1024];
+	struct coord c;
+	struct coord_geo g;
+
+	popup_pnt=*p;
+	popup=gui_popup_new(navit_get_gui(nav), nav);
+	transform_reverse(navit_get_trans(nav), p, &c);
+	str=g_strdup_printf("Point 0x%x 0x%x", c.x, c.y);
+	men=menu_add(popup, str, menu_type_submenu, NULL, NULL, NULL);
+	g_free(str);
+	str=g_strdup_printf("Screen %d %d", p->x, p->y);
+	menu_add(men, str, menu_type_menu, NULL, NULL, NULL);
+	g_free(str);
+	transform_to_geo(transform_get_projection(navit_get_trans(nav)), &c, &g);
+	transform_geo_text(&g, buffer);	
+	menu_add(men, buffer, menu_type_menu, NULL, NULL, NULL);
+	sprintf(buffer, "%f %f", g.lat, g.lng);
+	menu_add(men, buffer, menu_type_menu, NULL, NULL, NULL);
+	popup_display(nav, popup, p);
+}

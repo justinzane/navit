@@ -15,6 +15,10 @@ struct menu_priv {
 	struct menu *callback_menu;
 	void *callback_data1;
 	void *callback_data2;
+	struct menu_priv *child;
+	struct menu_priv *sibling;
+	gulong handler_id;
+	guint merge_id;
 };
 
 /* Create callbacks that implement our Actions */
@@ -314,6 +318,8 @@ static char layout[] =
 				<separator/>\
 			</placeholder>\
 		</toolbar>\
+		<popup name=\"PopUp\">\
+		</popup>\
 	</ui>";
 	
 
@@ -344,9 +350,10 @@ add_menu(struct menu_priv *menu, struct menu_methods *meth, char *name, enum men
 	else
 		ret->action=gtk_action_new(dynname, name, NULL, NULL);
 	if (callback)
-		g_signal_connect(ret->action, "activate", activate, ret);
+		ret->handler_id=g_signal_connect(ret->action, "activate", activate, ret);
 	gtk_action_group_add_action(menu->gui->dyn_group, ret->action);
-	gtk_ui_manager_add_ui( menu->gui->menu_manager, gtk_ui_manager_new_merge_id(menu->gui->menu_manager), menu->path, dynname, dynname, type == menu_type_submenu ? GTK_UI_MANAGER_MENU : GTK_UI_MANAGER_MENUITEM, FALSE);
+	ret->merge_id=gtk_ui_manager_new_merge_id(menu->gui->menu_manager);
+	gtk_ui_manager_add_ui( menu->gui->menu_manager, ret->merge_id, menu->path, dynname, dynname, type == menu_type_submenu ? GTK_UI_MANAGER_MENU : GTK_UI_MANAGER_MENUITEM, FALSE);
 	ret->gui=menu->gui;
 	ret->path=g_strdup_printf("%s/%s", menu->path, dynname);
 	ret->type=type;
@@ -354,8 +361,34 @@ add_menu(struct menu_priv *menu, struct menu_methods *meth, char *name, enum men
 	ret->callback_menu=data_menu;
 	ret->callback_data1=data1;
 	ret->callback_data2=data2;
+	ret->sibling=menu->child;
+	menu->child=ret;
+	g_free(dynname);
 	return ret;
 		
+}
+
+void
+remove_menu(struct menu_priv *item, int recursive)
+{
+
+	if (recursive) {
+		struct menu_priv *next,*child=item->child;
+		while (child) {
+			next=child->sibling;
+			remove_menu(child, recursive);
+			child=next;
+		}
+	}
+	if (item->action) {
+		gtk_ui_manager_remove_ui(item->gui->menu_manager, item->merge_id);
+		gtk_action_group_remove_action(item->gui->dyn_group, item->action);
+		if (item->callback)
+			g_signal_handler_disconnect(item->action, item->handler_id);
+		g_object_unref(item->action);
+	}
+	g_free(item->path);
+	g_free(item);
 }
 
 static void
@@ -376,8 +409,15 @@ static struct menu_methods menu_methods = {
 	get_toggle,
 };
 
+
+void popup_deactivate(GtkWidget *widget, struct menu_priv *menu)
+{
+	g_signal_handler_disconnect(widget, menu->handler_id);
+	remove_menu(menu, 1);
+}	
+
 static struct menu_priv *
-gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, struct navit *nav)
+gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, struct navit *nav, int popup)
 {
 	struct menu_priv *ret;
 	GError *error;
@@ -407,20 +447,30 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 		}
 	}
 	widget=gtk_ui_manager_get_widget(this->menu_manager, path);
-	gtk_box_pack_start (this->vbox, widget, FALSE, FALSE, 0);
-	gtk_widget_show (widget);
+	if (! popup) {
+		gtk_box_pack_start (this->vbox, widget, FALSE, FALSE, 0);
+		gtk_widget_show (widget);
+	} else {
+		gtk_menu_popup(widget, NULL, NULL, NULL, NULL, 0, 0);
+		ret->handler_id=g_signal_connect(widget, "deactivate", popup_deactivate, ret);
+	}
 	return ret;
 }
 
 struct menu_priv *
 gui_gtk_toolbar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
 {
-	return gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav);
+	return gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav, 0);
 }
 
 struct menu_priv *
 gui_gtk_menubar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
 {
-	return gui_gtk_ui_new(this, meth, "/ui/MenuBar", nav);
+	return gui_gtk_ui_new(this, meth, "/ui/MenuBar", nav, 0);
 }
 
+struct menu_priv *
+gui_gtk_popup_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
+{
+	return gui_gtk_ui_new(this, meth, "/ui/PopUp", nav, 1);
+}

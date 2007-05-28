@@ -122,7 +122,8 @@ parse_line(struct map_rect_priv *mr)
 static int
 textfile_coord_get(void *priv_data, struct coord *c, int count)
 {
-	double lat,lng,lat_deg,lng_deg;
+	double lat,lng;
+	struct coord_geo cg;
 	struct map_rect_priv *mr=priv_data;
 	int ret=0;
 	if (debug)
@@ -132,15 +133,15 @@ textfile_coord_get(void *priv_data, struct coord *c, int count)
 			parse_line(mr);
 			lat=mr->lat;
 			lng=mr->lng;
-			lat_deg=floor(lat/100);
-			lat-=lat_deg*100;
-			lat_deg+=lat/60;
+			cg.lat=floor(lat/100);
+			lat-=cg.lat*100;
+			cg.lat+=lat/60;
 
-			lng_deg=floor(lng/100);
-			lng-=lng_deg*100;
-			lng_deg+=lng/60;
+			cg.lng=floor(lng/100);
+			lng-=cg.lng*100;
+			cg.lng+=lng/60;
 
-			transform_mercator(&lng_deg, &lat_deg, c);
+			transform_from_geo(projection_mg, &cg, c);
 			c++;
 			ret++;		
 			get_line(mr);
@@ -284,6 +285,9 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 			mr->item.type=item_from_name(type);
 			if (mr->item.type == type_none) 
 				printf("Warning: type '%s' unknown\n", type);
+		} else {
+			get_line(mr);
+			continue;
 		}
 		mr->item.id_lo=mr->pos;
 		mr->attr_last=attr_none;

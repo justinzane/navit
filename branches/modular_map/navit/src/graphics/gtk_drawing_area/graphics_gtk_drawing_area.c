@@ -408,6 +408,28 @@ draw_image(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct point *
 }
 
 static void
+draw_image_warp(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct point *p, int count, char *data)
+{
+	void *image;
+	int w,h;
+	printf("draw_image_warp data=%s\n", data);
+	image = imlib_load_image(data);
+	imlib_context_set_display(gdk_x11_drawable_get_xdisplay(gr->widget->window));
+	imlib_context_set_colormap(gdk_x11_colormap_get_xcolormap(gtk_widget_get_colormap(gr->widget)));
+	imlib_context_set_visual(gdk_x11_visual_get_xvisual(gtk_widget_get_visual(gr->widget)));
+	imlib_context_set_drawable(gdk_x11_drawable_get_xid(gr->drawable));
+	imlib_context_set_image(image);
+	w = imlib_image_get_width();
+	h = imlib_image_get_height();
+	if (count == 3) {
+		imlib_render_image_on_drawable_skewed(0, 0, w, h, p[0].x, p[0].y, p[1].x-p[0].x, p[1].y-p[0].y, p[2].x-p[0].x, p[2].y-p[0].y);
+	}
+	if (count == 2) {
+		imlib_render_image_on_drawable_skewed(0, 0, w, h, p[0].x, p[0].y, p[1].x-p[0].x, 0, 0, p[1].y-p[0].y);
+	}
+}
+
+static void
 overlay_draw(struct graphics_priv *parent, struct graphics_priv *overlay, int window)
 {
 	GdkPixbuf *pixbuf,*pixbuf2;
@@ -649,6 +671,7 @@ static struct graphics_methods graphics_methods = {
 	draw_circle,
 	draw_text,
 	draw_image,
+	draw_image_warp,
 	draw_restore,
 	font_new,
 	gc_new,

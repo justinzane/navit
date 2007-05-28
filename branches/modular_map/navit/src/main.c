@@ -31,7 +31,10 @@ int main(int argc, char **argv)
 	if (argc > 1) 
 		config_load(argv[1], &error);
 	else
-		config_load("navit.xml", &error);
+		if (file_exists("navit.xml.local"))
+			config_load("navit.xml.local", &error);
+		else	
+			config_load("navit.xml", &error);
 	gtk_main();
 	return 0;
 }

@@ -157,6 +157,7 @@ street_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 
 	attr->type=attr_type;
 	switch (attr_type) {
+	case attr_label:
 	case attr_name:
 		if (! street->name.len)
 			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));

@@ -25,6 +25,7 @@ struct gui_methods gui_gtk_methods = {
 	gui_gtk_menubar_new,
 	gui_gtk_toolbar_new,
 	gui_gtk_statusbar_new,
+	gui_gtk_popup_new,
 	gui_gtk_set_graphics,
 };
 
