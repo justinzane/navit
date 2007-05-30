@@ -1,5 +1,10 @@
 #include <glib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
 #include "coord.h"
+#include "transform.h"
 #include "projection.h"
 /**
  * @defgroup coord Coordinate handling functions

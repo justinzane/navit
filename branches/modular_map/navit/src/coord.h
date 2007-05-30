@@ -24,9 +24,12 @@ struct coord_geo {
 	double lat; /*!< Latitude */
 };
 
+enum projection;
+
 struct coord * coord_get(unsigned char **p);
 struct coord * coord_new(int x, int y);
 void coord_destroy(struct coord *c);
+int coord_parse(const char *c_str, enum projection pro, struct coord *c_ret);
 struct coord_rect * coord_rect_new(struct coord *lu, struct coord *rl);
 void coord_rect_destroy(struct coord_rect *r);
 int coord_rect_overlap(struct coord_rect *r1, struct coord_rect *r2);
