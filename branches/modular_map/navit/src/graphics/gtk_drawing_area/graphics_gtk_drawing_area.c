@@ -2,6 +2,8 @@
 #include <gtk/gtk.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <Imlib2.h>
+#include <gdk/gdkx.h>
 #include "point.h"
 #include "graphics.h"
 #include "color.h"
