@@ -18,6 +18,7 @@ void file_unmap_all(void);
 struct file *file_create_caseinsensitive(char *name);
 int file_get_param(struct file *file, struct param_list *param, int count);
 void file_destroy(struct file *f);
+int file_exists(char *name);
 void *file_opendir(char *dir);
 char *file_readdir(void *hnd);
 void file_closedir(void *hnd);

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include "file.h"
 #include "debug.h"
 #ifdef HAVE_PYTHON
 #include "python.h"
