@@ -35,12 +35,15 @@ struct town_priv {
 
 	int cidx;
 	int aidx;
+	enum attr_type attr_next;
+	char debug[256];
 };
 
 struct poly_priv {
 	int poly_num;
 	unsigned char *poly_next;
 	int subpoly_num;
+	int subpoly_num_all;
 	unsigned char *subpoly_next;
 	unsigned char *subpoly_start;
 	unsigned char *p;
@@ -137,6 +140,7 @@ enum file_index {
 struct map_priv {
 	int id;
 	struct file *file[file_end];
+	char *dirname;
 };
 
 #define BT_STACK_SIZE 32
@@ -181,6 +185,9 @@ struct map_rect_priv {
 
 int block_init(struct map_rect_priv *mr);
 int block_next(struct map_rect_priv *mr);
+int block_get_byindex(struct file *file, int idx, struct block_priv *blk);
+
+int tree_search_hv(char *dirname, char *filename, unsigned int search1, unsigned int search2, int *result);
 int town_get(struct map_rect_priv *mr, struct town_priv *poly, struct item *item);
 int poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item);
 int street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *item);

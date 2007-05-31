@@ -85,8 +85,8 @@ poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item)
 		if (mr->b.p == mr->b.p_start) {
 			poly->poly_num=0;
 			poly->subpoly_num=0;
+			poly->subpoly_num_all=0;
 			poly->poly_next=mr->b.p;
-			item->type=2;
 			item->meth=&poly_meth;
 		}
 		if (poly->poly_num >= mr->b.b->count)
@@ -110,8 +110,14 @@ poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item)
 			case 0x14:
 				item->type=type_town_poly;
 				break;
+			case 0x15:
+				item->type=type_cemetery_poly;
+				break;
 			case 0x1e:
 				item->type=type_industry_poly;
+				break;
+			case 0x24:
+				item->type=type_parking_lot_poly;
 				break;
 			case 0x28:
 				item->type=type_airport_poly;
@@ -141,18 +147,23 @@ poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item)
 				item->type=type_rail;
 				break;
 			default:
-				printf("Unknown type 0x%x '%s' 0x%x,0x%x\n", poly->type,poly->name,r.lu.x,r.lu.y);
+				printf("Unknown poly type 0x%x '%s' 0x%x,0x%x\n", poly->type,poly->name,r.lu.x,r.lu.y);
 				item->type=type_street_unkn;
 			}
 			if (!coord_rect_overlap(&mr->r, &r)) {
 				mr->b.p=poly->poly_next;
+				poly->subpoly_num_all+=poly->polys;
 				continue;
 			}
 		} else 
 			mr->b.p=poly->subpoly_next;
-		item->id_hi=poly->subpoly_num | (mr->current_file << 16);
+		printf("%d %d %s\n", poly->subpoly_num_all, mr->b.block_num, poly->name);
+		item->id_lo=poly->subpoly_num_all | (mr->b.block_num << 16);
+		item->id_hi=(mr->current_file << 16);
+		printf("0x%x 0x%x\n", item->id_lo, item->id_hi);
 		poly->subpoly_next=mr->b.p+L(poly->count[poly->subpoly_num])*sizeof(struct coord);
 		poly->subpoly_num++;
+		poly->subpoly_num_all++;
 		if (poly->subpoly_num >= poly->polys) 
 			poly->subpoly_num=0;
 		poly->subpoly_start=poly->p=mr->b.p;

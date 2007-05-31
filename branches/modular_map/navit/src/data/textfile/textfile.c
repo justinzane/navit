@@ -25,16 +25,15 @@ contains_coord(char *line)
 static int debug=0;
 
 static int
-get_tag(char *line, char *name, int *pos, char *ret)
+get_tag(char *line, char *name, int *pos, char *ret, char *name_ret)
 {
-	int len,quoted;
+	int len=0,quoted;
 	char *p,*e,*n;
 
 	if (debug)
 		printf("get_tag %s from %s\n", name, line); 
-	if (! name)
-		return 0;
-	len=strlen(name);
+	if (name)
+		len=strlen(name);
 	if (pos) 
 		p=line+*pos;
 	else
@@ -58,7 +57,12 @@ get_tag(char *line, char *name, int *pos, char *ret)
 				quoted=1-quoted;
 			p++;
 		}
-		if (e-n == len && !strncmp(n, name, len)) {
+		if (name == NULL || (e-n == len && !strncmp(n, name, len))) {
+			if (name_ret) {
+				len=e-n;
+				strncpy(name_ret, n, len);
+				name_ret[len]='\0';
+			}
 			e++;
 			len=p-e;
 			if (e[0] == '"') {
@@ -81,6 +85,8 @@ get_line(struct map_rect_priv *mr)
 	if(mr->f) {
 		mr->pos=ftell(mr->f);
 		fgets(mr->line, 256, mr->f);
+		if (strlen(mr->line) >= 255) 
+			printf("line too long\n");
 	}
 }
 
@@ -159,6 +165,15 @@ textfile_attr_rewind(void *priv_data)
 {
 }
 
+static void
+textfile_encode_attr(char *attr_val, enum attr_type attr_type, struct attr *attr)
+{
+	if (attr_type == attr_size) 
+		attr->u.num=atoi(attr_val);
+	else
+		attr->u.str=attr_val;
+}
+
 static int
 textfile_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 {	
@@ -167,19 +182,32 @@ textfile_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 	if (debug)
 		printf("textfile_attr_get mr=%p attrs='%s' ", mr, mr->attrs);
 	if (attr_type != mr->attr_last) {
-		mr->attr_pos=0;
-	}
-	str=attr_to_name(attr_type);
-	if (debug)
-		printf("attr='%s' ",str);
-	if (get_tag(mr->attrs,str,&mr->attr_pos,mr->attr)) {
-		if (attr_type == attr_size) 
-			attr->u.num=atoi(mr->attr);
-		else
-			attr->u.str=mr->attr;
 		if (debug)
-			printf("found\n");
-		return 1;
+			printf("reset attr_pos\n");
+		mr->attr_pos=0;
+		mr->attr_last=attr_type;
+	}
+	if (attr_type == attr_any) {
+		if (debug)
+			printf("attr_any");
+		if (get_tag(mr->attrs,NULL,&mr->attr_pos,mr->attr, mr->attr_name)) {
+			attr_type=attr_from_name(mr->attr_name);
+			if (debug)
+				printf("found attr '%s' 0x%x\n", mr->attr_name, attr_type);
+			attr->type=attr_type;
+			textfile_encode_attr(mr->attr, attr_type, attr);
+			return 1;
+		}
+	} else {
+		str=attr_to_name(attr_type);
+		if (debug)
+			printf("attr='%s' ",str);
+		if (get_tag(mr->attrs,str,&mr->attr_pos,mr->attr, NULL)) {
+			textfile_encode_attr(mr->attr, attr_type, attr);
+			if (debug)
+				printf("found\n");
+			return 1;
+		}
 	}
 	if (debug)
 		printf("not found\n");
@@ -279,7 +307,7 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 		}
 		if (debug)
 			printf("get_attrs %s\n", mr->attrs);
-		if (get_tag(mr->attrs,"type",NULL,type)) {
+		if (get_tag(mr->attrs,"type",NULL,type,NULL)) {
 			if (debug)
 				printf("type='%s'\n", type);
 			mr->item.type=item_from_name(type);

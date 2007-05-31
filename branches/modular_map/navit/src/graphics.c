@@ -196,7 +196,7 @@ graphics_popup(struct display_list *list, struct popup_item **popup)
 }
 #endif
 
-struct display_item {
+struct displayitem {
 	struct item item;
 	char *label;
 	int displayed;
@@ -212,7 +212,7 @@ xdisplay_free_list(gpointer key, gpointer value, gpointer user_data)
 	l=h;
 	while (l) {
 #if 0
-		struct display_item *di=l->data;
+		struct displayitem *di=l->data;
 		if (! di->displayed) 
 			printf("warning: item '%s' not displayed\n", item_to_name(di->item.type));
 #endif
@@ -232,7 +232,7 @@ xdisplay_free(GHashTable *display_list)
 static void
 xdisplay_add(GHashTable *display_list, struct item *item, int count, struct point *pnt, char *label)
 {
-	struct display_item *di;
+	struct displayitem *di;
 	int len;
 	GList *l;
 	char *p;
@@ -244,7 +244,7 @@ xdisplay_add(GHashTable *display_list, struct item *item, int count, struct poin
 
 	p=g_malloc(len);
 
-	di=(struct display_item *)p;
+	di=(struct displayitem *)p;
 	p+=sizeof(*di)+count*sizeof(*pnt);
 	di->item=*item;
 	if (label) {
@@ -275,7 +275,7 @@ xdisplay_draw_elements(struct graphics *gra, GList *es, GList *ls)
 		gc=NULL;
 		img=NULL;
 		while (l) {
-			struct display_item *di;
+			struct displayitem *di;
 			di=l->data;
 			di->displayed=1;
 			if (! gc) {
@@ -302,6 +302,8 @@ xdisplay_draw_elements(struct graphics *gra, GList *es, GList *ls)
 			case element_icon:
 				if (!img) {
 					img=graphics_image_new(gra, e->u.icon.src);
+					if (! img)
+						g_warning("failed to load icon '%s'\n", e->u.icon.src);
 				}
 				p.x=di->pnt[0].x - img->width/2;
 				p.y=di->pnt[0].y - img->height/2;
@@ -443,11 +445,11 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 	struct mapset *ms;
 	struct map *m;
 	enum projection pro;
-	void *h;
+	struct mapset_handle *h;
 
 	ms=mapsets->data;
-	mapset_open(ms, &h);
-	while ((m=mapset_next(ms, &h))) {
+	h=mapset_open(ms);
+	while ((m=mapset_next(h))) {
 		if (map_get_active(m)) {
 			pro=map_projection(m);
 			transform_rect(t, pro, &r);
@@ -458,6 +460,7 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 			map_rect_destroy(mr);
 		}
 	}
+	mapset_close(h);
 }
 
 int
@@ -494,4 +497,146 @@ graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, st
 	}
 #endif
 	gra->ready=1;
+}
+
+struct displaylist_handle {
+	GHashTable *dl;
+	GList *l;
+	gpointer hashkey;	
+	gpointer lastkey;
+};
+
+static void
+graphics_displaylist_hash_next(gpointer key, gpointer value, gpointer user_data)
+{
+	struct displaylist_handle *dlh=user_data;
+	if (!dlh->l && (dlh->lastkey == dlh->hashkey || dlh->hashkey == NULL)) {
+		dlh->hashkey=key;
+		dlh->l=value;
+	}
+	dlh->lastkey=key;
+}
+
+struct displaylist_handle *
+graphics_displaylist_open(GHashTable *display_list)
+{
+	struct displaylist_handle *ret;
+
+	ret=g_new0(struct displaylist_handle, 1);
+	ret->dl=display_list;
+	
+
+	return ret;
+}
+
+struct displayitem *
+graphics_displaylist_next(struct displaylist_handle *dlh)
+{
+	struct displayitem *ret;
+	if (! dlh->l) {
+		dlh->lastkey=NULL;
+		g_hash_table_foreach(dlh->dl, graphics_displaylist_hash_next, dlh);
+		if (!dlh->l)
+			return NULL;
+	}
+	ret=dlh->l->data;
+	dlh->l=g_list_next(dlh->l);
+	return ret;
+}
+
+void
+graphics_displaylist_close(struct displaylist_handle *dlh)
+{
+	g_free(dlh);
+}
+
+struct item *
+graphics_displayitem_get_item(struct displayitem *di)
+{
+	return &di->item;	
+}
+
+char *
+graphics_displayitem_get_label(struct displayitem *di)
+{
+	return di->label;
+}
+
+static int
+within_dist_point(struct point *p0, struct point *p1, int dist)
+{
+	if (p0->x == 32767 || p0->y == 32767 || p1->x == 32767 || p1->y == 32767)
+		return 0;
+	if (p0->x == -32768 || p0->y == -32768 || p1->x == -32768 || p1->y == -32768)
+		return 0;
+        if ((p0->x-p1->x)*(p0->x-p1->x) + (p0->y-p1->y)*(p0->y-p1->y) <= dist*dist) {
+                return 1;
+        }
+        return 0;
+}
+
+static int
+within_dist_line(struct point *p, struct point *line_p0, struct point *line_p1, int dist)
+{
+	int vx,vy,wx,wy;
+	int c1,c2;
+	struct point line_p;
+
+	vx=line_p1->x-line_p0->x;
+	vy=line_p1->y-line_p0->y;
+	wx=p->x-line_p0->x;
+	wy=p->y-line_p0->y;
+
+	c1=vx*wx+vy*wy;
+	if ( c1 <= 0 )
+		return within_dist_point(p, line_p0, dist);
+	c2=vx*vx+vy*vy;
+	if ( c2 <= c1 )
+		return within_dist_point(p, line_p1, dist);
+
+	line_p.x=line_p0->x+vx*c1/c2;
+	line_p.y=line_p0->y+vy*c1/c2;
+	return within_dist_point(p, &line_p, dist);
+}
+
+static int
+within_dist_polyline(struct point *p, struct point *line_pnt, int count, int dist, int close)
+{
+	int i;
+	for (i = 0 ; i < count-1 ; i++) {
+		if (within_dist_line(p,line_pnt+i,line_pnt+i+1,dist)) {
+			return 1;
+		}
+	}
+	if (close)
+		return (within_dist_line(p,line_pnt,line_pnt+count-1,dist));
+	return 0;
+}
+
+static int
+within_dist_polygon(struct point *p, struct point *poly_pnt, int count, int dist)
+{
+	int i, j, c = 0;
+        for (i = 0, j = count-1; i < count; j = i++) {
+		if ((((poly_pnt[i].y <= p->y) && ( p->y < poly_pnt[j].y )) ||
+		((poly_pnt[j].y <= p->y) && ( p->y < poly_pnt[i].y))) &&
+		(poly_pnt->x < (poly_pnt[j].x - poly_pnt[i].x) * (p->y - poly_pnt[i].y) / (poly_pnt[j].y - poly_pnt[i].y) + poly_pnt[i].x)) {
+                        c = !c;
+		}
+        }
+	if (! c)
+		return within_dist_polyline(p, poly_pnt, count, dist, 1);
+        return c;
+}
+
+int
+graphics_displayitem_within_dist(struct displayitem *di, struct point *p, int dist)
+{
+	if (di->item.type < type_line) {
+		return within_dist_point(p, &di->pnt[0], dist);
+	}
+	if (di->item.type < type_area) {
+		return within_dist_polyline(p, di->pnt, di->count, dist, 0);
+	}
+	return within_dist_polygon(p, di->pnt, di->count, dist);
 }

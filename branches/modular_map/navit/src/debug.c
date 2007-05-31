@@ -1,11 +1,16 @@
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <glib.h>
 #include "file.h"
 #include "debug.h"
 
 
+int debug_level=0;
+static GHashTable *debug_hash;
 
 static int sigsegv(int sig)
 {
@@ -27,4 +32,36 @@ void
 debug_init(void)
 {
 	signal(SIGSEGV, sigsegv);
+	debug_hash=g_hash_table_new(g_str_hash, g_str_equal);
+}
+
+void
+debug_level_set(const char *name, int level)
+{
+	g_hash_table_insert(debug_hash, name, (gpointer) level);
+}
+
+int
+debug_level_get(const char *name)
+{
+	return g_hash_table_lookup(debug_hash, name);
+}
+
+void
+debug_print(int level, const char *module, const char *function, const char *fmt, ...)
+{
+	va_list ap;
+	int module_len=strlen(module);
+	int function_len=strlen(function);
+	char buffer[module_len+function_len+2];
+
+	strcpy(buffer, module);
+	buffer[module_len]=':';
+
+	if (debug_level_get(module) >= level || debug_level_get(buffer) >= level) {
+		printf("%s",buffer);
+		va_start(ap, fmt);
+		vprintf(fmt, ap);
+		va_end(ap);
+	}
 }

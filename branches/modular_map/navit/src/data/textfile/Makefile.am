@@ -1,3 +1,4 @@
+include $(top_srcdir)/Makefile.inc
 AM_CPPFLAGS = @PACKAGE_CFLAGS@ -I../..
-pkglib_LTLIBRARIES = libdata_textfile.la
+plugin_LTLIBRARIES = libdata_textfile.la
 libdata_textfile_la_SOURCES = textfile.c textfile.h

@@ -1,11 +1,17 @@
 /* common */
 ATTR2(none,0)
-ATTR2(id,1)
+ATTR2(any,1)
+ATTR(id)
 ATTR(label)
 ATTR(name)
 ATTR(name_systematic)
 ATTR(district)
 ATTR(type)
+ATTR(debug)
+ATTR(address)
+ATTR(phone)
+ATTR(entry_fee)
+ATTR(open_hours)
 /* town */
 ATTR(size)
 /* poi */

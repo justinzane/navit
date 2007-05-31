@@ -30,17 +30,31 @@ void mapset_destroy(struct mapset *ms)
 	g_free(ms);
 }
 
-void 
-mapset_open(struct mapset *ms, void **handle)
+struct mapset_handle {
+	GList *l;
+};
+
+struct mapset_handle *
+mapset_open(struct mapset *ms)
 {
-	*handle=ms->maps;
+	struct mapset_handle *ret;
+
+	ret=g_new(struct mapset, 1);
+	ret->l=ms->maps;
 }
 
-struct map * mapset_next(struct mapset *ms, void **handle)
+struct map * mapset_next(struct mapset_handle *msh)
 {
-	GList *l=*handle;
-	if (!l)
+	struct map *ret;
+	if (!msh->l)
 		return NULL;
-	*handle=g_list_next(l);
-	return l->data;
+	ret=msh->l->data;
+	msh->l=g_list_next(msh->l);
+	return ret;
+}
+
+void 
+mapset_close(struct mapset_handle *msh)
+{
+	g_free(msh);
 }

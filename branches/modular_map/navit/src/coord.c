@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "debug.h"
 #include "coord.h"
 #include "transform.h"
 #include "projection.h"
@@ -126,16 +127,14 @@ coord_parse(const char *c_str, enum projection pro, struct coord *c_ret)
 	struct coord c;
 	enum projection str_pro=projection_none;
 
-	if (debug)	
-		printf("coord_parse %s\n", str);
+	dbg(1,"enter('%s',%d,%p)\n", c_str, pro, c_ret);
 	s=index(str,' ');
 	co=index(str,':');
 	if (co && co < s) {
 		proj=malloc(co-str+1);
 		strncpy(proj, str, co-str);
 		proj[co-str]='\0';
-		if (debug)
-			printf("projection=%s\n", proj);
+		dbg(1,"projection=%s\n", proj);
 		str=co+1;
 		s=index(str,' ');
 	}
@@ -146,10 +145,8 @@ coord_parse(const char *c_str, enum projection pro, struct coord *c_ret)
 		args=sscanf(str, "%i %i%n",&c.x, &c.y, &ret);
 		if (args < 2)
 			return 0;
-		if (debug) {
-			printf("str='%s' x=0x%x y=0x%x c=%d\n", str, c.x, c.y, ret);
-			printf("rest='%s'\n", str+ret);
-		}
+		dbg(1,"str='%s' x=0x%x y=0x%x c=%d\n", str, c.x, c.y, ret);
+		dbg(1,"rest='%s'\n", str+ret);
 
 		if (str_pro == projection_none) 
 			str_pro=projection_mg;
@@ -159,7 +156,7 @@ coord_parse(const char *c_str, enum projection pro, struct coord *c_ret)
 			printf("help\n");
 		}
 	} else if (*s == 'N' || *s == 'n' || *s == 'S' || *s == 's') {
-		printf("str='%s'\n", str);
+		dbg(1,"str='%s'\n", str);
 		double lng, lat;
 		char ns, ew;
 		args=sscanf(str, "%lf %c %lf %c%n", &lat, &ns, &lng, &ew, &ret);

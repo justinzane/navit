@@ -77,11 +77,15 @@ struct graphics_image {
 };
 
 /* prototypes */
+enum draw_mode_num;
 struct color;
+struct displayitem;
+struct displaylist_handle;
 struct graphics;
 struct graphics_font;
 struct graphics_gc;
 struct graphics_image;
+struct item;
 struct point;
 struct transformation;
 struct graphics *graphics_new(char *type);
@@ -102,3 +106,9 @@ void graphics_draw_lines(struct graphics *this, struct graphics_gc *gc, struct p
 void graphics_draw_circle(struct graphics *this, struct graphics_gc *gc, struct point *p, int r);
 int graphics_ready(struct graphics *this);
 void graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, struct transformation *trans, GList *layouts);
+struct displaylist_handle *graphics_displaylist_open(GHashTable *display_list);
+struct displayitem *graphics_displaylist_next(struct displaylist_handle *dlh);
+void graphics_displaylist_close(struct displaylist_handle *dlh);
+struct item *graphics_displayitem_get_item(struct displayitem *di);
+char *graphics_displayitem_get_label(struct displayitem *di);
+int graphics_displayitem_within_dist(struct displayitem *di, struct point *p, int dist);

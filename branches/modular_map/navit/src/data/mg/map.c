@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <stdio.h>
 #include <string.h>
+#include "debug.h"
 #include "plugin.h"
 #include "maptype.h"
 #include "projection.h"
@@ -94,6 +95,7 @@ map_rect_new_mg(struct map_priv *map, struct coord_rect *r, struct layer *layers
 	return mr;
 }
 
+
 static struct item *
 map_rect_get_item_mg(struct map_rect_priv *mr)
 {
@@ -123,9 +125,28 @@ map_rect_get_item_mg(struct map_rect_priv *mr)
 			continue;
 		if (file_next(mr))
 			continue;
-		printf("lin_count %d idx_count %d active_count %d %d kB (%d kB)\n", block_lin_count, block_idx_count, block_active_count, (block_mem+block_active_mem)/1024, block_active_mem/1024);
+		dbg(1,"lin_count %d idx_count %d active_count %d %d kB (%d kB)\n", block_lin_count, block_idx_count, block_active_count, (block_mem+block_active_mem)/1024, block_active_mem/1024);
 		return NULL;
 	}
+}
+
+static struct item *
+map_rect_get_item_byid_mg(struct map_rect_priv *mr, int id_hi, int id_lo)
+{
+	mr->current_file = id_hi >> 16;
+	switch (mr->current_file) {
+	case file_town_twn:
+		if (town_get_byid(mr, &mr->town, id_hi, id_lo, &mr->item))
+			return &mr->item;
+		break;
+	case file_street_str:
+		if (street_get_byid(mr, &mr->street, id_hi, id_lo, &mr->item))
+			return &mr->item;
+		break;
+	default:	
+		printf("geht nicht\n");
+	}
+	return NULL;
 }
 
 
@@ -142,6 +163,7 @@ static struct map_methods map_methods_mg = {
 	map_rect_new_mg,
 	map_rect_destroy_mg,
 	map_rect_get_item_mg,
+	map_rect_get_item_byid_mg,
 };
 
 struct map_priv *
@@ -154,6 +176,7 @@ map_new_mg(struct map_methods *meth, char *dirname)
 	*meth=map_methods_mg;
 	m=g_new(struct map_priv, 1);
 	m->id=++map_id;
+	m->dirname=g_strdup(dirname);
 	strcpy(filename, dirname);
 	filename[len]='/';
 	for (i = 0 ; i < file_end ; i++) {

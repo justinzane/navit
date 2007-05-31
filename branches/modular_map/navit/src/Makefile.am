@@ -1,10 +1,10 @@
-SUBDIRS=fib-1.0 data gui graphics
+SUBDIRS=fib-1.0 data gui graphics xpm
 
 fib-1.0 fib-1.0/Makefile.in: fib-1.0/Makefile.am
 	cd fib-1.0
 	./configure
 
-AM_CPPFLAGS = @PACKAGE_CFLAGS@ @IMLIB2_CFLAGS@
+AM_CPPFLAGS = @PACKAGE_CFLAGS@ @IMLIB2_CFLAGS@ -DMODULE=\"navit\"
 
 
 bin_PROGRAMS = navit

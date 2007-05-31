@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <glib.h>
+#include <stdarg.h>
 #include "popup.h"
 #include "navit.h"
 #include "coord.h"
@@ -8,6 +9,8 @@
 #include "point.h"
 #include "transform.h"
 #include "projection.h"
+#include "map.h"
+#include "graphics.h"
 
 #if 0
 static void
@@ -266,114 +269,108 @@ popup_destroy(GtkObject *obj, void *parm)
 #endif
 
 #include "item.h"
-struct display_item {
-        struct item item;
-        char *label;
-        int displayed;
-        int count;
-        struct point pnt[0];
-};
 
 struct point popup_pnt;
 
-static void
-popup_show_item(void *popup, struct display_item *di)
+static void *
+popup_printf(void *menu, enum menu_type type, const char *fmt, ...)
 {
-	char *str;
-	if (di->label) 
-		str=g_strdup_printf("%s '%s'", item_to_name(di->item.type), di->label);
-	else
-		str=g_strdup(item_to_name(di->item.type));
-	menu_add(popup, str, menu_type_menu, NULL, NULL, NULL);
+	gchar *str;
+	va_list ap;
+	void *ret;
+
+	va_start(ap, fmt);
+	str=g_strdup_vprintf(fmt, ap);
+	ret=menu_add(menu, str, type, NULL, NULL, NULL);
+	va_end(ap);
 	g_free(str);
+	return ret;
 }
 
-static int
-within_dist_point(struct point *p0, struct point *p1, int dist)
+static void
+popup_show_attr_val(void *menu, struct attr *attr)
 {
-	if (p0->x == 32767 || p0->y == 32767 || p1->x == 32767 || p1->y == 32767)
-		return 0;
-	if (p0->x == -32768 || p0->y == -32768 || p1->x == -32768 || p1->y == -32768)
-		return 0;
-        if ((p0->x-p1->x)*(p0->x-p1->x) + (p0->y-p1->y)*(p0->y-p1->y) <= dist*dist) {
-                return 1;
-        }
-        return 0;
+	char *attr_name=attr_to_name(attr->type);
+	
+	printf("%s: %s", attr_name, attr->u.str);
+	popup_printf(menu, menu_type_menu, "%s: %s", attr_name, attr->u.str);
 }
 
-static int
-within_dist_line(struct point *p, struct point *line_p0, struct point *line_p1, int dist)
+static void
+popup_show_attr(void *menu, struct item *item, enum attr_type attr_type)
 {
-	int vx,vy,wx,wy;
-	int c1,c2;
-	struct point line_p;
-
-	vx=line_p1->x-line_p0->x;
-	vy=line_p1->y-line_p0->y;
-	wx=p->x-line_p0->x;
-	wy=p->y-line_p0->y;
-
-	c1=vx*wx+vy*wy;
-	if ( c1 <= 0 )
-		return within_dist_point(p, line_p0, dist);
-	c2=vx*vx+vy*vy;
-	if ( c2 <= c1 )
-		return within_dist_point(p, line_p1, dist);
-
-	line_p.x=line_p0->x+vx*c1/c2;
-	line_p.y=line_p0->y+vy*c1/c2;
-	return within_dist_point(p, &line_p, dist);
+	struct attr attr;
+	memset(&attr, 0, sizeof(attr));
+	attr.type=attr_type;
+	if (item_attr_get(item, attr_type, &attr)) 
+		popup_show_attr_val(menu, &attr);
 }
 
-static int
-within_dist_polyline(struct point *p, struct point *line_pnt, int count, int dist, int close)
+static void
+popup_show_attrs(void *menu, struct item *item)
 {
-	int i;
-	for (i = 0 ; i < count-1 ; i++) {
-		if (within_dist_line(p,line_pnt+i,line_pnt+i+1,dist)) {
-			return 1;
-		}
-	}
 #if 0
-	if (close)
-		return (within_dist_line(p,line_pnt,line_pnt+count-1,dist));
+	popup_show_attr(menu, item, attr_debug);
+	popup_show_attr(menu, item, attr_address);
+	popup_show_attr(menu, item, attr_phone);
+	popup_show_attr(menu, item, attr_phone);
+	popup_show_attr(menu, item, attr_entry_fee);
+	popup_show_attr(menu, item, attr_open_hours);
+#else
+	struct attr attr;
+	for (;;) {
+		memset(&attr, 0, sizeof(attr));
+		if (item_attr_get(item, attr_any, &attr)) 
+			popup_show_attr_val(menu, &attr);
+		else
+			break;
+	}
+	
 #endif
-	return 0;
-}
-
-static int
-within_dist(struct display_item *di, struct point *p, int dist)
-{
-	if (di->item.type < type_line) {
-		return within_dist_point(p, &di->pnt[0], dist);
-	}
-	if (di->item.type < type_area) {
-		return within_dist_polyline(p, di->pnt, di->count, dist, 0);
-	}
-	return 0;
 }
 
 static void
-popup_display_list(gpointer data, gpointer user_data)
+popup_show_item(void *popup, struct displayitem *di)
 {
-	struct display_item *di=data;
-	if (within_dist(di, &popup_pnt, 5)) {
-		popup_show_item(user_data, di);
-	}
-}
+	struct map_rect *mr;
+	void *menu, *menu_map, *menu_item;
+	char *label;
+	struct item *item;
 
-static void
-popup_display_hash(gpointer key, gpointer value, gpointer user_data)
-{
-	g_list_foreach(value, popup_display_list, user_data);
+	label=graphics_displayitem_get_label(di);
+	item=graphics_displayitem_get_item(di);
+
+	if (label) 
+		menu=popup_printf(popup, menu_type_submenu, "%s '%s'", item_to_name(item->type), label);
+	else
+		menu=popup_printf(popup, menu_type_submenu, "%s", item_to_name(item->type));
+	menu_item=popup_printf(menu, menu_type_submenu, "Item");
+	popup_printf(menu_item, menu_type_menu, "type: 0x%x", item->type);
+	popup_printf(menu_item, menu_type_menu, "id: 0x%x 0x%x", item->id_hi, item->id_lo);
+	mr=map_rect_new(item->map,NULL,NULL,0);
+	item=map_rect_get_item_byid(mr, item->id_hi, item->id_lo);
+	if (item) {
+		popup_show_attrs(menu_item, item);
+	}
+	map_rect_destroy(mr);
+	menu_map=popup_printf(menu, menu_type_submenu, "Map");
 }
 
 static void
 popup_display(struct navit *nav, void *popup, struct point *p)
 {
+	struct displaylist_handle *dlh;
 	GHashTable *display;
+	struct displayitem *di;
+
 	display=navit_get_display_list(nav);
-        g_hash_table_foreach(display, popup_display_hash, popup);
+	dlh=graphics_displaylist_open(display);
+	while ((di=graphics_displaylist_next(dlh))) {
+		if (graphics_displayitem_within_dist(di, &popup_pnt, 5)) {
+			popup_show_item(popup, di);
+		}
+	}
+	graphics_displaylist_close(dlh);
 }
 
 void

@@ -30,6 +30,7 @@ town_attr_rewind(void *priv_data)
 	struct town_priv *twn=priv_data;
 
 	twn->aidx=0;
+	twn->attr_next=attr_label;
 }
 
 static int
@@ -39,15 +40,31 @@ town_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 
 	attr->type=attr_type;
 	switch (attr_type) {
+	case attr_any:
+		while (twn->attr_next != attr_none) {
+			if (town_attr_get(twn, twn->attr_next, attr))
+				return 1;
+		}
+		return 0;
 	case attr_label:
+		attr->u.str=twn->district;
+		twn->attr_next=attr_name;
+		if (attr->u.str[0])
+			return 1;
+		attr->u.str=twn->name;
+		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	case attr_name:
 		attr->u.str=twn->name;
+		twn->attr_next=attr_district;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	case attr_district:
 		attr->u.str=twn->district;
+		twn->attr_next=attr_debug;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
-	case attr_size:
-		attr->u.num=twn->order;
+	case attr_debug:
+		sprintf(twn->debug, "order %d\nsize %d", twn->order, twn->size);
+		attr->u.str=twn->debug;
+		twn->attr_next=attr_none;
 		return 1;
 	default:
 		g_assert(1==0);
@@ -62,6 +79,7 @@ static struct item_methods town_meth = {
 	town_attr_rewind,
 	town_attr_get,
 };
+
 static void
 town_get_data(struct town_priv *twn, unsigned char **p)
 {
@@ -96,7 +114,10 @@ town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 		town_get_data(twn, &mr->b.p);
 		twn->cidx=0;
 		twn->aidx=0;
+		twn->attr_next=attr_label;
+#if 0
 		if (twn->order <= limit[mr->limit] && coord_rect_contains(&mr->r,&twn->c)) {
+#endif
 			switch(twn->type) {
 			case 1:
 				item->type=type_town_label;
@@ -104,11 +125,14 @@ town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 			case 3:
 				item->type=type_district_label;
 				break;
+			case 4:
+				item->type=type_port_label;
+				break;
 			case 9:
 				item->type=type_highway_exit_label;
 				break;
 			default:
-				printf("unknown town type %d\n", twn->type);
+				printf("unknown town type 0x%x '%s' '%s' 0x%x,0x%x\n", twn->type, twn->name, twn->district, twn->c.x, twn->c.y);
 				item->type=type_town_label;
 			}
 			item->id_hi=twn->country | (mr->current_file << 16);
@@ -116,7 +140,19 @@ town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 			item->priv_data=twn;
 			item->meth=&town_meth;
 			return 1;
+#if 0
 		}
+#endif
 	}
 }
 
+int
+town_get_byid(struct map_rect_priv *mr, struct town_priv *twn, int id_hi, int id_lo, struct item *item)
+{
+	int country=id_hi & 0xffff;
+	int res;
+	tree_search_hv(mr->m->dirname, "town", (id_lo >> 8) | (country << 24), id_lo & 0xff, &res);
+	block_get_byindex(mr->m->file[mr->current_file], res >> 16, &mr->b);
+	mr->b.p=mr->b.block_start+(res & 0xffff);
+	return town_get(mr, twn, item);
+}

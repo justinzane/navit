@@ -284,3 +284,18 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 	return 1;
 }
 
+int
+street_get_byid(struct map_rect_priv *mr, struct street_priv *street, int id_hi, int id_lo, struct item *item)
+{
+        int country=id_hi & 0xffff;
+        int res;
+        tree_search_hv(mr->m->dirname, "street", (id_lo >> 8) | (country << 24), id_lo & 0xff, &res);
+        block_get_byindex(mr->m->file[mr->current_file], res >> 16, &mr->b);
+#if 0
+        mr->b.p=mr->b.block_start+(res & 0xffff);
+        return town_get(mr, twn, item);
+#endif
+
+	return 0;
+}
+      

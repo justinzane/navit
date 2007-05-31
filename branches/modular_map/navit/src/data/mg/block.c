@@ -33,6 +33,7 @@ block_get_byid(struct file *file, int id, unsigned char **p_ret)
 	struct block_index *blk_idx;
 	int blk_num,max;
 
+
 	blk_idx=(struct block_index *)(file->begin+0x1000);
 	max=(blk_idx->size-sizeof(struct block_index))/sizeof(struct block_index_item);
 	block_mem+=24;
@@ -44,6 +45,16 @@ block_get_byid(struct file *file, int id, unsigned char **p_ret)
 
 	*p_ret=file->begin+blk_num*512;
 	return block_get(p_ret);
+}
+
+int
+block_get_byindex(struct file *file, int idx, struct block_priv *blk)
+{
+	printf("idx=%d\n", idx);
+	blk->b=block_get_byid(file, idx, &blk->p);
+	blk->block_start=(unsigned char *)(blk->b);
+	blk->p_start=blk->p;
+	blk->end=blk->block_start+blk->b->size;
 }
 
 static void

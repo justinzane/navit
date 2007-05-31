@@ -88,4 +88,5 @@ src/gui/Makefile
 src/gui/gtk/Makefile
 src/graphics/Makefile
 src/graphics/gtk_drawing_area/Makefile
+src/xpm/Makefile
 ])

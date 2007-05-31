@@ -1,3 +1,4 @@
-AM_CPPFLAGS = @PACKAGE_CFLAGS@ -I../..
-pkglib_LTLIBRARIES = libdata_mg.la
-libdata_mg_la_SOURCES = map.c block.c town.c poly.c street.c mg.h
+include $(top_srcdir)/Makefile.inc
+AM_CPPFLAGS = @PACKAGE_CFLAGS@ -I../.. -DMODULE=\"data_mg\"
+plugin_LTLIBRARIES = libdata_mg.la
+libdata_mg_la_SOURCES = map.c block.c town.c tree.c poly.c street.c mg.h

@@ -5,6 +5,7 @@
 #include <glib.h>
 #include "config.h"
 #include "coord.h"
+#include "debug.h"
 #include "transform.h"
 #include "projection.h"
 #include "point.h"
@@ -203,12 +204,12 @@ transform_rect(struct transformation *this, enum projection pro, struct coord_re
 	} else {
 		transform_to_geo(this->pro, &this->r.lu, &g);
 		transform_from_geo(pro, &g, &r->lu);
-		printf("%f,%f", g.lat, g.lng);
+		dbg(1,"%f,%f", g.lat, g.lng);
 		transform_to_geo(this->pro, &this->r.rl, &g);
-		printf(" - %f,%f\n", g.lat, g.lng);
+		dbg(1,": - %f,%f\n", g.lat, g.lng);
 		transform_from_geo(pro, &g, &r->rl);
 	}
-	printf("transform rect for %d is %d,%d - %d,%d\n", pro, r->lu.x, r->lu.y, r->rl.x, r->rl.y);
+	dbg(1,"transform rect for %d is %d,%d - %d,%d\n", pro, r->lu.x, r->lu.y, r->rl.x, r->rl.y);
 }
 
 struct coord *

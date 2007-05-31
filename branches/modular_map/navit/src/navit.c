@@ -168,16 +168,17 @@ navit_init(struct navit *this)
 {
 	struct menu *men,*men2;
 	struct map *map;
-	void *handle;
+	struct mapset_handle *handle;
 	struct mapset *ms=this->mapsets->data;
 	men=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
-	mapset_open(ms, &handle);
-	while ((map=mapset_next(ms, &handle))) {
+	handle=mapset_open(ms);
+	while ((map=mapset_next(handle))) {
 		char *s=g_strdup_printf("%s:%s", map_get_type(map), map_get_filename(map));
 		men2=menu_add(men, s, menu_type_toggle, navit_map_toggle, this, map);
 		menu_set_toggle(men2, map_get_active(map));
 		g_free(s);
-	}	
+	}
+	mapset_close(handle);
 	// menu_add(map, "Test", menu_type_menu, NULL, NULL);
 	men=menu_add(this->menubar, "Layout", menu_type_submenu, NULL, NULL, NULL);
 	menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
