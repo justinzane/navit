@@ -104,7 +104,6 @@ struct navit *
 navit_new(char *ui, char *graphics, struct coord *center, enum projection pro, int zoom)
 {
 	struct navit *this=g_new0(struct navit, 1);
-	struct coord c;
 
 	this->trans=transform_new();
 	transform_set_projection(this->trans, pro);

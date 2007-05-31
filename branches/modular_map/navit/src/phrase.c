@@ -15,7 +15,9 @@ phrase_route_calc(void *speech)
 void
 phrase_route_calculated(void *speech, void *route)
 {
+#if 0
 	struct tm *eta;
+#endif
 	if (! speech)
 		return;
 

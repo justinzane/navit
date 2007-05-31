@@ -20,10 +20,12 @@ void mapset_add(struct mapset *ms, struct map *m)
 	ms->maps=g_list_append(ms->maps, m);
 }
 
+#if 0
 static void mapset_maps_free(struct mapset *ms)
 {
 	/* todo */
 }
+#endif
 
 void mapset_destroy(struct mapset *ms)
 {
@@ -39,17 +41,21 @@ mapset_open(struct mapset *ms)
 {
 	struct mapset_handle *ret;
 
-	ret=g_new(struct mapset, 1);
+	ret=g_new(struct mapset_handle, 1);
 	ret->l=ms->maps;
+
+	return ret;
 }
 
 struct map * mapset_next(struct mapset_handle *msh)
 {
 	struct map *ret;
+
 	if (!msh->l)
 		return NULL;
 	ret=msh->l->data;
 	msh->l=g_list_next(msh->l);
+
 	return ret;
 }
 

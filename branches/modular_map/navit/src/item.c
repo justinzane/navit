@@ -1,3 +1,4 @@
+#include <string.h>
 #include <glib.h>
 #include "attr.h"
 #include "coord.h"

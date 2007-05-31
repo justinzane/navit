@@ -12,7 +12,7 @@
 int debug_level=0;
 static GHashTable *debug_hash;
 
-static int sigsegv(int sig)
+static void sigsegv(int sig)
 {
 	FILE *f;
 	time_t t;
@@ -36,7 +36,7 @@ debug_init(void)
 }
 
 void
-debug_level_set(const char *name, int level)
+debug_level_set(char *name, int level)
 {
 	g_hash_table_insert(debug_hash, name, (gpointer) level);
 }
@@ -44,7 +44,7 @@ debug_level_set(const char *name, int level)
 int
 debug_level_get(const char *name)
 {
-	return g_hash_table_lookup(debug_hash, name);
+	return (int)(g_hash_table_lookup(debug_hash, name));
 }
 
 void

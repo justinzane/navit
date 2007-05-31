@@ -1,5 +1,7 @@
 struct route;
 struct statusbar_priv;
+struct point;
+struct transformation;
 
 struct statusbar_methods {
 	void (*statusbar_destroy)(struct statusbar_priv *this);
@@ -12,3 +14,5 @@ struct statusbar {
 	struct statusbar_methods meth;
 	struct statusbar_priv *priv;
 };
+
+/* prototypes */
