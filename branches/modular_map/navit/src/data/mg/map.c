@@ -76,7 +76,7 @@ map_projection_mg(struct map_priv *m)
 extern int block_lin_count,block_idx_count,block_active_count,block_mem,block_active_mem;
 
 static struct map_rect_priv *
-map_rect_new_mg(struct map_priv *map, struct coord_rect *r, struct layer *layers, int limit)
+map_rect_new_mg(struct map_priv *map, struct map_selection *sel)
 {
 	struct map_rect_priv *mr;
 
@@ -87,9 +87,7 @@ map_rect_new_mg(struct map_priv *map, struct coord_rect *r, struct layer *layers
 	block_active_mem=0;
 	mr=g_new0(struct map_rect_priv, 1);
 	mr->m=map;
-	if (r)
-		mr->r=*r;
-	mr->limit=limit;
+	mr->sel=sel;
 	mr->current_file=-1;
 	file_next(mr);
 	return mr;
@@ -144,7 +142,9 @@ map_rect_get_item_byid_mg(struct map_rect_priv *mr, int id_hi, int id_lo)
 			return &mr->item;
 		break;
 	default:	
-		printf("geht nicht\n");
+		if (poly_get_byid(mr, &mr->street, id_hi, id_lo, &mr->item))
+			return &mr->item;
+		break;
 	}
 	return NULL;
 }

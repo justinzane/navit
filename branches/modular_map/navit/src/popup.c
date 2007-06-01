@@ -157,8 +157,9 @@ popup_show_item(void *popup, struct displayitem *di)
 	menu_item=popup_printf(menu, menu_type_submenu, "Item");
 	popup_printf(menu_item, menu_type_menu, "type: 0x%x", item->type);
 	popup_printf(menu_item, menu_type_menu, "id: 0x%x 0x%x", item->id_hi, item->id_lo);
-	mr=map_rect_new(item->map,NULL,NULL,0);
+	mr=map_rect_new(item->map,NULL);
 	item=map_rect_get_item_byid(mr, item->id_hi, item->id_lo);
+	dbg(1,"item=%p\n", item);
 	if (item) {
 		popup_show_attrs(menu_item, item);
 	}

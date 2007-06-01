@@ -439,7 +439,7 @@ do_draw_item(GHashTable *display_list, struct transformation *t, enum projection
 static void
 do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int order)
 {
-	struct coord_rect r;
+	struct map_selection sel;
 	struct map_rect *mr;
 	struct item *item;
 	struct mapset *ms;
@@ -447,13 +447,15 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 	enum projection pro;
 	struct mapset_handle *h;
 
+	sel.next=NULL;
+	sel.order[0]=order;
 	ms=mapsets->data;
 	h=mapset_open(ms);
 	while ((m=mapset_next(h))) {
 		if (map_get_active(m)) {
 			pro=map_projection(m);
-			transform_rect(t, pro, &r);
-			mr=map_rect_new(m, &r, NULL, order);
+			transform_rect(t, pro, &sel.rect);
+			mr=map_rect_new(m, &sel);
 			while ((item=map_rect_get_item(mr))) {
 				do_draw_item(display_list, t, pro, item);
 			}

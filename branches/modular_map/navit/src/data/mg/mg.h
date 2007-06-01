@@ -56,6 +56,7 @@ struct poly_priv {
 	unsigned int count_sum;
 
 	int aidx;
+	enum attr_type attr_next;
 };
 
 struct street_header {
@@ -118,6 +119,7 @@ struct street_priv {
 	struct coord *ref;
 	int bytes;
 	struct street_name name;
+	enum attr_type attr_next;
 };
 
 enum file_index {
@@ -170,8 +172,7 @@ struct block_priv {
 };
 
 struct map_rect_priv {
-	struct coord_rect r;
-	int limit;
+	struct map_selection *sel;
 
 	struct map_priv *m;
 	enum file_index current_file;
@@ -189,6 +190,8 @@ int block_get_byindex(struct file *file, int idx, struct block_priv *blk);
 
 int tree_search_hv(char *dirname, char *filename, unsigned int search1, unsigned int search2, int *result);
 int town_get(struct map_rect_priv *mr, struct town_priv *poly, struct item *item);
+int town_get_byid(struct map_rect_priv *mr, struct town_priv *twn, int id_hi, int id_lo, struct item *item);
 int poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item);
+int poly_get_byid(struct map_rect_priv *mr, struct poly_priv *poly, int id_hi, int id_lo, struct item *item);
 int street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *item);
-
+int street_get_byid(struct map_rect_priv *mr, struct street_priv *street, int id_hi, int id_lo, struct item *item);

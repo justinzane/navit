@@ -1,5 +1,5 @@
-#include <glib.h>
-#include <stdio.h>
+#include <glib.h> 
+#include "debug.h"
 #include "mg.h"
 
 int coord_debug;
@@ -89,8 +89,7 @@ static int street_get_coord(unsigned char **pos, int bytes, struct coord *ref, s
 		f->x=ref[0].x+x;
 		f->y=ref[1].y+y;
 	}
-	if (coord_debug)
-		printf("0x%x,0x%x + 0x%x,0x%x = 0x%x,0x%x\n", x, y, ref[0].x, ref[1].y, f->x, f->y);
+	dbg(1,"0x%x,0x%x + 0x%x,0x%x = 0x%x,0x%x\n", x, y, ref[0].x, ref[1].y, f->x, f->y);
 	*pos=p;
 	return flags;
 }
@@ -155,18 +154,27 @@ street_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 {
 	struct street_priv *street=priv_data;
 
+	dbg(1,"segid 0x%x\n", street->str->segid);
 	attr->type=attr_type;
 	switch (attr_type) {
+	case attr_any:
+		while (street->attr_next != attr_none) {
+			if (street_attr_get(street, street->attr_next, attr))
+				return 1;
+		}
+		return 0;
 	case attr_label:
 	case attr_name:
 		if (! street->name.len)
 			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));
 		attr->u.str=street->name.name2;
+		street->attr_next=attr_type == attr_label ? attr_name : attr_name_systematic;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	case attr_name_systematic:
 		if (! street->name.len)
 			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));
 		attr->u.str=street->name.name1;
+		street->attr_next=attr_none;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	default:
 		return 0;
@@ -199,7 +207,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 		street->name_file=mr->m->file[file_strname_stn];
 		/* 1-6 */
 #if 1
-		if (street->header->order+street->header->order/2 > mr->limit)
+		if (street->header->order+street->header->order/2 > mr->sel->order[0])
 			return 0;
 #endif
 		street->end=mr->b.end;
@@ -218,7 +226,9 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 	}
 	if (! L(street->str->segid))
 		return 0;
+#if 0
 	g_assert(street->p != NULL);
+#endif
 	street->next=NULL;
 	street->status_rewind=street->status=L(street->str[1].segid) >= 0 ? 0:1;
 	if (street->status)
@@ -270,7 +280,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 		break;
 	default:
 		item->type=type_street_unkn;
-		printf("unknown type 0x%x\n",street->str->type);
+		dbg(0,"unknown type 0x%x\n",street->str->type);
 	}
 #if 0
 	coord_debug=(street->str->unknown2 != 0x40 || street->str->unknown3 != 0x40);
@@ -281,6 +291,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 #endif
 	street->p_rewind=street->p;
 	street->name.len=0;
+	street->attr_next=attr_label;
 	return 1;
 }
 
@@ -290,7 +301,23 @@ street_get_byid(struct map_rect_priv *mr, struct street_priv *street, int id_hi,
         int country=id_hi & 0xffff;
         int res;
         tree_search_hv(mr->m->dirname, "street", (id_lo >> 8) | (country << 24), id_lo & 0xff, &res);
-        block_get_byindex(mr->m->file[mr->current_file], res >> 16, &mr->b);
+	dbg(1,"res=0x%x\n", res);
+        block_get_byindex(mr->m->file[mr->current_file], res >> 12, &mr->b);
+	street_get_data(street, &mr->b.p);
+	street->name_file=mr->m->file[file_strname_stn];
+	street->end=mr->b.end;
+	street->ref=&mr->b.b->r.lu;
+	street->bytes=street_get_bytes(&mr->b.b->r);
+	street->str=(struct street_str *)mr->b.p;
+	street->coord_begin=mr->b.p;
+	street_coord_get_begin(&street->coord_begin);
+	street->p=street->coord_begin;
+	street->type--;
+	item->meth=&street_meth;
+	item->priv_data=street;
+	street->str+=(res & 0xfff)-1;
+	dbg(1,"segid 0x%x\n", street->str[1].segid);
+	return street_get(mr, street, item);
 #if 0
         mr->b.p=mr->b.block_start+(res & 0xffff);
         return town_get(mr, twn, item);

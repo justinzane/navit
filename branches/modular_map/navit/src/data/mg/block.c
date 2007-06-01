@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <stdio.h>
 #include <string.h>
+#include "debug.h"
 #include "mg.h"
 
 
@@ -50,11 +51,13 @@ block_get_byid(struct file *file, int id, unsigned char **p_ret)
 int
 block_get_byindex(struct file *file, int idx, struct block_priv *blk)
 {
-	printf("idx=%d\n", idx);
+	dbg(1,"idx=%d\n", idx);
 	blk->b=block_get_byid(file, idx, &blk->p);
 	blk->block_start=(unsigned char *)(blk->b);
 	blk->p_start=blk->p;
 	blk->end=blk->block_start+blk->b->size;
+
+	return 1;
 }
 
 static void
@@ -150,7 +153,7 @@ block_next_lin(struct map_rect_priv *mr)
 		mr->b.end=mr->b.block_start+mr->b.b->size;
 		if (mr->b.b->count == -1)
 			return 0;
-		if (coord_rect_overlap(&mr->r, &mr->b.b->r) || mr->current_file == file_street_str+100) {
+		if (!mr->sel || coord_rect_overlap(&mr->sel->rect, &mr->b.b->r)) {
 			block_active_count++;
 			block_active_mem+=mr->b.b->blocks*512-sizeof(struct block *);
 			return 1;
@@ -161,29 +164,28 @@ block_next_lin(struct map_rect_priv *mr)
 int
 block_next(struct map_rect_priv *mr)
 {
-	int debug=0;
 	int blk_num,coord,r_h,r_w;
 	struct block_bt_priv *bt=&mr->b.bt;
 
-	if (!mr->b.binarytree)
+	if (!mr->b.binarytree || ! mr->sel)
 		return block_next_lin(mr);
 	for (;;) {
 		if (! bt->p) {
-			if (debug)
-				printf("block 0x%x\n", bt->next);
+			dbg(1,"block 0x%x\n", bt->next);
 			if (bt->next == -1)
 				return 0;
 			bt->b=block_get_byid(mr->file, bt->next, &bt->p);
 			bt->end=(unsigned char *)mr->b.bt.b+mr->b.bt.b->size;
 			bt->next=bt->b->next;
 			bt->order=0;
-			if (debug)
-				printf("size 0x%x next 0x%x\n", bt->b->size, bt->b->next);
+			dbg(1,"size 0x%x next 0x%x\n", bt->b->size, bt->b->next);
 			if (! mr->b.bt.block_count) {
+#if 0
 				if (debug) {
 					printf("idx rect ");
 					block_rect_print(&mr->b.bt.b->r);
 				}
+#endif
 				bt->r=bt->b->r;
 				bt->r_curr=bt->r;
 				coord=get_u32(&mr->b.bt.p);
@@ -197,22 +199,22 @@ block_next(struct map_rect_priv *mr)
 			blk_num=get_u32(&mr->b.bt.p);
 			coord=get_u32(&mr->b.bt.p); 
 			block_mem+=8;
-			if (debug) {
-				printf("%p vs %p coord 0x%x ", mr->b.bt.end, mr->b.bt.p, coord);
-				printf("block 0x%x", blk_num);
-			}
+			dbg(1,"%p vs %p coord 0x%x ", mr->b.bt.end, mr->b.bt.p, coord);
+			dbg(1,"block 0x%x", blk_num);
 		
 			r_w=bt->r_curr.rl.x-bt->r_curr.lu.x;
 			r_h=bt->r_curr.lu.y-bt->r_curr.rl.y;
+#if 0
 			if (debug) {
 				printf(" rect1 ");
 				block_rect_print(&bt->r_curr);
 				printf(" %dx%d", r_w, r_h);
 			}
+#endif
 			mr->b.b=NULL;
 			if (blk_num != -1) {
 				block_mem+=8;
-				if (coord_rect_overlap(&mr->r, &bt->r_curr)) {
+				if (coord_rect_overlap(&mr->sel->rect, &bt->r_curr)) {
 					mr->b.b=block_get_byid(mr->file, blk_num, &mr->b.p);
 					mr->b.block_num=blk_num;
 					g_assert(mr->b.b != NULL);

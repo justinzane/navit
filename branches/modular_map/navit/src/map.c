@@ -81,7 +81,7 @@ map_destroy(struct map *m)
 }
 
 struct map_rect *
-map_rect_new(struct map *m, struct coord_rect *r, struct layer *layers, int limit)
+map_rect_new(struct map *m, struct map_selection *sel)
 {
 	struct map_rect *mr;
 
@@ -90,7 +90,7 @@ map_rect_new(struct map *m, struct coord_rect *r, struct layer *layers, int limi
 #endif
 	mr=g_new0(struct map_rect, 1);
 	mr->m=m;
-	mr->priv=m->meth.map_rect_new(m->priv, r, layers, limit);
+	mr->priv=m->meth.map_rect_new(m->priv, sel);
 
 	return mr;
 }
