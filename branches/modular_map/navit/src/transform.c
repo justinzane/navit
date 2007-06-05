@@ -367,13 +367,48 @@ transform_scale(int y)
 	return 1/cos(g.lat/180*M_PI);
 }
 
+#ifdef AVOID_FLOAT
+static int
+tab[]={14142,13379,12806,12364,12018,11741,11517,11333,11180,11051,10943,10850,10770,10701,10640,10587,10540,10499,10462,10429,10400,10373,10349,10327,10307,10289,10273,10257,10243,10231,10219,10208};
+#endif
+
 double
 transform_distance(struct coord *c1, struct coord *c2)
 {
+#ifndef AVOID_FLOAT 
 	double dx,dy,scale=transform_scale((c1->y+c2->y)/2);
 	dx=c1->x-c2->x;
 	dy=c1->y-c2->y;
 	return sqrt(dx*dx+dy*dy)/scale;
+#else
+	int dx,dy,f,scale=15539,ret;
+	dx=c1->x-c2->x;
+	dy=c1->y-c2->y;
+	if (dx < 0)
+		dx=-dx;
+	if (dy < 0)
+		dy=-dy;
+	while (dx > 20000 || dy > 20000) {
+		dx/=10;
+		dy/=10;
+		scale/=10;
+	}
+	if (! dy)
+		return dx*10000/scale;
+	if (! dx)
+		return dy*10000/scale;
+	if (dx > dy) {
+		f=dx*8/dy-8;
+		if (f >= 32)
+			return dx*10000/scale;
+		return dx*tab[f]/scale;
+	} else {
+		f=dy*8/dx-8;
+		if (f >= 32)
+			return dy*10000/scale;
+		return dy*tab[f]/scale;
+	}
+#endif
 }
 
 int
