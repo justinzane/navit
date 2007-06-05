@@ -52,7 +52,7 @@ void
 navit_draw(struct navit *this)
 {
 	transform_setup_source_rect(this->trans);
-	graphics_draw(this->gra, this->display_list, this->mapsets, this->trans, this->layouts);
+	graphics_draw(this->gra, this->display_list, this->mapsets, this->trans, this->layouts, this->route);
 	this->ready=1;
 }
 
@@ -134,7 +134,6 @@ navit_new(char *ui, char *graphics, struct coord *center, enum projection pro, i
 		return NULL;
 	}
 	graphics_init(this->gra);
-
 	return this;
 }
 
@@ -171,7 +170,7 @@ navit_init(struct navit *this)
 	struct mapset *ms=this->mapsets->data;
 	men=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
 	handle=mapset_open(ms);
-	while ((map=mapset_next(handle))) {
+	while ((map=mapset_next(handle,0))) {
 		char *s=g_strdup_printf("%s:%s", map_get_type(map), map_get_filename(map));
 		men2=menu_add(men, s, menu_type_toggle, navit_map_toggle, this, map);
 		menu_set_toggle(men2, map_get_active(map));
@@ -184,7 +183,7 @@ navit_init(struct navit *this)
 	men=menu_add(this->menubar, "Projection", menu_type_submenu, NULL, NULL, NULL);
 	menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, (void *)projection_mg);
 	menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, (void *)projection_garmin);
-
+	this->route=route_new(ms);
 }
 
 static void
@@ -194,7 +193,8 @@ navit_cursor_offscreen(struct cursor *cursor, void *this_p)
 	struct coord *c=transform_center(this->trans);
 	struct coord *cursor_c=cursor_pos_get(cursor);
 	*c=*cursor_c;
-	navit_draw(this);
+	if (graphics_ready(this->gra))
+		navit_draw(this);
 }
 
 void
@@ -216,6 +216,12 @@ struct transformation *
 navit_get_trans(struct navit *this)
 {
 	return this->trans;
+}
+
+struct route *
+navit_get_route(struct navit *this)
+{
+	return this->route;
 }
 
 GHashTable *

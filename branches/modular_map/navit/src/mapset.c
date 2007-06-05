@@ -47,16 +47,18 @@ mapset_open(struct mapset *ms)
 	return ret;
 }
 
-struct map * mapset_next(struct mapset_handle *msh)
+struct map * mapset_next(struct mapset_handle *msh, int active)
 {
 	struct map *ret;
 
-	if (!msh->l)
-		return NULL;
-	ret=msh->l->data;
-	msh->l=g_list_next(msh->l);
-
-	return ret;
+	for (;;) {
+		if (!msh->l)
+			return NULL;
+		ret=msh->l->data;
+		msh->l=g_list_next(msh->l);
+		if (!active || map_get_active(ret))
+			return ret;
+	}
 }
 
 void 

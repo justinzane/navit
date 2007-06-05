@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <stdio.h>
+#include "debug.h"
 #include "string.h"
 #include "draw_info.h"
 #include "graphics.h"
@@ -20,7 +21,7 @@ struct graphics
 {
 	struct graphics_priv *priv;
 	struct graphics_methods meth;
-	struct graphics_font *font[3];
+	struct graphics_font *font[16];
 	struct graphics_gc *gc[3];
 	int ready;
 };
@@ -43,9 +44,6 @@ graphics_new(char *type)
 void
 graphics_init(struct graphics *this)
 {
-	this->font[0]=graphics_font_new(this, 140);
-	this->font[1]=graphics_font_new(this, 200);
-	this->font[2]=graphics_font_new(this, 300);
 	this->gc[0]=graphics_gc_new(this);
 	graphics_gc_set_background(this->gc[0], &(struct color) { 0xffff, 0xefef, 0xb7b7 });
 	graphics_gc_set_foreground(this->gc[0], &(struct color) { 0xffff, 0xefef, 0xb7b7 });
@@ -211,10 +209,10 @@ xdisplay_free_list(gpointer key, gpointer value, gpointer user_data)
 	h=value;
 	l=h;
 	while (l) {
-#if 0
+#if 1
 		struct displayitem *di=l->data;
-		if (! di->displayed) 
-			printf("warning: item '%s' not displayed\n", item_to_name(di->item.type));
+		if (! di->displayed && di->item.type < type_line) 
+			dbg(0,"warning: item '%s' not displayed\n", item_to_name(di->item.type));
 #endif
 		g_free(l->data);
 		l=g_list_next(l);
@@ -245,6 +243,7 @@ xdisplay_add(GHashTable *display_list, struct item *item, int count, struct poin
 	p=g_malloc(len);
 
 	di=(struct displayitem *)p;
+	di->displayed=0;
 	p+=sizeof(*di)+count*sizeof(*pnt);
 	di->item=*item;
 	if (label) {
@@ -261,63 +260,73 @@ xdisplay_add(GHashTable *display_list, struct item *item, int count, struct poin
 }
 
 static void
-xdisplay_draw_elements(struct graphics *gra, GList *es, GList *ls)
+xdisplay_draw_elements(struct graphics *gra, GHashTable *display_list, struct itemtype *itm)
 {
 	struct element *e;
-	GList *l;
+	GList *l,*ls,*es,*types;
+	enum item_type type;
 	struct graphics_gc *gc;
 	struct graphics_image *img;
 	struct point p;
 
+	es=itm->elements;	
 	while (es) {
 		e=es->data;
-		l=ls;
-		gc=NULL;
-		img=NULL;
-		while (l) {
-			struct displayitem *di;
-			di=l->data;
-			di->displayed=1;
-			if (! gc) {
-				gc=graphics_gc_new(gra);
-				gc->meth.gc_set_foreground(gc->priv, &e->color);
-			}
-			switch (e->type) {
-			case element_polygon:
-				gra->meth.draw_polygon(gra->priv, gc->priv, di->pnt, di->count);
-				break;
-			case element_polyline:
-				if (e->u.polyline.width > 1) 
-					gc->meth.gc_set_linewidth(gc->priv, e->u.polyline.width);
-				gra->meth.draw_lines(gra->priv, gc->priv, di->pnt, di->count);
-				break;
-			case element_circle:
-				if (e->u.circle.width > 1) 
-					gc->meth.gc_set_linewidth(gc->priv, e->u.polyline.width);
-				gra->meth.draw_circle(gra->priv, gc->priv, &di->pnt[0], e->u.circle.radius);
-				p.x=di->pnt[0].x+3;
-				p.y=di->pnt[0].y+10;
-				gra->meth.draw_text(gra->priv, gra->gc[2]->priv, gra->gc[1]->priv, gra->font[e->label_size]->priv, di->label, &p, 0x10000, 0);
-				break;
-			case element_icon:
-				if (!img) {
-					img=graphics_image_new(gra, e->u.icon.src);
-					if (! img)
-						g_warning("failed to load icon '%s'\n", e->u.icon.src);
+		types=itm->type;
+		while (types) {
+			type=GPOINTER_TO_INT(types->data);
+			ls=g_hash_table_lookup(display_list, GINT_TO_POINTER(type));
+			l=ls;
+			gc=NULL;
+			img=NULL;
+			while (l) {
+				struct displayitem *di;
+				di=l->data;
+				di->displayed=1;
+				if (! gc) {
+					gc=graphics_gc_new(gra);
+					gc->meth.gc_set_foreground(gc->priv, &e->color);
 				}
-				p.x=di->pnt[0].x - img->width/2;
-				p.y=di->pnt[0].y - img->height/2;
-				gra->meth.draw_image(gra->priv, gra->gc[0]->priv, &p, img->priv);
-				break;
-			case element_image:
-				printf("image: '%s'\n", di->label);
-				gra->meth.draw_image_warp(gra->priv, gra->gc[0]->priv, di->pnt, di->count, di->label);
-				break;
-			default:
-				printf("Unhandled element type %d\n", e->type);
-			
+				switch (e->type) {
+				case element_polygon:
+					gra->meth.draw_polygon(gra->priv, gc->priv, di->pnt, di->count);
+					break;
+				case element_polyline:
+					if (e->u.polyline.width > 1) 
+						gc->meth.gc_set_linewidth(gc->priv, e->u.polyline.width);
+					gra->meth.draw_lines(gra->priv, gc->priv, di->pnt, di->count);
+					break;
+				case element_circle:
+					if (e->u.circle.width > 1) 
+						gc->meth.gc_set_linewidth(gc->priv, e->u.polyline.width);
+					gra->meth.draw_circle(gra->priv, gc->priv, &di->pnt[0], e->u.circle.radius);
+					p.x=di->pnt[0].x+3;
+					p.y=di->pnt[0].y+10;
+					if (! gra->font[e->label_size])
+						gra->font[e->label_size]=graphics_font_new(gra, e->label_size*20);
+					gra->meth.draw_text(gra->priv, gra->gc[2]->priv, gra->gc[1]->priv, gra->font[e->label_size]->priv, di->label, &p, 0x10000, 0);
+					break;
+				case element_icon:
+					if (!img) {
+						img=graphics_image_new(gra, e->u.icon.src);
+						if (! img)
+							g_warning("failed to load icon '%s'\n", e->u.icon.src);
+					}
+					p.x=di->pnt[0].x - img->width/2;
+					p.y=di->pnt[0].y - img->height/2;
+					gra->meth.draw_image(gra->priv, gra->gc[0]->priv, &p, img->priv);
+					break;
+				case element_image:
+					printf("image: '%s'\n", di->label);
+					gra->meth.draw_image_warp(gra->priv, gra->gc[0]->priv, di->pnt, di->count, di->label);
+					break;
+				default:
+					printf("Unhandled element type %d\n", e->type);
+				
+				}
+				l=g_list_next(l);
 			}
-			l=g_list_next(l);
+			types=g_list_next(types);	
 		}
 		es=g_list_next(es);
 	}	
@@ -327,21 +336,13 @@ static void
 xdisplay_draw_layer(GHashTable *display_list, struct graphics *gra, struct layer *lay, int order)
 {
 	GList *itms;
-	GList *types;
 	struct itemtype *itm;
-	enum item_type type;
 
 	itms=lay->itemtypes;
 	while (itms) {
 		itm=itms->data;
-		if (order >= itm->zoom_min && order <= itm->zoom_max) {
-			types=itm->type;
-			while (types) {
-				type=GPOINTER_TO_INT(types->data);
-				xdisplay_draw_elements(gra, itm->elements, g_hash_table_lookup(display_list, GINT_TO_POINTER(type)));
-				types=g_list_next(types);
-			}
-		}
+		if (order >= itm->zoom_min && order <= itm->zoom_max) 
+			xdisplay_draw_elements(gra, display_list, itm);
 		itms=g_list_next(itms);
 	}
 }
@@ -374,7 +375,7 @@ xdisplay_draw(GHashTable *display_list, struct graphics *gra, GList *layouts, in
 }
 
 static void
-do_draw_poly(GHashTable *display_list, struct transformation *t, enum projection pro, struct item *item)
+do_draw_poly(GHashTable *display_list, struct transformation *t, enum projection pro, struct item *item, struct route *route)
 {
 	struct coord c;
 	int max=16384;
@@ -404,6 +405,12 @@ do_draw_poly(GHashTable *display_list, struct transformation *t, enum projection
 			utf8=g_convert(attr.u.str, -1,"utf-8","iso8859-1",NULL,NULL,NULL);
 		xdisplay_add(display_list, item, count, pnt, utf8);
 		g_free(utf8);
+		if (route && route_contains(route, item)) {
+			struct item ritem;
+			ritem=*item;
+			ritem.type=type_street_route;
+			xdisplay_add(display_list, &ritem, count, pnt, NULL);
+		}
 	}
 }
 
@@ -426,18 +433,10 @@ do_draw_point(GHashTable *display_list, struct transformation *t, enum projectio
 	}
 }
 
-static void
-do_draw_item(GHashTable *display_list, struct transformation *t, enum projection pro, struct item *item)
-{
-	if (item->type < type_line) {
-		do_draw_point(display_list, t, pro, item);
-	} else {
-		do_draw_poly(display_list, t, pro, item);
-	}
-}
+extern void *route_selection;
 
 static void
-do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int order)
+do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int order, struct route *route)
 {
 	struct map_selection sel;
 	struct map_rect *mr;
@@ -448,19 +447,26 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 	struct mapset_handle *h;
 
 	sel.next=NULL;
-	sel.order[0]=order;
+	sel.order[layer_town]=1*order;
+	sel.order[layer_street]=order;
+	sel.order[layer_poly]=1*order;
 	ms=mapsets->data;
 	h=mapset_open(ms);
-	while ((m=mapset_next(h))) {
-		if (map_get_active(m)) {
-			pro=map_projection(m);
-			transform_rect(t, pro, &sel.rect);
+	while ((m=mapset_next(h, 1))) {
+		pro=map_projection(m);
+		transform_rect(t, pro, &sel.rect);
+		if (route_selection)
+			mr=map_rect_new(m, route_selection);
+		else
 			mr=map_rect_new(m, &sel);
-			while ((item=map_rect_get_item(mr))) {
-				do_draw_item(display_list, t, pro, item);
+		while ((item=map_rect_get_item(mr))) {
+			if (item->type < type_line) {
+				do_draw_point(display_list, t, pro, item);
+			} else {
+				do_draw_poly(display_list, t, pro, item, route);
 			}
-			map_rect_destroy(mr);
 		}
+		map_rect_destroy(mr);
 	}
 	mapset_close(h);
 }
@@ -472,15 +478,18 @@ graphics_ready(struct graphics *this)
 }
 
 void
-graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, struct transformation *trans, GList *layouts)
+graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, struct transformation *trans, GList *layouts, struct route *route)
 {
 	int order=transform_get_order(trans);
+
+	dbg(1,"enter");
 
 #if 0
 	printf("scale=%d center=0x%x,0x%x mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
 #endif
 	
 	xdisplay_free(display_list);
+	dbg(0,"order=%d\n", order);
 
 
 	gra->meth.draw_mode(gra->priv, draw_mode_begin);
@@ -489,7 +498,7 @@ graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, st
 		data_window_begin(co->data_window[i]);	
 	}
 #endif
-	do_draw(display_list, trans, mapsets, order);
+	do_draw(display_list, trans, mapsets, order, route);
 	xdisplay_draw(display_list, gra, layouts, order);
   
 	gra->meth.draw_mode(gra->priv, draw_mode_end);
@@ -622,9 +631,8 @@ within_dist_polygon(struct point *p, struct point *poly_pnt, int count, int dist
         for (i = 0, j = count-1; i < count; j = i++) {
 		if ((((poly_pnt[i].y <= p->y) && ( p->y < poly_pnt[j].y )) ||
 		((poly_pnt[j].y <= p->y) && ( p->y < poly_pnt[i].y))) &&
-		(poly_pnt->x < (poly_pnt[j].x - poly_pnt[i].x) * (p->y - poly_pnt[i].y) / (poly_pnt[j].y - poly_pnt[i].y) + poly_pnt[i].x)) {
+		(p->x < (poly_pnt[j].x - poly_pnt[i].x) * (p->y - poly_pnt[i].y) / (poly_pnt[j].y - poly_pnt[i].y) + poly_pnt[i].x)) 
                         c = !c;
-		}
         }
 	if (! c)
 		return within_dist_polyline(p, poly_pnt, count, dist, 1);

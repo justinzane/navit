@@ -31,7 +31,9 @@ static void sigsegv(int sig)
 void
 debug_init(void)
 {
+#if 0
 	signal(SIGSEGV, sigsegv);
+#endif
 	debug_hash=g_hash_table_new(g_str_hash, g_str_equal);
 }
 
@@ -53,10 +55,12 @@ debug_print(int level, const char *module, const char *function, const char *fmt
 	va_list ap;
 	int module_len=strlen(module);
 	int function_len=strlen(function);
-	char buffer[module_len+function_len+2];
+	char buffer[module_len+function_len+3];
 
 	strcpy(buffer, module);
 	buffer[module_len]=':';
+	strcpy(buffer+module_len+1, function);
+	strcpy(buffer+module_len+function_len+1, ":");
 
 	if (debug_level_get(module) >= level || debug_level_get(buffer) >= level) {
 		printf("%s",buffer);

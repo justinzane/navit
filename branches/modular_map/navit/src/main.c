@@ -15,6 +15,9 @@ struct map_data *map_data_default;
 int main(int argc, char **argv)
 {
 	GError *error = NULL;
+#if 0
+	GMainLoop *loop;
+#endif
 
 	setenv("LC_NUMERIC","C",1);
 	setlocale(LC_ALL,"");
@@ -36,6 +39,15 @@ int main(int argc, char **argv)
 			config_load("navit.xml.local", &error);
 		else	
 			config_load("navit.xml", &error);
+#if 1
 	gtk_main();
+#else
+	loop = g_main_loop_new (NULL, TRUE);
+	if (g_main_loop_is_running (loop))
+	{
+		g_main_loop_run (loop);
+	}
+#endif
+
 	return 0;
 }

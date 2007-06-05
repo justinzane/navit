@@ -55,7 +55,8 @@
 				<polyline color="#000000" width="2" /> 
 			</item>
 			<item type="street_1_city" zoom="0-">
-				<polyline color="#ffffff" width="3" /> 
+				<polyline color="#ffffff" width="1" /> 
+				<polyline color="#d2d2d2" width="3" /> 
 			</item>
 			<item type="street_1_land" zoom="0-">
 				<polyline color="#ffffff" width="3" /> 

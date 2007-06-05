@@ -192,6 +192,7 @@ cursor_update(struct vehicle *v, void *data)
 		if (!transform(this->trans, pro, pos, &pnt) || !transform_within_border(this->trans, &pnt, border)) {
 			if (this->callback.func) 
 				(*this->callback.func)(this, this->callback.data);
+			transform(this->trans, pro, pos, &pnt);
 		}
 		cursor_draw(this, &pnt, *dir-transform_get_angle(this->trans, 0), *speed > 2.5);
 	}
