@@ -94,6 +94,18 @@ circle_new(struct color *color, int radius, int width, int label_size)
 }
 
 struct element *
+label_new(int label_size)
+{
+	struct element *e;
+	
+	e = g_new0(struct element, 1);
+	e->type=element_label;
+	e->label_size=label_size;
+
+	return e;
+}
+
+struct element *
 icon_new(char *src)
 {
 	struct element *e;

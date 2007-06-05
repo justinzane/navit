@@ -259,6 +259,45 @@ xdisplay_add(GHashTable *display_list, struct item *item, int count, struct poin
 	g_hash_table_insert(display_list, GINT_TO_POINTER(item->type), l);
 }
 
+
+static void
+label_line(struct graphics *gra, struct graphics_gc *fg, struct graphics_gc *bg, struct graphics_font *font, struct point *p, int count, char *label)
+{
+	int i,x,y,tl;
+	double dx,dy,l;
+	struct point p_t;
+
+	tl=strlen(label)*400;
+	for (i = 0 ; i < count-1 ; i++) {
+		dx=p[i+1].x-p[i].x;
+		dx*=100;
+		dy=p[i+1].y-p[i].y;
+		dy*=100;
+		l=(int)sqrt((float)(dx*dx+dy*dy));
+		if (l > tl) {
+			x=p[i].x;
+			y=p[i].y;
+			if (dx < 0) {
+				dx=-dx;
+				dy=-dy;
+				x=p[i+1].x;
+				y=p[i+1].y;
+			}
+			x+=(l-tl)*dx/l/200;
+			y+=(l-tl)*dy/l/200;
+			x-=dy*45/l/10;
+			y+=dx*45/l/10;
+			p_t.x=x;
+			p_t.y=y;
+	#if 0
+			printf("display_text: '%s', %d, %d, %d, %d %d\n", label, x, y, dx*0x10000/l, dy*0x10000/l, l);
+	#endif
+			gra->meth.draw_text(gra->priv, fg->priv, bg->priv, font->priv, label, &p_t, dx*0x10000/l, dy*0x10000/l);
+		}
+	}
+}
+
+
 static void
 xdisplay_draw_elements(struct graphics *gra, GHashTable *display_list, struct itemtype *itm)
 {
@@ -305,6 +344,13 @@ xdisplay_draw_elements(struct graphics *gra, GHashTable *display_list, struct it
 					if (! gra->font[e->label_size])
 						gra->font[e->label_size]=graphics_font_new(gra, e->label_size*20);
 					gra->meth.draw_text(gra->priv, gra->gc[2]->priv, gra->gc[1]->priv, gra->font[e->label_size]->priv, di->label, &p, 0x10000, 0);
+					break;
+				case element_label:
+					if (di->label) {
+						if (! gra->font[e->label_size])
+							gra->font[e->label_size]=graphics_font_new(gra, e->label_size*20);
+						label_line(gra, gra->gc[2], gra->gc[1], gra->font[e->label_size], di->pnt, di->count, di->label);
+					}
 					break;
 				case element_icon:
 					if (!img) {

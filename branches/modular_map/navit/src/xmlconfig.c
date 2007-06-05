@@ -259,7 +259,7 @@ xmlconfig_polyline(struct xmlstate *state)
 
 	return 1;
 }
-				int w=0;
+
 static int
 xmlconfig_circle(struct xmlstate *state)
 {
@@ -279,6 +279,23 @@ xmlconfig_circle(struct xmlstate *state)
 	if (label_size) 
 		ls=convert_number(label_size);
 	state->element_object=circle_new(&color, r, w, ls);
+	if (! state->element_object)
+		return 0;
+	itemtype_add_element(state->parent->element_object, state->element_object);
+
+	return 1;
+}
+
+static int
+xmlconfig_label(struct xmlstate *state)
+{
+	char *label_size;
+	int ls=0;
+
+	label_size=find_attribute(state, "label_size", 0);
+	if (label_size) 
+		ls=convert_number(label_size);
+	state->element_object=label_new(ls);
 	if (! state->element_object)
 		return 0;
 	itemtype_add_element(state->parent->element_object, state->element_object);
@@ -327,6 +344,7 @@ struct element_func {
 	{ "polygon", "item", xmlconfig_polygon},
 	{ "polyline", "item", xmlconfig_polyline},
 	{ "circle", "item", xmlconfig_circle},
+	{ "label", "item", xmlconfig_label},
 	{ "icon", "item", xmlconfig_icon},
 	{ "image", "item", xmlconfig_image},
 	{},

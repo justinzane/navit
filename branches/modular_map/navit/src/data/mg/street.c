@@ -164,11 +164,21 @@ street_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 		}
 		return 0;
 	case attr_label:
+		if (! street->name.len)
+			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));
+		street->attr_next=attr_name;
+		attr->u.str=street->name.name2;
+		if (attr->u.str && attr->u.str[0])
+			return 1;
+		attr->u.str=street->name.name1;
+		if (attr->u.str && attr->u.str[0])
+			return 1;
+		return 0;
 	case attr_name:
 		if (! street->name.len)
 			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));
 		attr->u.str=street->name.name2;
-		street->attr_next=attr_type == attr_label ? attr_name : attr_name_systematic;
+		street->attr_next=attr_name_systematic;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	case attr_name_systematic:
 		if (! street->name.len)
