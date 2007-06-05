@@ -100,7 +100,7 @@ tree_search_hv(char *dirname, char *filename, unsigned int search_h, unsigned in
 	f_idx_h=file_create_caseinsensitive(buffer);
 	sprintf(buffer, "%s/%s.v1", dirname, filename);
 	f_idx_v=file_create_caseinsensitive(buffer);
-	printf("%p %p\n", f_idx_h, f_idx_v);
+	dbg(1,"%p %p\n", f_idx_h, f_idx_v);
 	if ((h=tree_search_h(f_idx_h, search_h))) {
 		dbg(1,"h=0x%x\n", h);
 		if ((v=tree_search_v(f_idx_v, h, search_v))) {

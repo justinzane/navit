@@ -1,5 +1,6 @@
 enum projection;
 /* prototypes */
+enum projection;
 struct coord;
 struct coord_geo;
 struct coord_rect;
@@ -29,6 +30,7 @@ double transform_scale(int y);
 double transform_distance(struct coord *c1, struct coord *c2);
 int transform_distance_sq(struct coord *c1, struct coord *c2);
 int transform_distance_line_sq(struct coord *l0, struct coord *l1, struct coord *ref, struct coord *lpnt);
+int transform_distance_polyline_sq(struct coord *c, int count, struct coord *ref, struct coord *lpnt, int *pos);
 void transform_print_deg(double deg);
 int is_visible(struct transformation *t, struct coord *c);
 int is_line_visible(struct transformation *t, struct coord *c);

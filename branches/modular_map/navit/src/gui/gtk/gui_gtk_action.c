@@ -36,11 +36,9 @@ zoom_out_action(GtkWidget *w, struct navit *nav, void *dummy)
 }
 
 static void
-refresh_action(GtkWidget *w, struct action *ac)
+refresh_action(GtkWidget *w, struct navit *nav, void *dummy)
 {
-#if 0
-	menu_route_update(ac->gui->co);
-#endif
+	navit_draw(nav);
 }
 
 static void
@@ -59,8 +57,35 @@ orient_north_action(GtkWidget *w, struct action *ac)
 #endif
 }
 
+#include "point.h"
+
 static void
-destination_action(GtkWidget *w, struct action *ac)
+info_action(GtkWidget *w, struct navit *nav, void *dummy)
+{
+	char buffer[512];
+	int mw,mh;
+	struct coord lt, rb;
+	struct point p;
+	struct transformation *t;
+
+	t=navit_get_trans(nav);
+	transform_get_size(t, &mw, &mh);
+	p.x=0;
+	p.y=0;
+	transform_reverse(t, &p, &lt);
+	p.x=mw;
+	p.y=mh;
+	transform_reverse(t, &p, &rb);
+
+	sprintf(buffer,"./info.sh %d,%d 0x%x,0x%x 0x%x,0x%x", mw, mh, lt.x, lt.y, rb.x, rb.y);
+	system(buffer);
+
+}
+
+
+
+static void
+destination_action(GtkWidget *w, struct navit *nav, void *dummy)
 {
 #if 0 /* FIXME */
 	destination_address(ac->gui->co);
@@ -129,6 +154,7 @@ static GtkActionEntry entries[] =
 	{ "ZoomOutAction", GTK_STOCK_ZOOM_OUT, "ZoomOut", NULL, NULL, G_CALLBACK(zoom_out_action) },
 	{ "ZoomInAction", GTK_STOCK_ZOOM_IN, "ZoomIn", NULL, NULL, G_CALLBACK(zoom_in_action) },
 	{ "RefreshAction", GTK_STOCK_REFRESH, "Refresh", NULL, NULL, G_CALLBACK(refresh_action) },
+	{ "InfoAction", GTK_STOCK_INFO, "Info", NULL, NULL, G_CALLBACK(info_action) },
 	{ "DestinationAction", "flag_icon", "Destination", NULL, NULL, G_CALLBACK(destination_action) },
 	{ "Test", NULL, "Test", NULL, NULL, G_CALLBACK(destination_action) },
 	{ "QuitAction", GTK_STOCK_QUIT, "_Quit", "<control>Q",NULL, G_CALLBACK (quit_action) }
@@ -314,6 +340,7 @@ static char layout[] =
 				<toolitem name=\"Cursor\" action=\"CursorAction\"/>\
 				<toolitem name=\"Orientation\" action=\"OrientationAction\"/>\
 				<toolitem name=\"Destination\" action=\"DestinationAction\"/>\
+				<toolitem name=\"Info\" action=\"InfoAction\"/>\
 				<toolitem name=\"Quit\" action=\"QuitAction\"/>\
 				<separator/>\
 			</placeholder>\
@@ -383,8 +410,10 @@ remove_menu(struct menu_priv *item, int recursive)
 	if (item->action) {
 		gtk_ui_manager_remove_ui(item->gui->menu_manager, item->merge_id);
 		gtk_action_group_remove_action(item->gui->dyn_group, item->action);
+#if 0
 		if (item->callback)
 			g_signal_handler_disconnect(item->action, item->handler_id);
+#endif
 		g_object_unref(item->action);
 	}
 	g_free(item->path);
@@ -451,7 +480,7 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 		gtk_box_pack_start (this->vbox, widget, FALSE, FALSE, 0);
 		gtk_widget_show (widget);
 	} else {
-		gtk_menu_popup(widget, NULL, NULL, NULL, NULL, 0, 0);
+		gtk_menu_popup(widget, NULL, NULL, NULL, NULL, 0, gtk_get_current_event_time ());
 		ret->handler_id=g_signal_connect(widget, "deactivate", popup_deactivate, ret);
 	}
 	return ret;

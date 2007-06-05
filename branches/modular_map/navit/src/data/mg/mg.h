@@ -1,3 +1,4 @@
+#include <glib.h>
 #include "attr.h"
 #include "coord.h"
 #include "data.h"
@@ -120,12 +121,17 @@ struct street_priv {
 	int bytes;
 	struct street_name name;
 	enum attr_type attr_next;
+	char debug[256];
 };
 
 enum file_index {
         file_border_ply=0,
         file_bridge_ply,
+	file_build_ply,
+	file_golf_ply,
         file_height_ply,
+	file_natpark_ply,
+	file_nature_ply,
         file_other_ply,
         file_rail_ply,
         file_sea_ply,
@@ -172,7 +178,8 @@ struct block_priv {
 };
 
 struct map_rect_priv {
-	struct map_selection *sel;
+	struct map_selection *xsel;
+	struct map_selection *cur_sel;
 
 	struct map_priv *m;
 	enum file_index current_file;
@@ -182,6 +189,7 @@ struct map_rect_priv {
 	struct town_priv town;
 	struct poly_priv poly;
 	struct street_priv street;
+	GHashTable *block_hash[file_end];
 };
 
 int block_init(struct map_rect_priv *mr);

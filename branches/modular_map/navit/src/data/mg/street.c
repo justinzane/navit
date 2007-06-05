@@ -1,4 +1,4 @@
-#include <glib.h> 
+#include <stdio.h>
 #include "debug.h"
 #include "mg.h"
 
@@ -174,8 +174,16 @@ street_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 		if (! street->name.len)
 			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));
 		attr->u.str=street->name.name1;
-		street->attr_next=attr_none;
+		street->attr_next=attr_debug;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_debug:
+		street->attr_next=attr_none;
+		{
+		struct street_str *str=street->str;
+		sprintf(street->debug,"order:0x%x\nsegid:0x%x\nlimit:0x%x\nunknown2:0x%x\nunknown3:0x%x\ntype:0x%x\nnameid:0x%x",street->header->order,str->segid,str->limit,str->unknown2,str->unknown3,str->type,str->nameid);
+		attr->u.str=street->debug;
+		}
+		return 1;
 	default:
 		return 0;
 	}
@@ -199,17 +207,18 @@ street_get_data(struct street_priv *street, unsigned char **p)
 	(*p)+=street->type_count*sizeof(struct street_type);
 }
 
+
+                            /*0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 */
+static unsigned char limit[]={0,0,1,1,1,2,2,4,6,6,12,13,14,20,20,20,20,20,20};
+
 int
 street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *item)
 {
 	if (mr->b.p == mr->b.p_start) {
 		street_get_data(street, &mr->b.p);
 		street->name_file=mr->m->file[file_strname_stn];
-		/* 1-6 */
-#if 1
-		if (street->header->order+street->header->order/2 > mr->sel->order[0])
+		if (mr->cur_sel && street->header->order > limit[mr->cur_sel->order[layer_street]])
 			return 0;
-#endif
 		street->end=mr->b.end;
 		street->ref=&mr->b.b->r.lu;
 		street->bytes=street_get_bytes(&mr->b.b->r);
@@ -217,7 +226,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 		street->coord_begin=mr->b.p;
 		street_coord_get_begin(&street->coord_begin);
 		street->p=street->coord_begin;
-		street->type--;
+		street->type--; 
 		item->meth=&street_meth;
 		item->priv_data=street;
 	} else {
@@ -226,18 +235,26 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 	}
 	if (! L(street->str->segid))
 		return 0;
+	if (L(street->str->segid) < 0)
+		street->type++;
 #if 0
 	g_assert(street->p != NULL);
 #endif
 	street->next=NULL;
 	street->status_rewind=street->status=L(street->str[1].segid) >= 0 ? 0:1;
-	if (street->status)
-		street->type++;
+#if 0
+	if (street->type->country != 0x31) {
+		printf("country=0x%x\n", street->type->country);
+	}
+#endif
 	item->id_hi=street->type->country | (mr->current_file << 16);
 	item->id_lo=L(street->str->segid) > 0 ? L(street->str->segid) : -L(street->str->segid);
 	switch(street->str->type & 0x1f) {
 	case 0xf: /* very small street */
-		item->type=type_street_0;
+		if (street->str->limit == 0x33) 
+			item->type=type_street_nopass;
+		else
+			item->type=type_street_0;
 		break;
 	case 0xd:
 		item->type=type_ferry;
@@ -249,16 +266,27 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 		item->type=type_street_2_city;
 		break;
 	case 0xa:
-		item->type=type_street_3_city;
+		if ((street->str->limit == 0x03 || street->str->limit == 0x30) && street->header->order < 4)
+			item->type=type_street_4_city;
+		else	
+			item->type=type_street_3_city;
 		break;
 	case 0x9:
-		item->type=type_street_4_city;
+		if (street->header->order < 5)
+			item->type=type_street_4_city;
+		else if (street->header->order < 7)
+			item->type=type_street_2_city;
+		else
+			item->type=type_street_1_city;
 		break;
 	case 0x8:
 		item->type=type_street_2_land;
 		break;
 	case 0x7:
-		item->type=type_street_3_land;
+		if ((street->str->limit == 0x03 || street->str->limit == 0x30) && street->header->order < 4)
+			item->type=type_street_4_land;
+		else
+			item->type=type_street_3_land;
 		break;
 	case 0x6:
 		item->type=type_ramp;
@@ -300,8 +328,11 @@ street_get_byid(struct map_rect_priv *mr, struct street_priv *street, int id_hi,
 {
         int country=id_hi & 0xffff;
         int res;
+	dbg(0,"enter(%p,%p,0x%x,0x%x,%p)\n", mr, street, id_hi, id_lo, item);
+	if (! country)
+		return 0;
         tree_search_hv(mr->m->dirname, "street", (id_lo >> 8) | (country << 24), id_lo & 0xff, &res);
-	dbg(1,"res=0x%x\n", res);
+	dbg(0,"res=0x%x (blk=0x%x)\n", res, res >> 12);
         block_get_byindex(mr->m->file[mr->current_file], res >> 12, &mr->b);
 	street_get_data(street, &mr->b.p);
 	street->name_file=mr->m->file[file_strname_stn];

@@ -1,4 +1,3 @@
-#include <glib.h>
 #include <stdio.h>
 #include <string.h>
 #include "debug.h"
@@ -15,7 +14,11 @@ static int map_id;
 static char *file[]={
 	[file_border_ply]="border.ply",
         [file_bridge_ply]="bridge.ply",
+        [file_build_ply]="build.ply",
+        [file_golf_ply]="golf.ply",
         [file_height_ply]="height.ply",
+        [file_natpark_ply]="natpark.ply",
+        [file_nature_ply]="nature.ply",
         [file_other_ply]="other.ply",
         [file_rail_ply]="rail.ply",
         [file_sea_ply]="sea.ply",
@@ -33,18 +36,34 @@ static int
 file_next(struct map_rect_priv *mr)
 {
 	int debug=0;
+	enum layer_type layer;
 
 	for (;;) {
 		mr->current_file++;
 		if (mr->current_file >= file_end)
 			return 0;
 		mr->file=mr->m->file[mr->current_file];
-		if (mr->file && mr->current_file != file_strname_stn) {
-			if (debug)
-				printf("current file: '%s'\n", file[mr->current_file]);
-			if (block_init(mr))
-				return 1;
+		if (! mr->file)
+			continue;
+		switch (mr->current_file) {
+		case file_strname_stn:
+			continue;
+		case file_town_twn:
+			layer=layer_town;
+			break;
+		case file_street_str:
+			layer=layer_street;
+			break;
+		default:
+			layer=layer_poly;
 		}
+		if (mr->cur_sel && !mr->cur_sel->order[layer])
+			continue;
+		if (debug)
+			printf("current file: '%s'\n", file[mr->current_file]);
+		mr->cur_sel=mr->xsel;
+		if (block_init(mr))
+			return 1;
 	}
 }
 
@@ -79,6 +98,7 @@ static struct map_rect_priv *
 map_rect_new_mg(struct map_priv *map, struct map_selection *sel)
 {
 	struct map_rect_priv *mr;
+	int i;
 
 	block_lin_count=0;
 	block_idx_count=0;
@@ -87,8 +107,12 @@ map_rect_new_mg(struct map_priv *map, struct map_selection *sel)
 	block_active_mem=0;
 	mr=g_new0(struct map_rect_priv, 1);
 	mr->m=map;
-	mr->sel=sel;
+	mr->xsel=sel;
 	mr->current_file=-1;
+	if (sel && sel->next)
+		for (i=0 ; i < file_end ; i++) 
+			mr->block_hash[i]=g_hash_table_new(g_int_hash,g_int_equal);
+		
 	file_next(mr);
 	return mr;
 }
@@ -104,9 +128,16 @@ map_rect_get_item_mg(struct map_rect_priv *mr)
 				return &mr->item;
 			break;
 		case file_border_ply:
+		/* case file_bridge_ply: */
+		case file_build_ply: 
+		case file_golf_ply: 
+		/* case file_height_ply: */
+		case file_natpark_ply: 
+		case file_nature_ply: 
 		case file_other_ply:
 		case file_rail_ply:
 		case file_sea_ply:
+		/* case file_tunnel_ply: */
 		case file_water_ply:
 		case file_woodland_ply:
 			if (poly_get(mr, &mr->poly, &mr->item))
@@ -116,11 +147,18 @@ map_rect_get_item_mg(struct map_rect_priv *mr)
 			if (street_get(mr, &mr->street, &mr->item))
 				return &mr->item;
 			break;
+		case file_end:
+			return NULL;
 		default:
 			break;
 		}
 		if (block_next(mr))
 			continue;
+		if (mr->cur_sel->next) {
+			mr->cur_sel=mr->cur_sel->next;
+			if (block_init(mr))
+				continue;
+		}
 		if (file_next(mr))
 			continue;
 		dbg(1,"lin_count %d idx_count %d active_count %d %d kB (%d kB)\n", block_lin_count, block_idx_count, block_active_count, (block_mem+block_active_mem)/1024, block_active_mem/1024);
@@ -142,7 +180,7 @@ map_rect_get_item_byid_mg(struct map_rect_priv *mr, int id_hi, int id_lo)
 			return &mr->item;
 		break;
 	default:	
-		if (poly_get_byid(mr, &mr->street, id_hi, id_lo, &mr->item))
+		if (poly_get_byid(mr, &mr->poly, id_hi, id_lo, &mr->item))
 			return &mr->item;
 		break;
 	}
@@ -153,6 +191,10 @@ map_rect_get_item_byid_mg(struct map_rect_priv *mr, int id_hi, int id_lo)
 static void
 map_rect_destroy_mg(struct map_rect_priv *mr)
 {
+	int i;
+	for (i=0 ; i < file_end ; i++) 
+		if (mr->block_hash[i])
+			g_hash_table_destroy(mr->block_hash[i]);	
 	g_free(mr);
 }
 
@@ -170,7 +212,7 @@ struct map_priv *
 map_new_mg(struct map_methods *meth, char *dirname)
 {
 	struct map_priv *m;
-	int i,maybe_missing,submap=0,len=strlen(dirname);
+	int i,maybe_missing,len=strlen(dirname);
 	char filename[len+16];
 	
 	*meth=map_methods_mg;
@@ -185,7 +227,7 @@ map_new_mg(struct map_methods *meth, char *dirname)
 			m->file[i]=file_create_caseinsensitive(filename);
 			if (! m->file[i]) {
 				maybe_missing=(i == file_border_ply || i == file_height_ply || i == file_sea_ply);
-				if (! (submap && maybe_missing))
+				if (! maybe_missing)
 					g_warning("Failed to load %s", filename);
 			}
 		}

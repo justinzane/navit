@@ -1,4 +1,3 @@
-#include <glib.h>
 #include <stdio.h>
 #include "mg.h"
 
@@ -102,12 +101,15 @@ town_get_data(struct town_priv *twn, unsigned char **p)
 		printf("%s\t%s\t%s\t%d\t%d\t%d\n",twn->name,twn->district,twn->postal_code1,twn->order, twn->country, twn->type);
 #endif
 }
-                     /*0 1 2 3 4 5 6 7  8  9  10 11 12 13 14 */
-unsigned char limit[]={0,1,2,2,4,6,8,10,11,12,12,13,14,20,20};
+                            /*0 1 2 3 4 5 6 7  8  9  10 11 12 13 14 15 16 17 18 */
+static unsigned char limit[]={0,1,2,2,4,6,8,10,11,12,12,13,14,20,20,20,20,20,20};
 
+static enum item_type town_item[]={type_town_label_5e1, type_town_label_1e2, type_town_label_2e2, type_town_label_5e2, type_town_label_1e3, type_town_label_1e3, type_town_label_2e3, type_town_label_5e3, type_town_label_1e4, type_town_label_2e4, type_town_label_5e4, type_town_label_1e5, type_town_label_1e5, type_town_label_2e5, type_town_label_5e5, type_town_label_1e6, type_town_label_2e6};
+static enum item_type district_item[]={type_district_label_5e1, type_district_label_1e2, type_district_label_2e2, type_district_label_5e2, type_district_label_1e3, type_district_label_1e3, type_district_label_2e3, type_district_label_5e3, type_district_label_1e4, type_district_label_2e4, type_district_label_5e4, type_district_label_1e5, type_district_label_1e5, type_district_label_2e5, type_district_label_5e5, type_district_label_1e6, type_district_label_2e6};
 int
 town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 {
+	int size;
 	for (;;) {
 		if (mr->b.p >= mr->b.end)
 			return 0;
@@ -115,15 +117,23 @@ town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 		twn->cidx=0;
 		twn->aidx=0;
 		twn->attr_next=attr_label;
-#if 0
-		if (twn->order <= limit[mr->limit] && coord_rect_contains(&mr->r,&twn->c)) {
-#endif
+		if (! mr->cur_sel || (twn->order <= mr->cur_sel->order[layer_town] && coord_rect_contains(&mr->cur_sel->rect,&twn->c))) {
 			switch(twn->type) {
 			case 1:
-				item->type=type_town_label;
+				size=twn->size;
+				if (size >= sizeof(town_item)/sizeof(enum item_type)) 
+					size=sizeof(town_item)/sizeof(enum item_type)-1;
+				item->type=town_item[size];
 				break;
 			case 3:
-				item->type=type_district_label;
+				size=twn->size;
+				if (size == 6 && twn->order < 14)
+					size++;
+				if (size == 5 && twn->order < 14)
+					size+=2;
+				if (size >= sizeof(district_item)/sizeof(enum item_type)) 
+					size=sizeof(district_item)/sizeof(enum item_type)-1;
+				item->type=district_item[size];
 				break;
 			case 4:
 				item->type=type_port_label;
@@ -140,9 +150,7 @@ town_get(struct map_rect_priv *mr, struct town_priv *twn, struct item *item)
 			item->priv_data=twn;
 			item->meth=&town_meth;
 			return 1;
-#if 0
 		}
-#endif
 	}
 }
 

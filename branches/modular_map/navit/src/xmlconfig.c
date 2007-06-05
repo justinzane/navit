@@ -61,7 +61,7 @@ find_zoom(struct xmlstate *state, int required, int *min, int *max)
 	int ret;
 
 	*min=0;
-	*max=15;
+	*max=18;
 	value=find_attribute(state, "zoom", required);
 	if (! value)
 		return 0;

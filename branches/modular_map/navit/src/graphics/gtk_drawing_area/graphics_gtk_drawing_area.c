@@ -64,6 +64,15 @@ static char *fontlist[]={
 	NULL,
 };
 
+static char *fontlist_bd[]={
+	"/usr/X11R6/lib/X11/fonts/msttcorefonts/arialbd.ttf",
+	"/usr/X11R6/lib/X11/fonts/truetype/arialbd.ttf",
+	"/usr/share/fonts/truetype/msttcorefonts/arialbd.ttf",
+	"/usr/share/fonts/ttf/arialbd.ttf",
+	"/usr/share/fonts/corefonts/arialbd.ttf",
+	NULL,
+};
+
 
 
 static void font_destroy(struct graphics_font_priv *font)

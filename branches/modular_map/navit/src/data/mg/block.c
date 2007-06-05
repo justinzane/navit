@@ -1,4 +1,3 @@
-#include <glib.h>
 #include <stdio.h>
 #include <string.h>
 #include "debug.h"
@@ -103,11 +102,13 @@ block_setup_tags(struct map_rect_priv *mr)
 	}
 }
 
+#if 0
 static void
 block_rect_print(struct coord_rect *r)
 {
 	printf ("0x%x,0x%x-0x%x,0x%x (0x%x,0x%x)", r->lu.x, r->lu.y, r->rl.x, r->rl.y, r->lu.x/2+r->rl.x/2,r->lu.y/2+r->rl.y/2);
 }
+#endif
 
 static void
 block_rect_same(struct coord_rect *r1, struct coord_rect *r2)
@@ -130,6 +131,8 @@ block_init(struct map_rect_priv *mr)
 		mr->b.bt.p=NULL;
 		mr->b.bt.block_count=0;
 	}
+	if (mr->cur_sel && !coord_rect_overlap(&mr->cur_sel->rect, &mr->b.b_rect)) 
+		return 0;
 	return block_next(mr);
 }
 
@@ -153,7 +156,7 @@ block_next_lin(struct map_rect_priv *mr)
 		mr->b.end=mr->b.block_start+mr->b.b->size;
 		if (mr->b.b->count == -1)
 			return 0;
-		if (!mr->sel || coord_rect_overlap(&mr->sel->rect, &mr->b.b->r)) {
+		if (!mr->cur_sel || coord_rect_overlap(&mr->cur_sel->rect, &mr->b.b->r)) {
 			block_active_count++;
 			block_active_mem+=mr->b.b->blocks*512-sizeof(struct block *);
 			return 1;
@@ -167,7 +170,7 @@ block_next(struct map_rect_priv *mr)
 	int blk_num,coord,r_h,r_w;
 	struct block_bt_priv *bt=&mr->b.bt;
 
-	if (!mr->b.binarytree || ! mr->sel)
+	if (!mr->b.binarytree || ! mr->cur_sel)
 		return block_next_lin(mr);
 	for (;;) {
 		if (! bt->p) {
@@ -214,7 +217,7 @@ block_next(struct map_rect_priv *mr)
 			mr->b.b=NULL;
 			if (blk_num != -1) {
 				block_mem+=8;
-				if (coord_rect_overlap(&mr->sel->rect, &bt->r_curr)) {
+				if (coord_rect_overlap(&mr->cur_sel->rect, &bt->r_curr)) {
 					mr->b.b=block_get_byid(mr->file, blk_num, &mr->b.p);
 					mr->b.block_num=blk_num;
 					g_assert(mr->b.b != NULL);

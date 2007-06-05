@@ -257,6 +257,13 @@ transform_set_size(struct transformation *t, int width, int height)
 }
 
 void
+transform_get_size(struct transformation *t, int *width, int *height)
+{
+	*width=t->width;
+	*height=t->height;
+}
+
+void
 transform_setup(struct transformation *t, struct coord *c, int scale, int angle)
 {
         t->center=*c;
@@ -316,13 +323,13 @@ transform_set_scale(struct transformation *t, long scale)
 int
 transform_get_order(struct transformation *t)
 {
-	int scale=t->scale/16;
+	int scale=t->scale;
 	int order=0;
         while (scale > 1) {
                 order++;
                 scale>>=1;
         }
-        order=14-order;
+        order=18-order;
         if (order < 0)
                 order=0;
 	return order;
@@ -416,6 +423,29 @@ transform_distance_line_sq(struct coord *l0, struct coord *l1, struct coord *ref
 	if (lpnt)
 		*lpnt=l;
 	return transform_distance_sq(&l, ref);
+}
+
+int
+transform_distance_polyline_sq(struct coord *c, int count, struct coord *ref, struct coord *lpnt, int *pos)
+{
+	int i,dist,distn;
+	struct coord lp;
+	if (count < 2)
+		return 0;
+	if (pos)
+		*pos=0;
+	dist=transform_distance_line_sq(&c[0], &c[1], ref, lpnt);
+	for (i=2 ; i < count ; i++) {
+		distn=transform_distance_line_sq(&c[i-1], &c[i], ref, &lp);
+		if (distn < dist) {
+			dist=distn;
+			if (lpnt)
+				*lpnt=lp;
+			if (pos)
+				*pos=i-1;
+		}
+	}
+	return dist;
 }
 
 

@@ -96,7 +96,7 @@ static struct statusbar_methods methods = {
 struct statusbar_priv *
 gui_gtk_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth, struct navit *nav)
 {
-	struct statusbar_priv *this=g_new0(struct statusbar, 1);
+	struct statusbar_priv *this=g_new0(struct statusbar_priv, 1);
 	char *utf8;
 
 	this->gui=gui;
