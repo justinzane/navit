@@ -98,7 +98,7 @@ convert_number(const char *val)
 static int
 xmlconfig_navit(struct xmlstate *state)
 {
-	char *value;
+	char *value,*gui,*graphics;
 	int zoom=0;
 	struct coord c;
 	enum projection pro=projection_mg;
@@ -113,8 +113,13 @@ xmlconfig_navit(struct xmlstate *state)
 		c.x=1300000;
 		c.y=7000000;
 	}
-
-	state->element_object = navit_new("gtk","gtk_drawing_area", &c, pro, zoom);
+	gui=find_attribute(state, "gui", 0);
+	if (! gui)
+		gui="gtk";
+	graphics=find_attribute(state, "graphics", 0);
+	if (! graphics)
+		graphics="gtk_drawing_area";
+	state->element_object = navit_new(gui, graphics, &c, pro, zoom);
 	if (! state->element_object)
 		return 0;
 	return 1;

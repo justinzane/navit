@@ -1,8 +1,11 @@
 #define GDK_ENABLE_BROKEN
+#include "config.h"
 #include <gtk/gtk.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#ifdef HAVE_IMLIB2
 #include <Imlib2.h>
+#endif
 #include <gdk/gdkx.h>
 #include "point.h"
 #include "graphics.h"
@@ -418,6 +421,7 @@ draw_image(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct point *
 		    img->w, img->h, GDK_RGB_DITHER_NONE, 0, 0);
 }
 
+#ifdef HAVE_IMLIB2
 static void
 draw_image_warp(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct point *p, int count, char *data)
 {
@@ -439,6 +443,7 @@ draw_image_warp(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct po
 		imlib_render_image_on_drawable_skewed(0, 0, w, h, p[0].x, p[0].y, p[1].x-p[0].x, 0, 0, p[1].y-p[0].y);
 	}
 }
+#endif
 
 static void
 overlay_draw(struct graphics_priv *parent, struct graphics_priv *overlay, int window)
@@ -682,7 +687,11 @@ static struct graphics_methods graphics_methods = {
 	draw_circle,
 	draw_text,
 	draw_image,
+#ifdef HAVE_IMLIB2
 	draw_image_warp,
+#else
+	NULL,
+#endif
 	draw_restore,
 	font_new,
 	gc_new,

@@ -221,7 +221,6 @@ transform_center(struct transformation *this)
 int
 transform_contains(struct transformation *this, enum projection pro, struct coord_rect *r)
 {
-	return 1;
 	struct coord_geo g;
 	struct coord_rect r1;
 	if (this->pro != pro) {

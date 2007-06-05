@@ -51,6 +51,7 @@ plugin_init(void)
 	}
 	plugin_load("gui/gtk/.libs/libgui_gtk.so.0");
 	plugin_load("graphics/gtk_drawing_area/.libs/libgraphics_gtk_drawing_area.so.0");
+	plugin_load("graphics/null/.libs/libgraphics_null.so.0");
 	plugin_load("data/mg/.libs/libdata_mg.so.0");
 	plugin_load("data/textfile/.libs/libdata_textfile.so.0");
 	plugin_load("data/garmin_img/.libs/libdata_garmin_img.so.0");

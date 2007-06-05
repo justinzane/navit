@@ -1,1 +1,1 @@
-SUBDIRS=gtk_drawing_area
+SUBDIRS=gtk_drawing_area null
