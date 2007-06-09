@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <fcntl.h>
 #include <glib.h>
 #include "navit.h"
@@ -35,6 +36,7 @@ struct navit {
 	int ready;
 	struct window *win;
 	GHashTable *display_list;
+	int cursor_flag;
 };
 
 void
@@ -77,7 +79,8 @@ navit_button(void *data, int pressed, int button, struct point *p)
 			c=transform_center(t);
 			transform_reverse(t, p, c);
 			navit_draw(this);
-		}
+		} else
+			popup(this, button, p);
 	}
 	if (pressed && button == 3)
 		popup(this, button, p);
@@ -106,6 +109,7 @@ navit_new(char *ui, char *graphics, struct coord *center, enum projection pro, i
 {
 	struct navit *this=g_new0(struct navit, 1);
 
+	this->cursor_flag=1;
 	this->trans=transform_new();
 	transform_set_projection(this->trans, pro);
 
@@ -188,38 +192,25 @@ navit_init(struct navit *this)
 	{
 		struct mapset *ms=this->mapsets->data;
 		struct coord c;
-		int fd,size;
+		int flag=0;
+		FILE *f;
+
 		char buffer[2048];
 		this->route=route_new(ms);
-		fd=open("destination.txt", O_RDONLY);
-		if (fd != -1) {
-			size=read(fd, buffer, 2048);
-			buffer[size]=0;
-			coord_parse(buffer, projection_mg, &c);
-			printf("buffer='%s'\n", buffer);
-			printf("c=0x%x,0x%x\n", c.x, c.y);
-			route_set_destination(this->route, &c);
+		f=fopen("destination.txt", "r");
+		if (f) {
+			while (! feof(f)) {
+				fgets(buffer, 2048, f);
+				if (coord_parse(buffer, projection_mg, &c)) {
+					printf("buffer='%s'\n", buffer);
+					printf("c=0x%x,0x%x\n", c.x, c.y);
+					flag=1;
+				}
+			}
+			fclose(f);
+			if (flag)
+				route_set_destination(this->route, &c);
 		}
-
-#if 0
-		struct coord pos;
-		pos.x=0x137c69;
-		pos.y=0x5f2663;
-		route_set_position(this->route, &pos);
-
-#if 0
-		struct coord dest;
-		dest.x=0x135a15;
-		dest.y=0x5f142b;
-		route_set_destination(this->route, &dest);
-#endif
-#if 0
-		struct coord dest;
-		dest.x=0x161885;
-		dest.y=0x63cae0;
-		route_set_destination(this->route, &dest);
-#endif
-#endif
 	}
 	global_navit=this;
 
@@ -235,18 +226,18 @@ navit_set_center(struct navit *this, struct coord *center)
 		navit_draw(this);
 }
 
-int cursor_flag=1;
 void
-navit_toggle_cursor(void)
+navit_toggle_cursor(struct navit *this)
 {
-	cursor_flag=1-cursor_flag;
+	this->cursor_flag=1-this->cursor_flag;
 }
+
 static void
 navit_cursor_offscreen(struct cursor *cursor, void *this_p)
 {
 	struct navit *this=this_p;
 
-	if (cursor_flag)
+	if (this->cursor_flag)
 		navit_set_center(this, cursor_pos_get(cursor));
 }
 

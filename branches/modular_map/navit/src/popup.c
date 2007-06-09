@@ -48,7 +48,7 @@ popup_set_destination(struct menu *menu, struct navit *nav, struct coord *c)
 		navit_draw(nav);
 	}
 	sprintf(buffer,"0x%x 0x%x\n", c->x, c->y);
-	fd=open("destination.txt", O_RDWR|O_CREAT|O_TRUNC, 0644);
+	fd=open("destination.txt", O_RDWR|O_CREAT|O_APPEND, 0644);
 	if (fd != -1)
 		write(fd, buffer, strlen(buffer));
 	close(fd);
