@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #endif
 #include <glib.h>
+#include "config.h"
 #include "debug.h"
 #include "profile.h"
 #include "coord.h"
@@ -24,7 +25,6 @@
 #endif
 #include "transform.h"
 #if 0
-#include "route.h"
 #include "phrase.h"
 #include "navigation.h"
 #endif
@@ -109,8 +109,13 @@ struct route_info {
 
 struct route {
 	struct map_data *map_data;
+#ifdef AVOID_FLOAT
+	int route_time_val;
+	int route_len_val;
+#else
 	double route_time_val;
 	double route_len_val;
+#endif
 	struct route_path_segment *path;
 	struct route_path_segment *path_last;
 	struct route_segment *route_segments;
@@ -537,7 +542,11 @@ route_value(struct item *item, int len)
 static void
 route_process_street_graph(struct route *this, struct item *item)
 {
+#ifdef AVOID_FLOAT
+	int len=0;
+#else
 	double len=0;
+#endif
 	struct route_point *s_pnt,*e_pnt;
 	struct coord c,l;
 	struct attr attr;
@@ -690,7 +699,7 @@ route_find(struct route *this, struct route_info *pos, struct route_info *dst)
 {
 	struct route_point *start1=NULL,*start2=NULL,*start;
 	struct route_segment *s=NULL;
-	double len=0;
+	int len=0;
 	int ilen,hr,min,time=0,seg_time,seg_len;
 	unsigned int val1=0xffffffff,val2=0xffffffff;
 
