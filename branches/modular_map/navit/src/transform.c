@@ -560,16 +560,6 @@ is_too_small(struct transformation *t, struct coord *c, int limit)
 }
 
 
-void transform_limit_extend(struct coord *rect, struct coord *c)
-{
-	if (c->x < rect[0].x) rect[0].x=c->x;
-	if (c->x > rect[1].x) rect[1].x=c->x;
-	if (c->y < rect[1].y) rect[1].y=c->y;
-	if (c->y > rect[0].y) rect[0].y=c->y;
-}
-
-
-
 int
 transform_get_angle_delta(struct coord *c, int dir)
 {

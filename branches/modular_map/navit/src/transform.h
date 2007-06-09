@@ -36,6 +36,5 @@ int is_visible(struct transformation *t, struct coord *c);
 int is_line_visible(struct transformation *t, struct coord *c);
 int is_point_visible(struct transformation *t, struct coord *c);
 int is_too_small(struct transformation *t, struct coord *c, int limit);
-void transform_limit_extend(struct coord *rect, struct coord *c);
 int transform_get_angle_delta(struct coord *c, int dir);
 int transform_within_border(struct transformation *this, struct point *p, int border);

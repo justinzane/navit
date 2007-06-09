@@ -31,7 +31,8 @@ struct cursor {
 	struct graphics_gc *cursor_gc;
 	struct transformation *trans;
 	struct point cursor_pnt;
-	struct callback callback;
+	struct callback offscreen_callback;
+	struct callback update_callback;
 	struct vehicle *v;
 	void *vehicle_callback;
 };
@@ -183,6 +184,8 @@ cursor_update(struct vehicle *v, void *data)
 		dir=vehicle_dir_get(v);
 		speed=vehicle_speed_get(v);
 		pro=vehicle_projection(v);
+		if (this->update_callback.func) 
+			(*this->update_callback.func)(this, this->update_callback.data);
 #if 0 /* FIXME */
 		track_update(this->co->track, pos, (int)(*dir));
 #endif
@@ -190,8 +193,8 @@ cursor_update(struct vehicle *v, void *data)
 		route_set_position(this->co->route, cursor_pos_get(this->co->cursor));
 #endif
 		if (!transform(this->trans, pro, pos, &pnt) || !transform_within_border(this->trans, &pnt, border)) {
-			if (this->callback.func) 
-				(*this->callback.func)(this, this->callback.data);
+			if (this->offscreen_callback.func) 
+				(*this->offscreen_callback.func)(this, this->offscreen_callback.data);
 			transform(this->trans, pro, pos, &pnt);
 		}
 		cursor_draw(this, &pnt, *dir-transform_get_angle(this->trans, 0), *speed > 2.5);
@@ -219,6 +222,16 @@ cursor_new(struct graphics *gra, struct vehicle *v, struct color *c, struct tran
 void
 cursor_register_offscreen_callback(struct cursor *this, void (*func)(struct cursor *cursor, void *data), void *data)
 {
-	this->callback.func=func;
-	this->callback.data=data;
+	this->offscreen_callback.func=func;
+	this->offscreen_callback.data=data;
 }
+
+
+void
+cursor_register_update_callback(struct cursor *this, void (*func)(struct cursor *cursor, void *data), void *data)
+{
+	this->update_callback.func=func;
+	this->update_callback.data=data;
+}
+
+

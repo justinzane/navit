@@ -1,4 +1,5 @@
 #include <time.h>
+#include <glib.h>
 #include "coord.h"
 #include "route.h"
 #include "speech.h"

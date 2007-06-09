@@ -16,6 +16,8 @@
 #include "statusbar.h"
 #include "vehicle.h"
 
+int vfd;
+
 static void disable_watch(struct vehicle *this);
 static void enable_watch(struct vehicle *this);
 
@@ -134,6 +136,8 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 	if (debug) {
 		printf("GPS %s\n", buffer);
 	}
+	write(vfd, buffer, strlen(buffer));
+	write(vfd, "\n", 1);
 	if (!strncmp(buffer,"$GPGGA",6)) {
 		/* $GPGGA,184424.505,4924.2811,N,01107.8846,E,1,05,2.5,408.6,M,,,,0000*0C
 			UTC of Fix,Latitude,N/S,Longitude,E/W,Quality,Satelites,HDOP,Altitude,"M"
@@ -318,6 +322,9 @@ vehicle_new(const char *url)
 #endif
 	this=g_new0(struct vehicle,1);
 
+	if (! vfd) {
+		vfd=open("vlog.txt", O_RDWR|O_APPEND|O_CREAT, 0644);
+	}
 	if (! strncmp(url,"file:",5)) {
 		struct stat st;
 		fd=open(url+5,O_RDONLY|O_NDELAY);

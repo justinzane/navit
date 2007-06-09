@@ -116,28 +116,47 @@ street_coord_rewind(void *priv_data)
 }
 
 static int
+street_coord_get_helper(struct street_priv *street, struct coord *c)
+{
+	unsigned char *n;
+	if (street->p+street->bytes*2 >= street->end) 
+		return 0;
+	if (street->status >= 4)
+		return 0;
+	n=street->p;
+	if (street_get_coord(&street->p, street->bytes, street->ref, c)) {
+		if (street->status)
+			street->next=n;
+		street->status+=2;
+		if (street->status == 5)
+			return 0;
+	}
+	return 1;
+}
+
+static int
 street_coord_get(void *priv_data, struct coord *c, int count)
 {
 	struct street_priv *street=priv_data;
-	unsigned char *n;
-	int ret=0;
+	int ret=0,i,scount;
 
-	while (count > 0) {
-		if (street->p+street->bytes*2 >= street->end) 
-			return ret;
-		if (street->status >= 4)
-			return ret;
-		n=street->p;
-		if (street_get_coord(&street->p, street->bytes, street->ref, c)) {
-			if (street->status)
-				street->next=n;
-			street->status+=2;
-			if (street->status == 5)
-				return ret;
+	if (! street->p && count) {
+		street->p=street->coord_begin;
+		scount=street->str-street->str_start;
+		for (i = 0 ; i < scount ; i++) {
+			street->status=L(street->str[i+1].segid) >= 0 ? 0:1;
+			while (street_coord_get_helper(street, c));
+			street->p=street->next;
 		}
-		c++;
-		ret++;
-		count--;
+		street->status_rewind=street->status=L(street->str[1].segid) >= 0 ? 0:1;
+	}
+	while (count > 0) {
+		if (street_coord_get_helper(street, c)) {
+			c++;
+			ret++;
+			count--;
+		} else
+			return ret;
 	}
 	return ret;
 }
@@ -184,8 +203,18 @@ street_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 		if (! street->name.len)
 			street_name_get_by_id(&street->name,street->name_file,L(street->str->nameid));
 		attr->u.str=street->name.name1;
-		street->attr_next=attr_debug;
+		street->attr_next=attr_limit;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_limit:
+		if (street->str->type & 0x40) {
+			attr->u.num=(street->str->limit & 0x30) ? 2:0;
+			attr->u.num|=(street->str->limit & 0x03) ? 1:0;
+		} else {
+			attr->u.num=(street->str->limit & 0x30) ? 1:0;
+			attr->u.num|=(street->str->limit & 0x03) ? 2:0;
+		}
+		street->attr_next=attr_debug;
+		return 1;
 	case attr_debug:
 		street->attr_next=attr_none;
 		{
@@ -232,7 +261,7 @@ street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *it
 		street->end=mr->b.end;
 		street->ref=&mr->b.b->r.lu;
 		street->bytes=street_get_bytes(&mr->b.b->r);
-		street->str=(struct street_str *)mr->b.p;
+		street->str_start=street->str=(struct street_str *)mr->b.p;
 		street->coord_begin=mr->b.p;
 		street_coord_get_begin(&street->coord_begin);
 		street->p=street->coord_begin;
@@ -338,18 +367,18 @@ street_get_byid(struct map_rect_priv *mr, struct street_priv *street, int id_hi,
 {
         int country=id_hi & 0xffff;
         int res;
-	dbg(0,"enter(%p,%p,0x%x,0x%x,%p)\n", mr, street, id_hi, id_lo, item);
+	dbg(1,"enter(%p,%p,0x%x,0x%x,%p)\n", mr, street, id_hi, id_lo, item);
 	if (! country)
 		return 0;
         tree_search_hv(mr->m->dirname, "street", (id_lo >> 8) | (country << 24), id_lo & 0xff, &res);
-	dbg(0,"res=0x%x (blk=0x%x)\n", res, res >> 12);
+	dbg(1,"res=0x%x (blk=0x%x)\n", res, res >> 12);
         block_get_byindex(mr->m->file[mr->current_file], res >> 12, &mr->b);
 	street_get_data(street, &mr->b.p);
 	street->name_file=mr->m->file[file_strname_stn];
 	street->end=mr->b.end;
 	street->ref=&mr->b.b->r.lu;
 	street->bytes=street_get_bytes(&mr->b.b->r);
-	street->str=(struct street_str *)mr->b.p;
+	street->str_start=street->str=(struct street_str *)mr->b.p;
 	street->coord_begin=mr->b.p;
 	street_coord_get_begin(&street->coord_begin);
 	street->p=street->coord_begin;

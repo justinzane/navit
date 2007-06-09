@@ -22,13 +22,13 @@ struct xmlstate {
 } *xmlstate_root;
 
 
-static char * find_attribute(struct xmlstate *state, const char *attribute, int required)
+static const char * find_attribute(struct xmlstate *state, const char *attribute, int required)
 {
 	const gchar **attribute_name=state->attribute_names;
 	const gchar **attribute_value=state->attribute_values;
 	while(*attribute_name) {
 		if(! g_ascii_strcasecmp(attribute,*attribute_name))
-			return g_strdup(*attribute_value);
+			return *attribute_value;
 		attribute_name++;
 		attribute_value++;
 	}

@@ -110,6 +110,7 @@ struct street_priv {
 	int type_count;
 	struct street_type *type;
 	struct street_str *str;
+	struct street_str *str_start;
 	unsigned char *coord_begin;
 	unsigned char *p;
 	unsigned char *p_rewind;

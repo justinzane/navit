@@ -42,8 +42,9 @@ refresh_action(GtkWidget *w, struct navit *nav, void *dummy)
 }
 
 static void
-cursor_action(GtkWidget *w, struct action *ac)
+cursor_action(GtkWidget *w, struct navit *nav, void *dummy)
 {
+	navit_toggle_cursor(nav);
 #if 0
 	ac->gui->co->flags->track=gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(w));
 #endif

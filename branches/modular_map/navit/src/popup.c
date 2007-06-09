@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <string.h>
+#include <fcntl.h>
 #include <glib.h>
 #include "popup.h"
 #include "debug.h"
@@ -39,11 +40,19 @@ static void
 popup_set_destination(struct menu *menu, struct navit *nav, struct coord *c)
 {
 	struct route *route;
+	char buffer[1024];
+	int fd;
 	route=navit_get_route(nav);
 	if (route) {
 		route_set_destination(route, c);
 		navit_draw(nav);
 	}
+	sprintf(buffer,"0x%x 0x%x\n", c->x, c->y);
+	fd=open("destination.txt", O_RDWR|O_CREAT|O_TRUNC, 0644);
+	if (fd != -1)
+		write(fd, buffer, strlen(buffer));
+	close(fd);
+	
 #if 0
 	struct popup_item *ref=param;
 	struct popup *popup=ref->param;
@@ -122,9 +131,11 @@ static void
 popup_show_attr_val(void *menu, struct attr *attr)
 {
 	char *attr_name=attr_to_name(attr->type);
-	
-	dbg(1,"%s: %s", attr_name, attr->u.str);
-	popup_printf(menu, menu_type_menu, "%s: %s", attr_name, attr->u.str);
+
+	if (attr->type == attr_limit) 
+		popup_printf(menu, menu_type_menu, "%s: %d", attr_name, attr->u.num);
+	else 
+		popup_printf(menu, menu_type_menu, "%s: %s", attr_name, attr->u.str);
 }
 
 #if 0
@@ -180,14 +191,18 @@ popup_show_item(void *popup, struct displayitem *di)
 	menu_item=popup_printf(menu, menu_type_submenu, "Item");
 	popup_printf(menu_item, menu_type_menu, "type: 0x%x", item->type);
 	popup_printf(menu_item, menu_type_menu, "id: 0x%x 0x%x", item->id_hi, item->id_lo);
-	mr=map_rect_new(item->map,NULL);
-	item=map_rect_get_item_byid(mr, item->id_hi, item->id_lo);
-	dbg(1,"item=%p\n", item);
-	if (item) {
-		popup_show_attrs(menu_item, item);
+	if (item->map) {
+		mr=map_rect_new(item->map,NULL);
+		item=map_rect_get_item_byid(mr, item->id_hi, item->id_lo);
+		dbg(1,"item=%p\n", item);
+		if (item) {
+			popup_show_attrs(menu_item, item);
+		}
+		map_rect_destroy(mr);
+		menu_map=popup_printf(menu, menu_type_submenu, "Map");
+	} else {
+		popup_printf(menu, menu_type_menu, "(No map)");
 	}
-	map_rect_destroy(mr);
-	menu_map=popup_printf(menu, menu_type_submenu, "Map");
 }
 
 static void

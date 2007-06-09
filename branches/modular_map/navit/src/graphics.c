@@ -227,8 +227,8 @@ xdisplay_free(GHashTable *display_list)
 	g_hash_table_foreach_remove(display_list, xdisplay_free_list, NULL);
 }
 
-static void
-xdisplay_add(GHashTable *display_list, struct item *item, int count, struct point *pnt, char *label)
+void
+display_add(GHashTable *display_list, struct item *item, int count, struct point *pnt, char *label)
 {
 	struct displayitem *di;
 	int len;
@@ -449,13 +449,13 @@ do_draw_poly(GHashTable *display_list, struct transformation *t, enum projection
 		item_attr_get(item, attr_label, &attr);
 		if (attr.u.str && attr.u.str[0]) 
 			utf8=g_convert(attr.u.str, -1,"utf-8","iso8859-1",NULL,NULL,NULL);
-		xdisplay_add(display_list, item, count, pnt, utf8);
+		display_add(display_list, item, count, pnt, utf8);
 		g_free(utf8);
 		if (route && route_contains(route, item)) {
 			struct item ritem;
 			ritem=*item;
 			ritem.type=type_street_route;
-			xdisplay_add(display_list, &ritem, count, pnt, NULL);
+			display_add(display_list, &ritem, count, pnt, NULL);
 		}
 	}
 }
@@ -474,7 +474,7 @@ do_draw_point(GHashTable *display_list, struct transformation *t, enum projectio
 		item_attr_get(item, attr_label, &attr); 
 		if (attr.u.str && attr.u.str[0]) 
 			utf8=g_convert(attr.u.str, -1,"utf-8","iso8859-1",NULL,NULL,NULL);
-		xdisplay_add(display_list, item, 1, &pnt, utf8);
+		display_add(display_list, item, 1, &pnt, utf8);
 		g_free(utf8);
 	}
 }
@@ -545,6 +545,7 @@ graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, st
 	}
 #endif
 	do_draw(display_list, trans, mapsets, order, route);
+	route_draw(route, trans, display_list);
 	xdisplay_draw(display_list, gra, layouts, order);
   
 	gra->meth.draw_mode(gra->priv, draw_mode_end);

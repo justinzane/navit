@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <glib.h>
 #include "navit.h"
 #include "gui.h"
@@ -160,6 +161,7 @@ navit_projection_set(struct menu *menu, void *this_p, void *pro_p)
 	transform_from_geo(pro, &g, c);
 	navit_draw(this);
 }
+struct navit *global_navit;
 
 void
 navit_init(struct navit *this)
@@ -183,18 +185,82 @@ navit_init(struct navit *this)
 	men=menu_add(this->menubar, "Projection", menu_type_submenu, NULL, NULL, NULL);
 	menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, (void *)projection_mg);
 	menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, (void *)projection_garmin);
-	this->route=route_new(ms);
+	{
+		struct mapset *ms=this->mapsets->data;
+		struct coord c;
+		int fd,size;
+		char buffer[2048];
+		this->route=route_new(ms);
+		fd=open("destination.txt", O_RDONLY);
+		if (fd != -1) {
+			size=read(fd, buffer, 2048);
+			buffer[size]=0;
+			coord_parse(buffer, projection_mg, &c);
+			printf("buffer='%s'\n", buffer);
+			printf("c=0x%x,0x%x\n", c.x, c.y);
+			route_set_destination(this->route, &c);
+		}
+
+#if 0
+		struct coord pos;
+		pos.x=0x137c69;
+		pos.y=0x5f2663;
+		route_set_position(this->route, &pos);
+
+#if 0
+		struct coord dest;
+		dest.x=0x135a15;
+		dest.y=0x5f142b;
+		route_set_destination(this->route, &dest);
+#endif
+#if 0
+		struct coord dest;
+		dest.x=0x161885;
+		dest.y=0x63cae0;
+		route_set_destination(this->route, &dest);
+#endif
+#endif
+	}
+	global_navit=this;
+
+
 }
 
+void
+navit_set_center(struct navit *this, struct coord *center)
+{
+	struct coord *c=transform_center(this->trans);
+	*c=*center;
+	if (this->ready)
+		navit_draw(this);
+}
+
+int cursor_flag=1;
+void
+navit_toggle_cursor(void)
+{
+	cursor_flag=1-cursor_flag;
+}
 static void
 navit_cursor_offscreen(struct cursor *cursor, void *this_p)
 {
 	struct navit *this=this_p;
-	struct coord *c=transform_center(this->trans);
+
+	if (cursor_flag)
+		navit_set_center(this, cursor_pos_get(cursor));
+}
+
+static void
+navit_cursor_update(struct cursor *cursor, void *this_p)
+{
+	struct navit *this=this_p;
 	struct coord *cursor_c=cursor_pos_get(cursor);
-	*c=*cursor_c;
-	if (graphics_ready(this->gra))
+	if (this->route) 
+		route_set_position(this->route, cursor_c);
+#if 0
+	if (this->ready)
 		navit_draw(this);
+#endif
 }
 
 void
@@ -203,6 +269,7 @@ navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c)
 	this->vehicle=v;
 	this->cursor=cursor_new(this->gra, v, c, this->trans);
 	cursor_register_offscreen_callback(this->cursor, navit_cursor_offscreen, this);
+	cursor_register_update_callback(this->cursor, navit_cursor_update, this);
 }
 
 
