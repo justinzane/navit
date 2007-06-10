@@ -215,7 +215,7 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 			old->crossings_end=new->crossings_end;
 			old->angle_end=new->angle_end;
 			old->points+=new->points;
-		} else {	
+		} else {
 			sprintf(angle_old,"%d", old->angle_end);
 			param_list[4].value=angle_old;
 			sprintf(angle_new,"%d", new->angle_start);
@@ -400,7 +400,7 @@ struct street_data {
 };
 
 void
-navigation_path_description(struct route *route, struct mapset *ms, struct route_info *pos, struct route_info *dst)
+navigation_path_description(struct route *route, int dir)
 {
 	struct coord *p1=NULL, *p2=NULL;
 	struct route_path_handle *rph;
@@ -409,12 +409,19 @@ navigation_path_description(struct route *route, struct mapset *ms, struct route
 	struct street_data *sd;
 	int i,len;
 	struct navigation_item item_curr,item_last;
+	struct mapset *ms;
+	struct route_info *pos;
+	struct route_info *dst;
 	int end_flag=0;
 
+	ms=route_get_mapset(route);
+	pos=route_get_pos(route);
+	dst=route_get_dst(route);
 	if (!navigation_window)
 		navigation_window=data_window("Navigation",NULL,navigation_goto);
 	data_window_begin(navigation_window);
 	memset(&item_last,0,sizeof(item_last));
+	memset(&item_curr,0,sizeof(item_curr));
 	flag=1;
 
 	len=route_info_length(pos, dst, 0);

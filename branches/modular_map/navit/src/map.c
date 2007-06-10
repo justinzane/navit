@@ -27,7 +27,7 @@ struct map *
 map_new(const char *type, const char *filename)
 {
 	struct map *m;
-	struct map_priv *(*maptype_new)(struct map_methods *meth, char *name);
+	struct map_priv *(*maptype_new)(struct map_methods *meth, const char *name);
 
 	maptype_new=plugin_get_map_type(type);
 	if (! maptype_new)

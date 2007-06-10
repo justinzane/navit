@@ -89,7 +89,7 @@ struct item;
 struct point;
 struct route;
 struct transformation;
-struct graphics *graphics_new(char *type);
+struct graphics *graphics_new(const char *type);
 void graphics_init(struct graphics *this);
 void *graphics_get_data(struct graphics *this, char *type);
 void graphics_register_resize_callback(struct graphics *this, void (*callback)(void *data, int w, int h), void *data);

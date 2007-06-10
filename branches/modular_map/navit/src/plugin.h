@@ -11,7 +11,7 @@ enum plugin_type {
 #endif
 
 struct plugin *plugin_load(char *plugin);
-void * plugin_get_type(enum plugin_type type, char *name);
+void * plugin_get_type(enum plugin_type type, const char *name);
 void plugin_init(void);
 
 struct container;
@@ -63,7 +63,7 @@ GList *plugin_types[plugin_type_last];
 struct type##_priv; \
 struct type##_methods; \
 void \
-plugin_register_##type##_type(char *name, struct type##_priv *(*new) newargs) \
+plugin_register_##type##_type(const char *name, struct type##_priv *(*new) newargs) \
 { \
         struct name_val *nv; \
         nv=g_new(struct name_val, 1); \
@@ -73,7 +73,7 @@ plugin_register_##type##_type(char *name, struct type##_priv *(*new) newargs) \
 } \
  \
 void * \
-plugin_get_##type##_type(char *name) \
+plugin_get_##type##_type(const char *name) \
 { \
 	return plugin_get_type(plugin_type_##type, name); \
 } 
@@ -94,8 +94,8 @@ void plugin_call_##name(t1 p1,t2 p2,t3 p3,t4 p4);
 #define PLUGIN_TYPE(type,newargs) \
 struct type##_priv; \
 struct type##_methods; \
-void plugin_register_##type##_type(char *name, struct type##_priv *(*new) newargs); \
-void *plugin_get_##type##_type(char *name);
+void plugin_register_##type##_type(const char *name, struct type##_priv *(*new) newargs); \
+void *plugin_get_##type##_type(const char *name);
 
 #endif
 

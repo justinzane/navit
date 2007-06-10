@@ -5,7 +5,7 @@
 #include "plugin.h"
 
 struct gui *
-gui_new(char *type, int w, int h)
+gui_new(const char *type, int w, int h)
 {
 	struct gui *this;
 	struct gui_priv *(*guitype_new)(struct gui_methods *meth, int w, int h);

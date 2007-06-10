@@ -191,6 +191,24 @@ route_new(struct mapset *ms)
 	return this;
 }
 
+struct mapset *
+route_get_mapset(struct route *this)
+{
+	return this->ms;
+}
+
+struct route_info *
+route_get_pos(struct route *this)
+{
+	return this->pos;
+}
+
+struct route_info *
+route_get_dst(struct route *this)
+{
+	return this->dst;
+}
+
 int
 route_contains(struct route *this, struct item *itm)
 {
@@ -802,7 +820,7 @@ route_find(struct route *this, struct route_info *pos, struct route_info *dst)
 	min-=hr*60;
 	dbg(0, "time %02d:%02d:%02d (%d sec)\n", hr, min, time, (int)this->route_time_val);
 	dbg(0, "speed %f km/h\n", len/this->route_time_val*3.6);
-	navigation_path_description(this, this->ms, this->pos, this->dst);
+	navigation_path_description(this);
 	return 1;
 }
 

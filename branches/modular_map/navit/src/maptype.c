@@ -16,7 +16,7 @@ maptype_register(char *name, struct map_priv *(*map_new)(struct map_methods *met
 }
 
 struct maptype *
-maptype_get(char *name)
+maptype_get(const char *name)
 {
 	struct maptype *mt=maptype_root;
 

@@ -28,7 +28,7 @@ struct graphics
 };
 
 struct graphics *
-graphics_new(char *type)
+graphics_new(const char *type)
 {
 	struct graphics *this;
 	struct graphics_priv * (*new)(struct graphics_methods *meth);

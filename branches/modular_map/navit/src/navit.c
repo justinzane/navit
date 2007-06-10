@@ -13,6 +13,7 @@
 #include "cursor.h"
 #include "popup.h"
 #include "route.h"
+#include "navigation.h"
 #include "track.h"
 
 struct navit {
@@ -251,17 +252,20 @@ navit_cursor_update(struct cursor *cursor, void *this_p)
 {
 	struct navit *this=this_p;
 	struct coord *cursor_c=cursor_pos_get(cursor);
+	int dir=cursor_get_dir(cursor);
 	if (this->track) {
 		struct coord c=*cursor_c;
-		int dir=cursor_get_dir(cursor);
 		track_update(this->track, &c, dir);
 		cursor_c=&c;
 		cursor_pos_set(cursor, cursor_c);
 		if (this->route)
 			route_set_position_from_track(this->route, this->track);
-	} else 
-		if (this->route) 
+	} else {
+		if (this->route)
 			route_set_position(this->route, cursor_c);
+	}
+	if (this->route)
+		navigation_path_description(this->route, dir);
 #if 1
 	if (this->cursor_flag)
 		navit_set_center(this, cursor_c);

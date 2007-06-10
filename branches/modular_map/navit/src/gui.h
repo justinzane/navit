@@ -24,7 +24,7 @@ struct gui;
 struct menu;
 struct navit;
 struct statusbar;
-struct gui *gui_new(char *type, int w, int h);
+struct gui *gui_new(const char *type, int w, int h);
 struct statusbar *gui_statusbar_new(struct gui *gui, struct navit *nav);
 struct menu *gui_menubar_new(struct gui *gui, struct navit *nav);
 struct menu *gui_toolbar_new(struct gui *gui, struct navit *nav);

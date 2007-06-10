@@ -28,7 +28,7 @@ plugin_load(char *plugin)
 }
 
 void *
-plugin_get_type(enum plugin_type type, char *name)
+plugin_get_type(enum plugin_type type, const char *name)
 {
 	GList *l;
 	struct name_val *nv;
