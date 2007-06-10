@@ -19,6 +19,7 @@ int transform_contains(struct transformation *this, enum projection pro, struct 
 void transform_set_angle(struct transformation *t, int angle);
 int transform_get_angle(struct transformation *this, int angle);
 void transform_set_size(struct transformation *t, int width, int height);
+void transform_get_size(struct transformation *t, int *width, int *height);
 void transform_setup(struct transformation *t, struct coord *c, int scale, int angle);
 void transform_setup_source_rect_limit(struct transformation *t, struct coord *center, int limit);
 void transform_setup_source_rect(struct transformation *t);
@@ -36,5 +37,5 @@ int is_visible(struct transformation *t, struct coord *c);
 int is_line_visible(struct transformation *t, struct coord *c);
 int is_point_visible(struct transformation *t, struct coord *c);
 int is_too_small(struct transformation *t, struct coord *c, int limit);
-int transform_get_angle_delta(struct coord *c, int dir);
+int transform_get_angle_delta(struct coord *c1, struct coord *c2, int dir);
 int transform_within_border(struct transformation *this, struct point *p, int border);

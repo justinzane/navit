@@ -2,7 +2,7 @@
 #include <string.h>
 #include "layout.h"
 
-struct layout * layout_new(char *name)
+struct layout * layout_new(const char *name)
 {
 	struct layout *l;
 
@@ -12,7 +12,7 @@ struct layout * layout_new(char *name)
 }
 
 
-struct layer * layer_new(char *name, int details)
+struct layer * layer_new(const char *name, int details)
 {
 	struct layer *l;
 
@@ -106,7 +106,7 @@ label_new(int label_size)
 }
 
 struct element *
-icon_new(char *src)
+icon_new(const char *src)
 {
 	struct element *e;
 

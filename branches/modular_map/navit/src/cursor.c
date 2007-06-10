@@ -34,14 +34,30 @@ struct cursor {
 	struct callback offscreen_callback;
 	struct callback update_callback;
 	struct vehicle *v;
+	int dir;
+	struct coord pos;
 	void *vehicle_callback;
 };
 
 struct coord *
 cursor_pos_get(struct cursor *this)
 {
+	return &this->pos;
+#if 0
 	return vehicle_pos_get(this->v);
+#endif
 }
+
+
+struct coord *
+cursor_pos_set(struct cursor *this, struct coord *pos)
+{
+	this->pos=*pos;
+#if 0
+	return vehicle_pos_get(this->v);
+#endif
+}
+
 
 static void
 cursor_draw(struct cursor *this, struct point *pnt, int dir, int draw_dir)
@@ -168,6 +184,12 @@ cursor_map_reposition_boundary(struct cursor *this, struct coord *c, double *dir
 
 #endif
 
+int
+cursor_get_dir(struct  cursor *this)
+{
+	return this->dir;
+}
+
 static void
 cursor_update(struct vehicle *v, void *data)
 {
@@ -184,6 +206,8 @@ cursor_update(struct vehicle *v, void *data)
 		dir=vehicle_dir_get(v);
 		speed=vehicle_speed_get(v);
 		pro=vehicle_projection(v);
+		this->dir=*dir;
+		this->pos=*pos;
 		if (this->update_callback.func) 
 			(*this->update_callback.func)(this, this->update_callback.data);
 #if 0 /* FIXME */
@@ -192,10 +216,10 @@ cursor_update(struct vehicle *v, void *data)
 #if 0 /* FIXME */
 		route_set_position(this->co->route, cursor_pos_get(this->co->cursor));
 #endif
-		if (!transform(this->trans, pro, pos, &pnt) || !transform_within_border(this->trans, &pnt, border)) {
+		if (!transform(this->trans, pro, &this->pos, &pnt) || !transform_within_border(this->trans, &pnt, border)) {
 			if (this->offscreen_callback.func) 
 				(*this->offscreen_callback.func)(this, this->offscreen_callback.data);
-			transform(this->trans, pro, pos, &pnt);
+			transform(this->trans, pro, &this->pos, &pnt);
 		}
 		cursor_draw(this, &pnt, *dir-transform_get_angle(this->trans, 0), *speed > 2.5);
 	}

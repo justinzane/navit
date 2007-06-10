@@ -561,11 +561,11 @@ is_too_small(struct transformation *t, struct coord *c, int limit)
 
 
 int
-transform_get_angle_delta(struct coord *c, int dir)
+transform_get_angle_delta(struct coord *c1, struct coord *c2, int dir)
 {
 	double angle;
-	int dx=c[1].x-c[0].x;
-	int dy=c[1].y-c[0].y;
+	int dx=c2->x-c1->x;
+	int dy=c2->y-c1->y;
 	angle=atan2(dx,dy);
 	angle*=180/M_PI;
 	if (dir == -1)

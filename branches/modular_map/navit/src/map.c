@@ -24,7 +24,7 @@ struct map_rect {
 };
 
 struct map *
-map_new(char *type, char *filename)
+map_new(const char *type, const char *filename)
 {
 	struct map *m;
 	struct map_priv *(*maptype_new)(struct map_methods *meth, char *name);

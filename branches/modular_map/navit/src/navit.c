@@ -12,6 +12,8 @@
 #include "graphics.h"
 #include "cursor.h"
 #include "popup.h"
+#include "route.h"
+#include "track.h"
 
 struct navit {
 	GList *mapsets;
@@ -105,7 +107,7 @@ navit_zoom_out(struct navit *this, int factor)
 }
 
 struct navit *
-navit_new(char *ui, char *graphics, struct coord *center, enum projection pro, int zoom)
+navit_new(const char *ui, const char *graphics, struct coord *center, enum projection pro, int zoom)
 {
 	struct navit *this=g_new0(struct navit, 1);
 
@@ -197,6 +199,9 @@ navit_init(struct navit *this)
 
 		char buffer[2048];
 		this->route=route_new(ms);
+#if 1
+		this->track=track_new(ms);
+#endif
 		f=fopen("destination.txt", "r");
 		if (f) {
 			while (! feof(f)) {
@@ -246,11 +251,20 @@ navit_cursor_update(struct cursor *cursor, void *this_p)
 {
 	struct navit *this=this_p;
 	struct coord *cursor_c=cursor_pos_get(cursor);
-	if (this->route) 
-		route_set_position(this->route, cursor_c);
-#if 0
-	if (this->ready)
-		navit_draw(this);
+	if (this->track) {
+		struct coord c=*cursor_c;
+		int dir=cursor_get_dir(cursor);
+		track_update(this->track, &c, dir);
+		cursor_c=&c;
+		cursor_pos_set(cursor, cursor_c);
+		if (this->route)
+			route_set_position_from_track(this->route, this->track);
+	} else 
+		if (this->route) 
+			route_set_position(this->route, cursor_c);
+#if 1
+	if (this->cursor_flag)
+		navit_set_center(this, cursor_c);
 #endif
 }
 

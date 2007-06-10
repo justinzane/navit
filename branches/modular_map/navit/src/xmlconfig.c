@@ -40,7 +40,7 @@ static const char * find_attribute(struct xmlstate *state, const char *attribute
 static int
 find_color(struct xmlstate *state, int required, struct color *color)
 {
-	char *value;
+	const char *value;
 	int r,g,b;
 
 	value=find_attribute(state, "color", required);
@@ -57,7 +57,7 @@ find_color(struct xmlstate *state, int required, struct color *color)
 static int
 find_zoom(struct xmlstate *state, int required, int *min, int *max)
 {
-	char *value, *pos;
+	const char *value, *pos;
 	int ret;
 
 	*min=0;
@@ -79,7 +79,7 @@ find_zoom(struct xmlstate *state, int required, int *min, int *max)
 static int
 find_boolean(struct xmlstate *state, const char *attribute, int deflt, int required)
 {
-	char *value;
+	const char *value;
 
 	value=find_attribute(state, attribute, required);
 	if (! value)
@@ -98,7 +98,7 @@ convert_number(const char *val)
 static int
 xmlconfig_navit(struct xmlstate *state)
 {
-	char *value,*gui,*graphics;
+	const char *value,*gui,*graphics;
 	int zoom=0;
 	struct coord c;
 	enum projection pro=projection_mg;
@@ -128,7 +128,7 @@ xmlconfig_navit(struct xmlstate *state)
 static int
 xmlconfig_vehicle(struct xmlstate *state)
 {
-	char *s=find_attribute(state, "source", 1);
+	const char *s=find_attribute(state, "source", 1);
 	struct color color;
 
 	if (! s)
@@ -156,8 +156,8 @@ xmlconfig_mapset(struct xmlstate *state)
 static int
 xmlconfig_map(struct xmlstate *state)
 {
-	char *type=find_attribute(state, "type", 1);
-	char *data=find_attribute(state, "data", 1);
+	const char *type=find_attribute(state, "type", 1);
+	const char *data=find_attribute(state, "data", 1);
 	if (! type || ! data)
 		return 0;
 	state->element_object = map_new(type, data);
@@ -173,7 +173,7 @@ xmlconfig_map(struct xmlstate *state)
 static int
 xmlconfig_layout(struct xmlstate *state)
 {
-	char *name=find_attribute(state, "name", 1);
+	const char *name=find_attribute(state, "name", 1);
 
 	if (! name)
 		return 0;
@@ -187,7 +187,7 @@ xmlconfig_layout(struct xmlstate *state)
 static int
 xmlconfig_layer(struct xmlstate *state)
 {
-	char *name=find_attribute(state, "name", 1);
+	const char *name=find_attribute(state, "name", 1);
 	if (! name)
 		return 0;
 	state->element_object = layer_new(name, convert_number(find_attribute(state, "details", 0)));
@@ -200,7 +200,7 @@ xmlconfig_layer(struct xmlstate *state)
 static int
 xmlconfig_item(struct xmlstate *state)
 {
-	char *type=find_attribute(state, "type", 1);
+	const char *type=find_attribute(state, "type", 1);
 	int min, max;
 	enum item_type itype;
 	char *saveptr, *tok, *type_str, *str;
@@ -244,7 +244,7 @@ static int
 xmlconfig_polyline(struct xmlstate *state)
 {
 	struct color color;
-	char *width;
+	const char *width;
 	int w=0;
 
 	if (! find_color(state, 1, &color))
@@ -264,7 +264,7 @@ static int
 xmlconfig_circle(struct xmlstate *state)
 {
 	struct color color;
-	char *width, *radius, *label_size;
+	const char *width, *radius, *label_size;
 	int w=0,r=0,ls=0;
 
 	if (! find_color(state, 1, &color))
@@ -289,7 +289,7 @@ xmlconfig_circle(struct xmlstate *state)
 static int
 xmlconfig_label(struct xmlstate *state)
 {
-	char *label_size;
+	const char *label_size;
 	int ls=0;
 
 	label_size=find_attribute(state, "label_size", 0);
@@ -306,7 +306,7 @@ xmlconfig_label(struct xmlstate *state)
 static int
 xmlconfig_icon(struct xmlstate *state)
 {
-	char *src=find_attribute(state, "src", 1);
+	const char *src=find_attribute(state, "src", 1);
 
 	if (! src)
 		return 0;

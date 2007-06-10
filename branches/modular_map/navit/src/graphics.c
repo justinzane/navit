@@ -1,18 +1,19 @@
 #include <glib.h>
 #include <stdio.h>
+#include <math.h>
 #include "debug.h"
 #include "string.h"
 #include "draw_info.h"
 #include "graphics.h"
 #include "map.h"
 #include "coord.h"
-#include "param.h"	/* FIXME */
 #include "transform.h"
 #include "projection.h"
 #include "point.h"
 #include "plugin.h"
 #include "profile.h"
 #include "mapset.h"
+#include "route.h"
 
 
 #include "layout.h"

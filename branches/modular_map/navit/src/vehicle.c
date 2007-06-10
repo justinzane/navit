@@ -32,6 +32,7 @@ struct vehicle {
 	GIOChannel *iochan;
 	guint watch;
 	int is_file;
+	int is_pipe;
 	int timer_count;
 	int qual;
 	int sats;
@@ -44,6 +45,8 @@ struct vehicle {
 	struct coord_d delta;
 
 	double speed_last;
+	int fd;
+	FILE *file;
 #ifdef HAVE_LIBGPS
 	struct gps_data_t *gps;
 #endif
@@ -225,8 +228,13 @@ vehicle_track(GIOChannel *iochan, GIOCondition condition, gpointer t)
 			if (this->is_file) {
 				char *str;
 				g_io_channel_read_line(iochan, &str, NULL, NULL, &error);
-				vehicle_parse_gps(this, str);
-				g_free(str);
+				if (str) {
+					vehicle_parse_gps(this, str);
+					g_free(str);
+				} else {
+					if (this->is_file) 
+						disable_watch(this);
+				}
 			} else {
 				g_io_channel_read_chars(iochan, buffer, 4096, &size, &error);
 				buffer[size]='\0';
@@ -321,6 +329,7 @@ vehicle_new(const char *url)
 	struct gps_data_t *gps=NULL;
 #endif
 	this=g_new0(struct vehicle,1);
+	this->fd=-1;
 
 	if (! vfd) {
 		vfd=open("vlog.txt", O_RDWR|O_APPEND|O_CREAT, 0644);
@@ -336,6 +345,15 @@ vehicle_new(const char *url)
 		if (S_ISREG (st.st_mode)) {
 			this->is_file=1;
 		}
+		this->fd=fd;
+	} else if (! strncmp(url,"pipe:",5)) {
+		this->file=popen(url+5, "r");
+		this->is_pipe=1;
+		if (! this->file) {
+			g_warning("Failed to open %s", url);
+			return NULL;
+		}
+		fd=fileno(this->file);
 	} else if (! strncmp(url,"gpsd://",7)) {
 #ifdef HAVE_LIBGPS
 		url_=g_strdup(url);
@@ -353,14 +371,12 @@ vehicle_new(const char *url)
 		gps_query(gps, "w+x\n");
 		gps_set_raw_hook(gps, vehicle_gps_callback);
 		fd=gps->gps_fd;
+		this->gps=gps;
 #else
 		g_warning("No support for gpsd compiled in\n");
 		return NULL;
 #endif
 	}
-#ifdef HAVE_LIBGPS
-	this->gps=gps;
-#endif
 	this->iochan=g_io_channel_unix_new(fd);
 	g_io_channel_set_encoding(this->iochan, NULL, &error);
 	enable_watch(this);
@@ -371,7 +387,7 @@ vehicle_new(const char *url)
 	this->delta.x=0;
 	this->delta.y=0;
 #if INTERPOLATION_TIME
-		g_timeout_add(INTERPOLATION_TIME, vehicle_timer, this);
+	g_timeout_add(INTERPOLATION_TIME, vehicle_timer, this);
 #endif
 	
 	return this;
@@ -405,5 +421,10 @@ vehicle_destroy(struct vehicle *this)
 	if (this->gps)
 		gps_close(this->gps);
 #endif
+	if (this->file)
+		pclose(this->file);
+	if (this->fd != -1)
+		close(this->fd);
+
 	g_free(this);
 }

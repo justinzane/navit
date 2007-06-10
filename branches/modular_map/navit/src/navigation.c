@@ -1,13 +1,19 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <glib.h>
 #include "debug.h"
+#include "navigation.h"
 #include "coord.h"
 #include "item.h"
 #include "route.h"
+#include "transform.h"
+#include "mapset.h"
+#include "map.h"
+#include "navit.h"
 #if 0
 #include <math.h>
-#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "coord.h"
@@ -46,17 +52,9 @@ struct navigation_item {
 static int
 road_angle(struct coord *c1, struct coord *c2, int dir)
 {
-	double angle;
-	int dx=c2->x-c1->x;
-	int dy=c2->y-c1->y;
-	angle=atan2(dx,dy);
-	angle*=180/M_PI;
-	if (dir == -1)
-		angle=angle-180;
-	if (angle < 0)
-		angle+=360;
-	dbg(1, "road_angle(0x%x,0x%x - 0x%x,0x%x)=%d\n", c1->x, c1->y, c2->x, c2->y, (int) angle);
-	return angle;
+	int ret=transform_get_angle_delta(c1, c2, dir);
+	dbg(1, "road_angle(0x%x,0x%x - 0x%x,0x%x)=%d\n", c1->x, c1->y, c2->x, c2->y, ret);
+	return ret;
 }
 
 static void
@@ -76,7 +74,7 @@ navigation_goto(struct data_window *navigation_window, char **cols)
 	struct coord c;
 
 	printf("goto %s\n",cols[8]);
-	sscanf(cols[8],"%lx,%lx",&c.x,&c.y);
+	sscanf(cols[8],"%x,%x",&c.x,&c.y);
 	printf("0x%x,0x%x\n", c.x, c.y);
 	navit_set_center(global_navit, &c);
 }
@@ -186,7 +184,7 @@ static void
 make_maneuver(struct navigation_item *old, struct navigation_item *new)
 {
 	
-	int delta,navmode=1,add_dir,level;
+	int delta=0,navmode=1,add_dir,level;
 	struct param_list param_list[20];
 
 	char angle_old[30],angle_new[30],angle_delta[30],cross_roads[30],position[30],distance[30];
@@ -226,7 +224,7 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 			param_list[6].value=angle_delta;
 			sprintf(cross_roads,"%d", old->crossings_end);
 			param_list[7].value=cross_roads;
-			sprintf(position,"0x%lx,0x%lx", new->c.x, new->c.y);
+			sprintf(position,"0x%x,0x%x", new->c.x, new->c.y);
 			param_list[8].value=position;
 			sprintf(distance,"%d", old->length);
 			param_list[9].value=distance;
@@ -243,7 +241,7 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 			} else if (delta < 165) {
 				strength="scharf ";
 			} else {
-				printf("delta=%d\n", delta);
+				dbg(0,"delta=%d\n", delta);
 				strength="unbekannt ";
 			}
 			level=0;
@@ -257,11 +255,15 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 					sprintf(command,"In %sn ", dist);
 				} else if (old->length <= 500) {
 					level=3;
-					sprintf(command,"In Kürze ");
+					sprintf(command,"Demnächst ");
 				} else {
 					level=4;
 					get_distance(dist, old->length);
-					sprintf(command,"Dem Strassenverlauf %s folgen", dist);
+					if (old_save.name2[0]) {
+						sprintf(command,"Der %s %s folgen", old_save.name2, dist);
+					} else {
+						sprintf(command,"Dem Strassenverlauf %s folgen", dist);
+					}
 					add_dir=0;
 				}
 			} else {
@@ -270,11 +272,15 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 			}
 			if (add_dir) {
 				p=command+strlen(command);
-				strcpy(p,strength);
-				p+=strlen(p);
-				strcpy(p,dir);
-				p+=strlen(p);
-				strcpy(p," abbiegen");
+				if (! new->points) 
+					strcpy(p,"haben Sie ihr Ziel erreicht");
+				else {
+					strcpy(p,strength);
+					p+=strlen(p);
+					strcpy(p,dir);
+					p+=strlen(p);
+					strcpy(p," abbiegen");
+				}
 			}
 			param_list[10].value=command;
 			if (flag) {
@@ -301,8 +307,8 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 	}
 }
 
-
-int
+#if 0
+static int
 navigation_crossings(struct mapset *ms, struct coord *cc)
 {
 	int max_dist=1000;
@@ -332,6 +338,7 @@ navigation_crossings(struct mapset *ms, struct coord *cc)
 	
 	return ret;
 }
+#endif
 
 void
 navigation_item_get_data(struct item *item, struct coord *start, struct navigation_item *nitem)
@@ -359,13 +366,17 @@ navigation_item_get_data(struct item *item, struct coord *start, struct navigati
 	while (item_coord_get(item, &c[i], 1)) {
 		dbg(1, "coord %d 0x%x 0x%x\n", i, c[i].x ,c[i].y);
 		l=i;
-		if (i < 3) 
+		if (i < 4) 
 			i++;
-		else
+		else {
 			c[2]=c[3];
+			c[3]=c[4];
+		}
 		nitem->points++;
 	}
 	dbg(1,"count=%d\n", l);
+	if (l == 4)
+		l=3;
 	if (start->x != c[0].x || start->y != c[0].y)
 		dir=-1;
 	a1=road_angle(&c[0], &c[1], dir);
@@ -381,17 +392,24 @@ navigation_item_get_data(struct item *item, struct coord *start, struct navigati
 	map_rect_destroy(mr);
 }
 
+struct street_data {
+        struct item item;
+        int count;
+        int limit;
+        struct coord c[0];
+};
+
 void
-navigation_path_description(void *route, void *ms, void *pos, void *dst)
+navigation_path_description(struct route *route, struct mapset *ms, struct route_info *pos, struct route_info *dst)
 {
-	struct route_info_handle *h;
-	struct coord *c, *p1=NULL, *p2=NULL, ci;
-	struct route_segment_handle *rph;
-	struct route_segment *s;
+	struct coord *p1=NULL, *p2=NULL;
+	struct route_path_handle *rph;
+	struct route_path_segment *s;
 	struct item *item;
-	h=route_info_open(pos, dst);
-	int angle_start,i;
+	struct street_data *sd;
+	int i,len;
 	struct navigation_item item_curr,item_last;
+	int end_flag=0;
 
 	if (!navigation_window)
 		navigation_window=data_window("Navigation",NULL,navigation_goto);
@@ -399,26 +417,21 @@ navigation_path_description(void *route, void *ms, void *pos, void *dst)
 	memset(&item_last,0,sizeof(item_last));
 	flag=1;
 
-	if (h) {
-		printf("destination nearly reached\n");
-		route_info_close(h);
-		return;
+	len=route_info_length(pos, dst, 0);
+	if (len == -1) {
+		len=route_info_length(pos, NULL, 0);
+		end_flag=1;
 	}
-	h=route_info_open(pos, NULL);
-	while (c=route_info_get(h)) {
-		p1=p2;
-		p2=c;
-	}
-	dbg(1,"p1=%p p2=%p\n", p1, p2);
-	if (!p1 || !p2)
-		return;
-	angle_start=road_angle(p1, p2, 0);
-	printf("angle_start=%d\n", angle_start);
-	printf("c=0x%x,0x%x\n", p2->x, p2->y);
-
-
+	sd=route_info_street(pos);
+	item=&sd->item;
+	item_curr.length=len;
+	item_curr.time=route_time(item, len);
+	item_curr.crossings_start=3;
+	item_curr.crossings_end=3;
+	navigation_item_get_data(item, route_info_point(pos, -1), &item_curr);
+	make_maneuver(&item_last,&item_curr);
+	
 	rph=route_path_open(route);
-
 	i=0;
 	while((s=route_path_get_segment(rph)) && i < 1000) {
 		dbg(1,"s=%p\n", s);
@@ -440,6 +453,19 @@ navigation_path_description(void *route, void *ms, void *pos, void *dst)
 		make_maneuver(&item_last,&item_curr);
 		i++;
 	}
+	if (end_flag) {
+		len=route_info_length(NULL, dst, 0);
+		sd=route_info_street(dst);
+		item=&sd->item;
+		item_curr.length=len;
+		item_curr.time=route_time(item, len);
+		item_curr.crossings_start=3;
+		item_curr.crossings_end=3;
+		navigation_item_get_data(item, route_info_point(dst, 2), &item_curr);
+		make_maneuver(&item_last,&item_curr);
+	}
+	memset(&item_curr,0,sizeof(item_curr));
+	make_maneuver(&item_last,&item_curr);
 	data_window_end(navigation_window);
 #if 0
 	exit(0);	

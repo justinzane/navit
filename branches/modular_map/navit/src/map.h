@@ -19,12 +19,12 @@ struct map_methods {
 };
 
 /* prototypes */
-struct coord_rect;
+enum projection;
 struct item;
-struct layer;
 struct map;
 struct map_rect;
-struct map *map_new(char *type, char *filename);
+struct map_selection;
+struct map *map_new(const char *type, const char *filename);
 char *map_get_filename(struct map *this);
 char *map_get_type(struct map *this);
 int map_get_active(struct map *this);

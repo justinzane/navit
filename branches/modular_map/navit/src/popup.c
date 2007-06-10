@@ -1,6 +1,8 @@
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <glib.h>
 #include "popup.h"
 #include "debug.h"
@@ -14,6 +16,7 @@
 #include "map.h"
 #include "graphics.h"
 #include "item.h"
+#include "route.h"
 
 #if 0
 static void

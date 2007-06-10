@@ -38,13 +38,14 @@ struct layer { char *name; int details; GList *itemtypes; };
 struct layout { char *name; GList *layers; };
 
 /* prototypes */
+enum item_type;
 struct color;
 struct element;
 struct itemtype;
 struct layer;
 struct layout;
-struct layout *layout_new(char *name);
-struct layer *layer_new(char *name, int details);
+struct layout *layout_new(const char *name);
+struct layer *layer_new(const char *name, int details);
 void layout_add_layer(struct layout *layout, struct layer *layer);
 struct itemtype *itemtype_new(int zoom_min, int zoom_max);
 void itemtype_add_type(struct itemtype *this, enum item_type type);
@@ -54,5 +55,5 @@ struct element *polygon_new(struct color *color);
 struct element *polyline_new(struct color *color, int width);
 struct element *circle_new(struct color *color, int radius, int width, int label_size);
 struct element *label_new(int label_size);
-struct element *icon_new(char *src);
+struct element *icon_new(const char *src);
 struct element *image_new(void);
