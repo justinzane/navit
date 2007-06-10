@@ -544,9 +544,14 @@ graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, st
 		data_window_begin(co->data_window[i]);	
 	}
 #endif
+	profile(0,NULL);
 	do_draw(display_list, trans, mapsets, order, route);
+	profile(1,"do_draw");
 	route_draw(route, trans, display_list);
+	profile(1,"route_draw");
 	xdisplay_draw(display_list, gra, layouts, order);
+	profile(1,"xdisplay_draw");
+	profile(0,"end");
   
 	gra->meth.draw_mode(gra->priv, draw_mode_end);
 #if 0
