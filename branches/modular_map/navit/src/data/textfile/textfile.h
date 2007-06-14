@@ -6,18 +6,19 @@ struct map_priv {
 	char *filename;
 };
 
+#define SIZE 512
+
 struct map_rect_priv {
-	struct coord_rect r;
-	int limit;
+	struct map_selection *sel;
 
 	FILE *f;
 	long pos;
-	char line[256];
+	char line[SIZE];
 	int attr_pos;
 	enum attr_type attr_last;
-	char attrs[256];
-	char attr[256];
-	char attr_name[256];
+	char attrs[SIZE];
+	char attr[SIZE];
+	char attr_name[SIZE];
 	double lat,lng;
 	char lat_c,lng_c;
 	int eoc;

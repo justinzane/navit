@@ -51,14 +51,16 @@ cursor_action(GtkWidget *w, struct navit *nav, void *dummy)
 }
 
 static void
-orient_north_action(GtkWidget *w, struct action *ac)
+orient_north_action(GtkWidget *w, struct navit *nav, void *dummy)
 {
 #if 0
 	ac->gui->co->flags->orient_north=gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(w));
 #endif
 }
 
+#include <stdlib.h>
 #include "point.h"
+#include "transform.h"
 
 static void
 info_action(GtkWidget *w, struct navit *nav, void *dummy)
@@ -88,14 +90,12 @@ info_action(GtkWidget *w, struct navit *nav, void *dummy)
 static void
 destination_action(GtkWidget *w, struct navit *nav, void *dummy)
 {
-#if 0 /* FIXME */
-	destination_address(ac->gui->co);
-#endif
+	destination_address(nav);
 }
 
 
 static void     
-quit_action (GtkWidget *w, struct action *ac)
+quit_action (GtkWidget *w, struct navit *nav, void *dummy)
 {
 	gtk_main_quit();
 }
@@ -351,12 +351,8 @@ static char layout[] =
 	</ui>";
 	
 
-void test(void *x)
-{
-	printf("test\n");
-}
-
-void activate(void *dummy, struct menu_priv *menu)
+static void
+activate(void *dummy, struct menu_priv *menu)
 {
 	if (menu->callback)
 		(*menu->callback)(menu->callback_menu, menu->callback_data1, menu->callback_data2);
@@ -374,11 +370,11 @@ add_menu(struct menu_priv *menu, struct menu_methods *meth, char *name, enum men
 	*meth=menu_methods;
 	dynname=g_strdup_printf("%d", menu->gui->dyn_counter++);
 	if (type == menu_type_toggle)
-		ret->action=gtk_toggle_action_new(dynname, name, NULL, NULL);
+		ret->action=GTK_ACTION(gtk_toggle_action_new(dynname, name, NULL, NULL));
 	else
 		ret->action=gtk_action_new(dynname, name, NULL, NULL);
 	if (callback)
-		ret->handler_id=g_signal_connect(ret->action, "activate", activate, ret);
+		ret->handler_id=g_signal_connect(ret->action, "activate", G_CALLBACK(activate), ret);
 	gtk_action_group_add_action(menu->gui->dyn_group, ret->action);
 	ret->merge_id=gtk_ui_manager_new_merge_id(menu->gui->menu_manager);
 	gtk_ui_manager_add_ui( menu->gui->menu_manager, ret->merge_id, menu->path, dynname, dynname, type == menu_type_submenu ? GTK_UI_MANAGER_MENU : GTK_UI_MANAGER_MENUITEM, FALSE);
@@ -396,7 +392,7 @@ add_menu(struct menu_priv *menu, struct menu_methods *meth, char *name, enum men
 		
 }
 
-void
+static void
 remove_menu(struct menu_priv *item, int recursive)
 {
 
@@ -424,13 +420,13 @@ remove_menu(struct menu_priv *item, int recursive)
 static void
 set_toggle(struct menu_priv *menu, int active)
 {
-	gtk_toggle_action_set_active(menu->action, active);
+	gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(menu->action), active);
 }
 
 static  int
 get_toggle(struct menu_priv *menu)
 {
-	return gtk_toggle_action_get_active(menu->action);
+	return gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(menu->action));
 }
 
 static struct menu_methods menu_methods = {
@@ -440,7 +436,8 @@ static struct menu_methods menu_methods = {
 };
 
 
-void popup_deactivate(GtkWidget *widget, struct menu_priv *menu)
+static void
+popup_deactivate(GtkWidget *widget, struct menu_priv *menu)
 {
 	g_signal_handler_disconnect(widget, menu->handler_id);
 	remove_menu(menu, 1);
@@ -478,11 +475,11 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 	}
 	widget=gtk_ui_manager_get_widget(this->menu_manager, path);
 	if (! popup) {
-		gtk_box_pack_start (this->vbox, widget, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX(this->vbox), widget, FALSE, FALSE, 0);
 		gtk_widget_show (widget);
 	} else {
-		gtk_menu_popup(widget, NULL, NULL, NULL, NULL, 0, gtk_get_current_event_time ());
-		ret->handler_id=g_signal_connect(widget, "deactivate", popup_deactivate, ret);
+		gtk_menu_popup(GTK_MENU(widget), NULL, NULL, NULL, NULL, 0, gtk_get_current_event_time ());
+		ret->handler_id=g_signal_connect(widget, "deactivate", G_CALLBACK(popup_deactivate), ret);
 	}
 	return ret;
 }

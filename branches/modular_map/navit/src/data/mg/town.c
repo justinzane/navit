@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+#include "debug.h"
 #include "mg.h"
 
 
@@ -47,21 +49,21 @@ town_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 		return 0;
 	case attr_label:
 		attr->u.str=twn->district;
-		twn->attr_next=attr_name;
+		twn->attr_next=attr_town_name;
 		if (attr->u.str[0])
 			return 1;
 		attr->u.str=twn->name;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
-	case attr_name:
+	case attr_town_name:
 		attr->u.str=twn->name;
-		twn->attr_next=attr_district;
+		twn->attr_next=attr_district_name;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
-	case attr_district:
+	case attr_district_name:
 		attr->u.str=twn->district;
 		twn->attr_next=attr_debug;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	case attr_debug:
-		sprintf(twn->debug, "order %d\nsize %d", twn->order, twn->size);
+		sprintf(twn->debug, "order %d\nsize %d\nstreet_assoc 0x%x", twn->order, twn->size, twn->street_assoc);
 		attr->u.str=twn->debug;
 		twn->attr_next=attr_none;
 		return 1;
@@ -163,4 +165,85 @@ town_get_byid(struct map_rect_priv *mr, struct town_priv *twn, int id_hi, int id
 	block_get_byindex(mr->m->file[mr->current_file], res >> 16, &mr->b);
 	mr->b.p=mr->b.block_start+(res & 0xffff);
 	return town_get(mr, twn, item);
+}
+
+static int
+town_search_compare(unsigned char **p, struct map_rect_priv *mr)
+{
+        int country, d;
+        char *name;
+
+	country=get_u16(p);
+	dbg(1,"country 0x%x ", country);
+	name=get_string(p);
+	dbg(1,"name '%s' ",name);
+	mr->search_blk_count=get_u32(p);
+	mr->search_blk=(struct block_offset *)(*p);
+	dbg(1,"len %d ", mr->search_blk_count);
+	(*p)+=mr->search_blk_count*4;
+	d=mr->search_country-country;
+	if (!d) {
+		if (mr->search_partial)
+			d=strncasecmp(mr->search_str, name, strlen(mr->search_str));
+		else
+			d=strcasecmp(mr->search_str, name);
+	}
+	dbg(1,"%d \n",d);
+	return d;
+
+}
+
+
+
+struct item *
+town_search_get_item(struct map_rect_priv *mr)
+{
+	int dir=1,leaf;
+
+	if (! mr->search_blk_count) {
+		if (mr->search_partial) {
+			dbg(1,"partial 0x%x '%s' ***\n", mr->search_country, mr->search_str);
+			if (! mr->search_linear) {
+				while ((leaf=tree_search_next(&mr->ts, &mr->search_p, dir)) != -1) {
+					dir=town_search_compare(&mr->search_p, mr);
+					if (! dir && leaf) {
+						mr->search_linear=1;
+						mr->search_p=NULL;
+						break;
+					}
+				}
+				if (! mr->search_linear)
+					return NULL;
+			}
+			if (! tree_search_next_lin(&mr->ts, &mr->search_p))
+				return NULL;
+			if (town_search_compare(&mr->search_p, mr))
+				return NULL;
+			dbg(1,"found %d blocks\n",mr->search_blk_count);
+		} else {
+	#if 0
+			dbg(1,"full 0x%x '%s' ***\n", country, search);
+			while (tree_search_next(&ts, &p, dir) != -1) {
+				ps=p;
+				printf("0x%x ",p-ts.f->begin);
+				dir=show_town2(&p, country, search, 0);
+				if (! dir) {
+					printf("*** found full: ");
+					show_town2(&ps, country, search, 0);
+					break;
+				}
+			}
+	#endif
+			return NULL;
+		}
+	}
+	if (! mr->search_blk_count)
+		return NULL;
+	dbg(1,"block 0x%x offset 0x%x\n", mr->search_blk->block, mr->search_blk->offset);
+	block_get_byindex(mr->m->file[mr->current_file], mr->search_blk->block, &mr->b);
+	mr->b.p=mr->b.block_start+mr->search_blk->offset;
+	town_get(mr, &mr->town, &mr->item);
+	mr->search_blk++;
+	mr->search_blk_count--;
+	return &mr->item;
 }

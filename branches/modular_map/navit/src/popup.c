@@ -40,8 +40,10 @@ popup_set_no_passing(struct popup_item *item, void *param)
 #endif
 
 static void
-popup_set_destination(struct menu *menu, struct navit *nav, struct coord *c)
+popup_set_destination(struct menu *menu, void *data1, void *data2)
 {
+	struct navit *nav=data1;
+	struct coord *c=data2;
 	struct route *route;
 	char buffer[1024];
 	int fd;
@@ -76,8 +78,10 @@ popup_set_destination(struct menu *menu, struct navit *nav, struct coord *c)
 extern void *vehicle;
 
 static void
-popup_set_position(struct menu *menu, struct navit *nav, struct coord *c)
+popup_set_position(struct menu *menu, void *data1, void *data2)
 {
+	struct navit *nav=data1;
+	struct coord *c=data2;
 	struct route *route;
 	dbg(0,"%p %p\n", nav, c);
 	route=navit_get_route(nav);

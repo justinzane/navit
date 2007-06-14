@@ -16,6 +16,7 @@
 #include "item.h"
 #include "route.h"
 #include "track.h"
+#include "graphics.h"
 #if 0
 #include "param.h"
 #include "map_data.h"
@@ -820,7 +821,6 @@ route_find(struct route *this, struct route_info *pos, struct route_info *dst)
 	min-=hr*60;
 	dbg(0, "time %02d:%02d:%02d (%d sec)\n", hr, min, time, (int)this->route_time_val);
 	dbg(0, "speed %f km/h\n", len/this->route_time_val*3.6);
-	navigation_path_description(this);
 	return 1;
 }
 

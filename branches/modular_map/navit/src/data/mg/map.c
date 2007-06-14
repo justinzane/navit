@@ -7,7 +7,7 @@
 #include "mg.h"
 
 
-struct map_priv * map_new_mg(struct map_methods *meth, char *dirname);
+struct map_priv * map_new_mg(struct map_methods *meth, char *dirname, char **charset, enum projection *pro);
 
 static int map_id;
 
@@ -78,19 +78,6 @@ map_destroy_mg(struct map_priv *m)
 			file_destroy(m->file[i]);
 	}
 }
-
-static char *
-map_charset_mg(struct map_priv *m)
-{
-	return "iso8859-1";
-}
-
-static enum projection
-map_projection_mg(struct map_priv *m)
-{
-	return projection_mg;
-}
-
 
 extern int block_lin_count,block_idx_count,block_active_count,block_mem,block_active_mem;
 
@@ -198,24 +185,64 @@ map_rect_destroy_mg(struct map_rect_priv *mr)
 	g_free(mr);
 }
 
+static struct map_search_priv *
+map_search_new_mg(struct map_priv *map, struct item *item, struct attr *search, int partial)
+{
+	struct map_rect_priv *mr=g_new0(struct map_rect_priv, 1);
+	dbg(0,"id_lo=0x%x\n", item->id_lo);
+	dbg(0,"search=%s\n", search->u.str);
+	mr->m=map;
+	tree_search_init(map->dirname, "town.b2", &mr->ts);
+	mr->search_country=item->id_lo;
+	mr->search_str=search->u.str;
+	mr->search_partial=partial;
+	mr->current_file=file_town_twn-1;
+	file_next(mr);
+#if 0
+	tree_search(mr->m->dirname,"town.b2",item->id_lo,search->u.str,partial);
+#endif
+	return (struct map_search_priv *)mr;
+}
+
+static void
+map_search_destroy_mg(struct map_search_priv *ms)
+{
+	struct map_rect_priv *mr=(struct map_rect_priv *)ms;
+
+	tree_search_free(&mr->ts);
+	g_free(mr);
+}
+
+static struct item *
+map_search_get_item_mg(struct map_search_priv *ms)
+{
+	struct map_rect_priv *mr=(struct map_rect_priv *)ms;
+	
+	return town_search_get_item(mr);
+}
+
 static struct map_methods map_methods_mg = {
 	map_destroy_mg,
-	map_charset_mg,
-	map_projection_mg,
 	map_rect_new_mg,
 	map_rect_destroy_mg,
 	map_rect_get_item_mg,
 	map_rect_get_item_byid_mg,
+	map_search_new_mg,
+	map_search_destroy_mg,
+	map_search_get_item_mg,
 };
 
 struct map_priv *
-map_new_mg(struct map_methods *meth, char *dirname)
+map_new_mg(struct map_methods *meth, char *dirname, char **charset, enum projection *pro)
 {
 	struct map_priv *m;
 	int i,maybe_missing,len=strlen(dirname);
 	char filename[len+16];
 	
 	*meth=map_methods_mg;
+	*charset="iso8859-1";
+	*pro=projection_mg;
+
 	m=g_new(struct map_priv, 1);
 	m->id=++map_id;
 	m->dirname=g_strdup(dirname);

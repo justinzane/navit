@@ -349,11 +349,11 @@ navigation_item_get_data(struct item *item, struct coord *start, struct navigati
 	int l,i=0,a1,a2,dir=0;
 	mr=map_rect_new(item->map, NULL);
 	item=map_rect_get_item_byid(mr, item->id_hi, item->id_lo);
-	if (item_attr_get(item, attr_name, &attr)) 
+	if (item_attr_get(item, attr_street_name, &attr)) 
 		strcpy(nitem->name1, attr.u.str);
 	else
 		nitem->name1[0]='\0';
-	if (item_attr_get(item, attr_name_systematic, &attr))
+	if (item_attr_get(item, attr_street_name_systematic, &attr))
 		strcpy(nitem->name2, attr.u.str);
 	else
 		nitem->name2[0]='\0';

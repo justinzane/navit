@@ -421,65 +421,6 @@ xdisplay_draw(GHashTable *display_list, struct graphics *gra, GList *layouts, in
 	}
 }
 
-static void
-do_draw_poly(GHashTable *display_list, struct transformation *t, enum projection pro, struct item *item, struct route *route)
-{
-	struct coord c;
-	int max=16384;
-	struct point pnt[max];
-	struct attr attr;
-	struct coord_rect r;
-	int count=0;
-
-	while (count < max) {
-		if (!item_coord_get(item, &c, 1))
-			break;
-		if (! count) {
-			r.lu=c;
-			r.rl=c;
-		} else
-			coord_rect_extend(&r, &c);
-		transform(t, pro, &c, &pnt[count]);
-		count++;
-			
-	}
-	g_assert(count < max);
-	if (transform_contains(t, pro, &r)) {	
-		attr.u.str=NULL;
-		char *utf8=NULL;
-		item_attr_get(item, attr_label, &attr);
-		if (attr.u.str && attr.u.str[0]) 
-			utf8=g_convert(attr.u.str, -1,"utf-8","iso8859-1",NULL,NULL,NULL);
-		display_add(display_list, item, count, pnt, utf8);
-		g_free(utf8);
-		if (route && route_contains(route, item)) {
-			struct item ritem;
-			ritem=*item;
-			ritem.type=type_street_route;
-			display_add(display_list, &ritem, count, pnt, NULL);
-		}
-	}
-}
-
-static void
-do_draw_point(GHashTable *display_list, struct transformation *t, enum projection pro, struct item *item)
-{
-	struct point pnt;
-	struct coord c;
-	struct attr attr;
-
-	item_coord_get(item, &c, 1);
-	if (transform(t, pro, &c, &pnt)) {
-		attr.u.str=NULL;
-		char *utf8=NULL;
-		item_attr_get(item, attr_label, &attr); 
-		if (attr.u.str && attr.u.str[0]) 
-			utf8=g_convert(attr.u.str, -1,"utf-8","iso8859-1",NULL,NULL,NULL);
-		display_add(display_list, item, 1, &pnt, utf8);
-		g_free(utf8);
-	}
-}
-
 extern void *route_selection;
 
 static void
@@ -492,6 +433,11 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 	struct map *m;
 	enum projection pro;
 	struct mapset_handle *h;
+	struct coord c;
+	int conv,count,max=16384;
+	struct point pnt[max];
+	struct attr attr;
+	struct coord_rect r;
 
 	sel.next=NULL;
 	sel.order[layer_town]=1*order;
@@ -501,6 +447,7 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 	h=mapset_open(ms);
 	while ((m=mapset_next(h, 1))) {
 		pro=map_projection(m);
+		conv=map_requires_conversion(m);
 		transform_rect(t, pro, &sel.rect);
 		if (route_selection)
 			mr=map_rect_new(m, route_selection);
@@ -508,10 +455,42 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 			mr=map_rect_new(m, &sel);
 		while ((item=map_rect_get_item(mr))) {
 			if (item->type < type_line) {
-				do_draw_point(display_list, t, pro, item);
+				item_coord_get(item, &c, 1);
+				if (!transform(t, pro, &c, &pnt[0]))
+					continue;
+				count=1;
 			} else {
-				do_draw_poly(display_list, t, pro, item, route);
+				count=0;
+				while (count < max) {
+					if (!item_coord_get(item, &c, 1))
+						break;
+					if (! count) {
+						r.lu=c;
+						r.rl=c;
+					} else
+						coord_rect_extend(&r, &c);
+					transform(t, pro, &c, &pnt[count]);
+					if (! count || pnt[count].x != pnt[count-1].x || pnt[count].y != pnt[count-1].y)
+						count++;
+						
+				}
+				g_assert(count < max);
+				if (!transform_contains(t, pro, &r))
+					continue;
+				if (route && route_contains(route, item)) {
+					struct item ritem;
+					ritem=*item;
+					ritem.type=type_street_route;
+					display_add(display_list, &ritem, count, pnt, NULL);
+				}
 			}
+			attr.u.str=NULL;
+			if (conv && item_attr_get(item, attr_label, &attr) && attr.u.str && attr.u.str[0]) {
+				char *str=map_convert_string(m, attr.u.str);
+				display_add(display_list, item, count, pnt, str);
+				map_convert_free(str);
+			} else
+				display_add(display_list, item, count, pnt, attr.u.str);
 		}
 		map_rect_destroy(mr);
 	}

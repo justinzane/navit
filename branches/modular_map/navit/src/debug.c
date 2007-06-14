@@ -37,10 +37,21 @@ debug_init(void)
 	debug_hash=g_hash_table_new(g_str_hash, g_str_equal);
 }
 
+
+static void
+debug_update_level(gpointer key, gpointer value, gpointer user_data)
+{
+	if (debug_level < (int) value)
+		debug_level=(int) value;
+}
+
 void
 debug_level_set(char *name, int level)
 {
+	debug_level=0;
 	g_hash_table_insert(debug_hash, name, (gpointer) level);
+	g_hash_table_foreach(debug_hash, debug_update_level, NULL);	
+	debug_level_get(name);
 }
 
 int
@@ -60,9 +71,9 @@ debug_print(int level, const char *module, const char *function, const char *fmt
 	strcpy(buffer, module);
 	buffer[module_len]=':';
 	strcpy(buffer+module_len+1, function);
-	strcpy(buffer+module_len+function_len+1, ":");
 
 	if (debug_level_get(module) >= level || debug_level_get(buffer) >= level) {
+		strcpy(buffer+module_len+function_len+1, ":");
 		printf("%s",buffer);
 		va_start(ap, fmt);
 		vprintf(fmt, ap);

@@ -1,5 +1,9 @@
-#if 0
 #include <glib.h>
+#include "debug.h"
+#include "attr.h"
+#include "search.h"
+#include "country.h"
+#if 0
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,8 +14,13 @@
 #include "street.h"
 #include "street_name.h"
 
+#endif
 
 struct search {
+	struct mapset *ms;
+	struct attr search_attr;
+	void *priv;
+#if 0
 	struct map_data *map_data;
 	char *country;
 	GHashTable *country_hash;
@@ -26,7 +35,9 @@ struct search {
 	int number_low, number_high;
 	int (*func)(struct search_destination *dest, void *user_data);
 	void *user_data;
+#endif
 };
+#if 0
 
 struct dest_town {
 	int country;
@@ -426,19 +437,34 @@ void search_update(struct search *search, enum search_param what, char *val)
 	}
 }
 
+#endif
+
 struct search *
-search_new(struct map_data *mdat, char *country, char *postal, char *town, char *district, char *street, char *number, int (*func)(struct search_destination *dest, void *user_data), void *user_data)
+search_new(struct mapset *ms, struct item *item, struct attr *search_attr, int partial)
 {
-	struct search *this=g_new0(struct search,1);
-	this->map_data=mdat;
-	this->country=g_strdup(country);
-	this->postal=g_strdup(postal);
-	this->town=g_strdup(town);
-	this->district=g_strdup(district);
-	this->street=g_strdup(street);
-	this->number=g_strdup(number);
-	this->func=func;
-	this->user_data=user_data;
+	struct search *this;
+	dbg(0,"enter(%p,%p,%p,%d)\n", ms, item, search_attr, partial);
+	this=g_new0(struct search,1);
+	this->ms=ms;
+	this->search_attr=*search_attr;
+	if (search_attr->type >= attr_country_all && search_attr->type <= attr_country_name)
+		this->priv=country_search_new(&this->search_attr, partial);
+	else
+
 	return this;
 }
-#endif
+
+struct item *
+search_get_item(struct search *this)
+{
+	if (this->search_attr.type >= attr_country_all && this->search_attr.type <= attr_country_name) {
+		return country_search_get_item(this->priv);
+	}
+	return NULL;
+}
+
+void
+search_destroy(struct search *this)
+{
+	g_free(this);
+}

@@ -1,3 +1,7 @@
+#include <gtk/gtk.h>
+#include "attr.h"
+#include "item.h"
+#include "search.h"
 #if 0 /* FIXME */
 #include <stdlib.h>
 #include <string.h>
@@ -22,16 +26,21 @@
 extern gint track_focus(gpointer data);
 
 
+#endif
 
 GtkWidget *entry_country, *entry_postal, *entry_city, *entry_district;
 GtkWidget *entry_street, *entry_number;
 GtkWidget *listbox, *current=NULL;
+GtkWidget *treeview;
+GtkListStore *liststore;
+GtkListStore *liststore2;
 int row_count=8;
 
 int selected;
 
 struct search_param {
-	struct map_data *map_data;
+	struct mapset *ms;
+#if 0
 	const char *country;
 	GHashTable *country_hash;
 	const char *town;
@@ -43,8 +52,10 @@ struct search_param {
 	int number_low, number_high;
 	GtkWidget *clist;
 	int count;
+#endif
 } search_param2;
 
+#if 0
 struct destination {
 	struct town *town;
 	struct street_name *street_name;
@@ -438,11 +449,55 @@ destination_street_search(gpointer key, gpointer value, gpointer user_data)
 	street_name_search(search->map_data, town->country, town->assoc, search->street, 1, destination_street_add, search);
 }
 
+#endif
 
 
 static void changed(GtkWidget *widget, struct search_param *search)
 {
 	const char *str;
+	struct attr attr,result;
+	struct item *item,*sitem;
+	struct item temp;
+	struct mapset_search *srch;
+	GtkTreeIter iter;
+	int i;
+
+	attr.u.str=gtk_entry_get_text(GTK_ENTRY(widget));
+	printf("changed %s\n", attr.u.str);
+	if (widget == entry_country) {
+		printf("country\n");
+		sitem=NULL;
+		attr.type=attr_country_all;
+	}
+	if (widget == entry_city) {
+		printf("town\n");
+		sitem=&temp;
+		sitem->id_lo=0x31;
+		attr.type=attr_town_name;
+	}
+
+	srch=mapset_search_new(search->ms,sitem,&attr,1);
+	gtk_list_store_clear(liststore);
+	while(item=mapset_search_get_item(srch)) {
+#if 0
+		enum attr_type type[]={attr_country_name, attr_country_car, attr_country_iso2, attr_country_iso3};
+#endif
+		enum attr_type type[]={attr_town_name, attr_district_name};
+		gtk_list_store_append(liststore,&iter);
+		for(i=0;i<sizeof(type)/sizeof(enum attr_type);i++) {
+			if (item_attr_get(item, type[i], &result)) {
+				char *str;
+				str=g_convert(result.u.str,-1,"utf-8","iso8859-1",NULL,NULL,NULL);
+#if 0
+				printf("%d %s\n", i, result.u.str);
+#endif
+				gtk_list_store_set(liststore,&iter,i,str,-1);
+				g_free(str);
+			}
+		}
+	}
+	mapset_search_destroy(srch);
+#if 0
 	char *empty[9]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 	char *dash;
 
@@ -455,7 +510,6 @@ static void changed(GtkWidget *widget, struct search_param *search)
 
 	search->count=row_count;
 
-	str=gtk_entry_get_text(GTK_ENTRY(widget));
 
 	if (widget == entry_country) {
 		if (search->country_hash) g_hash_table_destroy(search->country_hash);
@@ -527,22 +581,138 @@ static void changed(GtkWidget *widget, struct search_param *search)
 	}
         gtk_clist_columns_autosize (GTK_CLIST(listbox));
 	gtk_clist_thaw(GTK_CLIST(listbox));
+#endif
 }
 
-int destination_address(struct container *co)
+/* borrowed from gpe-login */
+
+#include <fcntl.h>
+
+#define MAX_ARGS 8
+
+parse_xkbd_args (const char *cmd, char **argv)
 {
+	const char *p = cmd;
+	char buf[strlen (cmd) + 1], *bufp = buf;
+	int nargs = 0;
+	int escape = 0, squote = 0, dquote = 0;
+
+	while (*p)
+	{
+		if (escape)
+		{
+			*bufp++ = *p;
+			 escape = 0;
+		}
+		else
+		{
+			switch (*p)
+			{
+			case '\\':
+				escape = 1;
+				break;
+			case '"':
+				if (squote)
+					*bufp++ = *p;
+				else
+					dquote = !dquote;
+				break;
+			case '\'':
+				if (dquote)
+					*bufp++ = *p;
+				else
+					squote = !squote;
+				break;
+			case ' ':
+				if (!squote && !dquote)
+				{
+					*bufp = 0;
+					if (nargs < MAX_ARGS)
+					argv[nargs++] = strdup (buf);
+					bufp = buf;
+					break;
+				}
+			default:
+				*bufp++ = *p;
+				break;
+			}
+		}
+		p++;
+	}
+
+	if (bufp != buf)
+	{
+		*bufp = 0;
+		if (nargs < MAX_ARGS)
+			argv[nargs++] = strdup (buf);
+	}
+	argv[nargs] = NULL;
+}
+
+int kbd_pid;
+
+static int
+spawn_xkbd (char *xkbd_path, char *xkbd_str)
+{
+	char *xkbd_args[MAX_ARGS + 1];
+	int fd[2];
+	char buf[256];
+	char c;
+	int a = 0;
+	size_t n;
+
+	pipe (fd);
+	kbd_pid = fork ();
+	if (kbd_pid == 0)
+	{
+		close (fd[0]);
+		if (dup2 (fd[1], 1) < 0)
+			perror ("dup2");
+		close (fd[1]);
+		if (fcntl (1, F_SETFD, 0))
+			perror ("fcntl");
+		xkbd_args[0] = (char *)xkbd_path;
+		xkbd_args[1] = "-xid";
+		if (xkbd_str)
+			parse_xkbd_args (xkbd_str, xkbd_args + 2);
+		else
+			xkbd_args[2] = NULL;
+		execvp (xkbd_path, xkbd_args);
+		perror (xkbd_path);
+		_exit (1);
+	}
+	close (fd[1]);
+	do {
+		n = read (fd[0], &c, 1);
+		if (n)
+		{
+			buf[a++] = c;
+		}
+	} while (n && (c != 10) && (a < (sizeof (buf) - 1)));
+
+	if (a)
+	{
+		buf[a] = 0;
+		return atoi (buf);
+	}
+	return 0;
+}
+
+int destination_address(struct navit *nav)
+{
+
 	GtkWidget *window2, *keyboard, *vbox, *table;
 	GtkWidget *label_country;
 	GtkWidget *label_postal, *label_city, *label_district;
 	GtkWidget *label_street, *label_number;
 	GtkWidget *hseparator1,*hseparator2;
 	GtkWidget *button1,*button2;
-	init_keyboard_stuff((char *) NULL);
 	int handlerid;
 	int i;
 	gchar *text[9]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-	struct search_param *search=&search_param2;
 
+
+	search_param2.ms=navit_get_mapset(nav);
 #if 0
 	if (co->cursor) {
 		struct coord *c;
@@ -570,7 +740,6 @@ int destination_address(struct container *co)
 #endif
 
 	window2 = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	keyboard = build_keyboard(NULL, "/usr/share/gtkeyboard/key/DE.key");
 	vbox = gtk_vbox_new(FALSE, 0);
 	table = gtk_table_new(3, 8, FALSE);
 
@@ -587,12 +756,40 @@ int destination_address(struct container *co)
 	label_street = gtk_label_new("Strasse");
 	entry_number = gtk_entry_new();
 	label_number = gtk_label_new("Nummer");
+ 	treeview=gtk_tree_view_new();
+#if 0
 	listbox = gtk_clist_new(9);
 	for (i=0 ; i < row_count ; i++) {
 		gtk_clist_append(GTK_CLIST(listbox), text);
 	}
 	gtk_clist_thaw(GTK_CLIST(listbox));
         gtk_clist_columns_autosize (GTK_CLIST(listbox));
+#endif
+	listbox = gtk_scrolled_window_new (NULL, NULL);
+        gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (listbox),
+                        GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+
+	gtk_tree_view_set_model (GTK_TREE_VIEW (treeview), NULL);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(listbox),treeview);
+#if 1
+	for(i=0;i<row_count;i++) {
+		GtkCellRenderer *cell=gtk_cell_renderer_text_new();
+		gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (treeview),-1,NULL, cell,"text",i, NULL);
+	}
+#endif
+	{ 
+		GType types[row_count+1];
+		for(i=0;i<row_count;i++)
+			types[i]=G_TYPE_STRING;
+		types[i]=G_TYPE_POINTER;
+                liststore=gtk_list_store_newv(row_count+1,types);
+                liststore2=gtk_tree_model_sort_new_with_model(liststore);
+		gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE (liststore2), 0, GTK_SORT_ASCENDING);
+                gtk_tree_view_set_model (GTK_TREE_VIEW (treeview), GTK_TREE_MODEL(liststore2));
+	}
+
+
+
 
 	hseparator2 = gtk_vseparator_new();
 	button1 = gtk_button_new_with_label("Karte");
@@ -619,27 +816,79 @@ int destination_address(struct container *co)
 	gtk_table_attach(GTK_TABLE(table), button1, 0, 1, 5, 6, GTK_FILL|GTK_EXPAND, GTK_FILL|GTK_EXPAND, 0, 0);
 	gtk_table_attach(GTK_TABLE(table), button2, 2, 3, 5, 6, GTK_FILL|GTK_EXPAND, GTK_FILL|GTK_EXPAND, 0, 0);
 
-	search->map_data=co->map_data;
-	search->clist=listbox;
-	g_signal_connect(G_OBJECT(entry_country), "changed", G_CALLBACK(changed), search);
-	g_signal_connect(G_OBJECT(entry_postal), "changed", G_CALLBACK(changed), search);
-	g_signal_connect(G_OBJECT(entry_city), "changed", G_CALLBACK(changed), search);
-	g_signal_connect(G_OBJECT(entry_district), "changed", G_CALLBACK(changed), search);
-	g_signal_connect(G_OBJECT(entry_street), "changed", G_CALLBACK(changed), search);
-	g_signal_connect(G_OBJECT(entry_number), "changed", G_CALLBACK(changed), search);
+	g_signal_connect(G_OBJECT(entry_country), "changed", G_CALLBACK(changed), &search_param2);
+	g_signal_connect(G_OBJECT(entry_postal), "changed", G_CALLBACK(changed), &search_param2);
+	g_signal_connect(G_OBJECT(entry_city), "changed", G_CALLBACK(changed), &search_param2);
+	g_signal_connect(G_OBJECT(entry_district), "changed", G_CALLBACK(changed), &search_param2);
+	g_signal_connect(G_OBJECT(entry_street), "changed", G_CALLBACK(changed), &search_param2);
+	g_signal_connect(G_OBJECT(entry_number), "changed", G_CALLBACK(changed), &search_param2);
+#if 0
 	g_signal_connect(G_OBJECT(button1), "clicked", G_CALLBACK(button_map), co);
 	g_signal_connect(G_OBJECT(button2), "clicked", G_CALLBACK(button_destination), co);
+#endif
+
 	gtk_widget_grab_focus(entry_city);
 
 	gtk_container_add(GTK_CONTAINER(vbox), table);
+	keyboard=gtk_socket_new();
 	gtk_container_add(GTK_CONTAINER(vbox), keyboard);
 	gtk_container_add(GTK_CONTAINER(window2), vbox);
+#if 0
 	handlerid = gtk_timeout_add(256, (GtkFunction) track_focus, NULL);
+#endif
 
+#if 0
 	g_signal_connect(G_OBJECT(listbox), "select-row", G_CALLBACK(select_row), NULL);
+#endif
 	
 	gtk_widget_show_all(window2);
+	gtk_socket_steal(keyboard, spawn_xkbd("xkbd","-geometry 200x100"));
 
 	return 0;
 }
+
+
+int destination_address_tst(struct navit *nav)
+{
+	struct search *search,*search2;
+	struct mapset *ms;
+	struct map *map;
+	struct item *item;
+	struct attr attr,attr2;
+	struct attr result;
+	int i;
+
+#if 1
+	return;
+#else
+	ms=navit_get_mapset(nav);
+
+#if 0
+	debug_level_set("data_mg:tree_search_next", 1);
+	debug_level_set("data_mg:town_search_compare", 1);
+	debug_level_set("data_mg:tree_search_enter", 1);
 #endif
+	attr.type=attr_country_all;
+	attr.u.str="D";
+	attr2.type=attr_town_name;
+	attr2.u.str="berl";
+	search=mapset_search_new(ms,NULL,&attr,0);
+	while(item=mapset_search_get_item(search)) {
+		if (item_attr_get(item, attr_country_name, &result)) {
+			printf("%s 0x%x\n", result.u.str, item->id_lo);
+		}
+		search2=mapset_search_new(ms,item,&attr2,1);
+		i=0;
+		while((item=mapset_search_get_item(search2)) && i < 100) {
+			if (item_attr_get(item, attr_label, &result)) {
+				printf("%s\n", result.u.str);
+			}
+			i++;
+		}
+		mapset_search_destroy(search2);
+		break;
+	}
+	mapset_search_destroy(search);
+	exit(0);
+#endif
+}

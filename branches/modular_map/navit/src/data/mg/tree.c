@@ -2,6 +2,12 @@
 #include "debug.h"
 #include "mg.h"
 
+struct tree_hdr {
+	unsigned int addr;
+	unsigned int size;
+	unsigned int low;
+};
+
 struct tree_hdr_h {
 	unsigned int addr;
 	unsigned int size;
@@ -116,4 +122,97 @@ tree_search_hv(char *dirname, char *filename, unsigned int search_h, unsigned in
 	file_destroy(f_idx_h);
 	dbg(1,"return 0\n");
 	return 0;
+}
+
+static struct tree_search_node *
+tree_search_enter(struct tree_search *ts, int offset)
+{
+	struct tree_search_node *tsn=&ts->nodes[++ts->curr_node];
+	unsigned char *p;
+	p=ts->f->begin+offset;
+	tsn->hdr=(struct tree_hdr *)p;
+	tsn->p=p+sizeof(struct tree_hdr);
+	tsn->last=tsn->p;
+	tsn->end=p+tsn->hdr->size;
+	tsn->low=tsn->hdr->low;
+	tsn->high=tsn->hdr->low;
+	dbg(1,"pos 0x%x addr 0x%x size 0x%x low 0x%x end 0x%x\n", p-ts->f->begin, tsn->hdr->addr, tsn->hdr->size, tsn->hdr->low, tsn->end-ts->f->begin);
+	return tsn;
+}
+
+int tree_search_next(struct tree_search *ts, unsigned char **p, int dir)
+{
+	struct tree_search_node *tsn=&ts->nodes[ts->curr_node];
+
+	if (! *p) 
+		*p=tsn->p;
+	dbg(1,"next *p=%p dir=%d\n", *p, dir);
+	dbg(1,"low1=0x%x high1=0x%x\n", tsn->low, tsn->high);
+	if (dir <= 0) {
+		dbg(1,"down 0x%x\n", tsn->low);
+		if (tsn->low != 0xffffffff) {
+			tsn=tree_search_enter(ts, tsn->low);
+			*p=tsn->p;
+			tsn->high=get_u32(p);
+			ts->last_node=ts->curr_node;
+			dbg(1,"saving last2 %d 0x%x\n", ts->curr_node, tsn->last-ts->f->begin);
+			dbg(1,"high2=0x%x\n", tsn->high);
+			return 0;
+		}
+		return -1;
+	}
+	tsn->low=tsn->high;
+	tsn->last=*p;
+	tsn->high=get_u32(p);
+	dbg(1,"saving last3 %d %p\n", ts->curr_node, tsn->last);
+	if (*p < tsn->end)
+		return (tsn->low == 0xffffffff ? 1 : 0);
+	return -1;
+}
+
+int tree_search_next_lin(struct tree_search *ts, unsigned char **p)
+{
+	struct tree_search_node *tsn=&ts->nodes[ts->curr_node];
+	int high;
+	
+	dbg(1,"pos=%d 0x%x\n", ts->curr_node, *p-ts->f->begin);
+	if (*p)
+		ts->nodes[ts->last_node].last=*p;
+	*p=tsn->last;
+	for (;;) {
+		high=get_u32(p);
+		if (*p < tsn->end) {
+			ts->last_node=ts->curr_node;
+			while (high != 0xffffffff) {
+				tsn=tree_search_enter(ts, high);
+				dbg(1,"reload %d\n",ts->curr_node);
+				high=tsn->low;
+			}
+			return 1;
+		}
+		dbg(1,"eon %d 0x%x 0x%x\n", ts->curr_node, *p-ts->f->begin, tsn->end-ts->f->begin);
+		if (! ts->curr_node)
+			break;
+		ts->curr_node--;
+		tsn=&ts->nodes[ts->curr_node];
+		*p=tsn->last;
+	}
+
+	return 0;
+}
+
+void
+tree_search_init(char *dirname, char *filename, struct tree_search *ts)
+{
+	char buffer[4096];
+	sprintf(buffer, "%s/%s", dirname, filename);
+	ts->f=file_create_caseinsensitive(buffer);
+	ts->curr_node=-1;
+	tree_search_enter(ts, 0x1000);
+}
+
+void
+tree_search_free(struct tree_search *ts)
+{
+	file_destroy(ts->f);
 }

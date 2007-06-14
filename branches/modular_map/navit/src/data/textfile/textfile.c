@@ -84,8 +84,8 @@ get_line(struct map_rect_priv *mr)
 {
 	if(mr->f) {
 		mr->pos=ftell(mr->f);
-		fgets(mr->line, 256, mr->f);
-		if (strlen(mr->line) >= 255) 
+		fgets(mr->line, SIZE, mr->f);
+		if (strlen(mr->line) >= SIZE-1) 
 			printf("line too long\n");
 	}
 }
@@ -96,18 +96,6 @@ map_destroy_textfile(struct map_priv *m)
 	if (debug)
 		printf("map_destroy_textfile\n");
 	g_free(m);
-}
-
-static char *
-map_charset_textfile(struct map_priv *m)
-{
-	return "iso8859-1";
-}
-
-static enum projection
-map_projection_textfile(struct map_priv *m)
-{
-	return projection_mg;
 }
 
 static void
@@ -222,7 +210,7 @@ static struct item_methods methods_textfile = {
 };
 
 static struct map_rect_priv *
-map_rect_new_textfile(struct map_priv *map, struct coord_rect *r, struct layer *layers, int limit)
+map_rect_new_textfile(struct map_priv *map, struct map_selection *sel)
 {
 	struct map_rect_priv *mr;
 
@@ -230,9 +218,7 @@ map_rect_new_textfile(struct map_priv *map, struct coord_rect *r, struct layer *
 		printf("map_rect_new_textfile\n");
 	mr=g_new0(struct map_rect_priv, 1);
 	mr->m=map;
-	if (r) 
-		mr->r=*r;
-	mr->limit=limit;
+	mr->sel=sel;
 	mr->item.id_hi=0;
 	mr->item.id_lo=0;
 	mr->item.meth=&methods_textfile;
@@ -258,7 +244,7 @@ map_rect_destroy_textfile(struct map_rect_priv *mr)
 static struct item *
 map_rect_get_item_textfile(struct map_rect_priv *mr)
 {
-	char *p,type[256];
+	char *p,type[SIZE];
 	if (debug)
 		printf("map_rect_get_item_textfile id_hi=%d line=%s", mr->item.id_hi, mr->line);
 	if (!mr->f) {
@@ -287,6 +273,7 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 			mr->attrs[0]='\0';
 			parse_line(mr);
 			mr->eoc=0;
+			mr->item.id_lo=mr->pos;
 		} else {
 			if (contains_coord(mr->line)) {
 				get_line(mr);
@@ -300,6 +287,7 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 				get_line(mr);
 				continue;
 			}
+			mr->item.id_lo=mr->pos;
 			strcpy(mr->attrs, mr->line);
 			get_line(mr);
 			if (debug)
@@ -317,7 +305,6 @@ map_rect_get_item_textfile(struct map_rect_priv *mr)
 			get_line(mr);
 			continue;
 		}
-		mr->item.id_lo=mr->pos;
 		mr->attr_last=attr_none;
 		if (debug)
 			printf("return attr='%s'\n", mr->attrs);
@@ -336,8 +323,6 @@ map_rect_get_item_byid_textfile(struct map_rect_priv *mr, int id_hi, int id_lo)
 
 static struct map_methods map_methods_textfile = {
 	map_destroy_textfile,
-	map_charset_textfile,
-	map_projection_textfile,
 	map_rect_new_textfile,
 	map_rect_destroy_textfile,
 	map_rect_get_item_textfile,
@@ -345,12 +330,15 @@ static struct map_methods map_methods_textfile = {
 };
 
 static struct map_priv *
-map_new_textfile(struct map_methods *meth, char *filename)
+map_new_textfile(struct map_methods *meth, char *filename, char **charset, enum projection *pro)
 {
 	struct map_priv *m;
 	if (debug)
 		printf("map_new_textfile %s\n",filename);	
 	*meth=map_methods_textfile;
+	*charset="iso8859-1";
+	*pro=projection_mg;
+
 	m=g_new(struct map_priv, 1);
 	m->id=++map_id;
 	m->filename=g_strdup(filename);

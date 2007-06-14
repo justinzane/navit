@@ -1,6 +1,9 @@
 #include <glib.h>
 #include <glib/gprintf.h>
+#include "debug.h"
+#include "attr.h"
 #include "mapset.h"
+#include "map.h"
 
 struct mapset {
 	GList *maps;
@@ -65,4 +68,49 @@ void
 mapset_close(struct mapset_handle *msh)
 {
 	g_free(msh);
+}
+
+struct mapset_search {
+	GList *map;
+	struct map_search *ms;
+	struct item *item;
+	struct attr *search_attr;
+	int partial;
+};
+
+struct mapset_search *
+mapset_search_new(struct mapset *ms, struct item *item, struct attr *search_attr, int partial)
+{
+	struct mapset_search *this;
+	dbg(0,"enter(%p,%p,%p,%d)\n", ms, item, search_attr, partial);
+	this=g_new0(struct mapset_search,1);
+	this->map=ms->maps;
+	this->item=item;
+	this->search_attr=search_attr;
+	this->partial=partial;
+	this->ms=map_search_new(this->map->data, item, search_attr, partial);
+	return this;
+}
+
+struct item *
+mapset_search_get_item(struct mapset_search *this)
+{
+	struct item *ret;
+	while (!(ret=map_search_get_item(this->ms))) {
+		if (this->search_attr->type >= attr_country_all && this->search_attr->type <= attr_country_name)
+			break;
+		this->map=g_list_next(this->map);
+		if (! this->map)
+			break;
+		map_search_destroy(this->ms);
+		this->ms=map_search_new(this->map->data, this->item, this->search_attr, this->partial);
+	}
+	return ret;
+}
+
+void
+mapset_search_destroy(struct mapset_search *this)
+{
+	map_search_destroy(this->ms);
+	g_free(this);
 }

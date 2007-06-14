@@ -1,6 +1,8 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <glib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <gtk/gtk.h>
 #include "file.h"
 #include "debug.h"
@@ -12,12 +14,20 @@
 
 struct map_data *map_data_default;
 
+static void sigchld(int sig)
+{
+	int status;
+	while (waitpid(-1, &status, WNOHANG) > 0);
+}
+
 int main(int argc, char **argv)
 {
 	GError *error = NULL;
 #if 0
 	GMainLoop *loop;
 #endif
+
+	signal(SIGCHLD, sigchld);
 
 	setenv("LC_NUMERIC","C",1);
 	setlocale(LC_ALL,"");

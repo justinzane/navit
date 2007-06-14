@@ -67,6 +67,7 @@ static char *fontlist[]={
 	NULL,
 };
 
+#if 0
 static char *fontlist_bd[]={
 	"/usr/X11R6/lib/X11/fonts/msttcorefonts/arialbd.ttf",
 	"/usr/X11R6/lib/X11/fonts/truetype/arialbd.ttf",
@@ -75,6 +76,7 @@ static char *fontlist_bd[]={
 	"/usr/share/fonts/corefonts/arialbd.ttf",
 	NULL,
 };
+#endif
 
 
 
@@ -131,7 +133,7 @@ gc_set_linewidth(struct graphics_gc_priv *gc, int w)
 static void
 gc_set_dashes(struct graphics_gc_priv *gc, unsigned char *dash_list, int n)
 {
-	gdk_gc_set_dashes(gc->gc, 0, dash_list, n);
+	gdk_gc_set_dashes(gc->gc, 0, (gint8 *)dash_list, n);
 	gdk_gc_set_line_attributes(gc->gc, 1, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 }
 

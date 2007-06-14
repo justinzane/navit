@@ -31,11 +31,11 @@ statusbar_destroy(struct statusbar_priv *this)
 static void
 statusbar_mouse_update(struct statusbar_priv *this, struct transformation *tr, struct point *p)
 {
+#if 0
 	struct coord c;
 	struct coord_geo g;
 	char buffer[128];
 
-#if 0
 	transform_reverse(tr, p, &c);
 	transform_lng_lat(&c, &g);
 	transform_geo_text(&g, buffer);
@@ -117,7 +117,7 @@ gui_gtk_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth, stru
 	gtk_box_pack_start(GTK_BOX(this->hbox), gtk_vseparator_new(), TRUE, TRUE, 2);
 	gtk_box_pack_start(GTK_BOX(this->hbox), this->route, TRUE, TRUE, 2);
 
-	gtk_box_pack_end(gui->vbox, this->hbox, FALSE, FALSE, 0);
+	gtk_box_pack_end(GTK_BOX(gui->vbox), this->hbox, FALSE, FALSE, 0);
 	gtk_widget_show_all(this->hbox);
 
 #if 0

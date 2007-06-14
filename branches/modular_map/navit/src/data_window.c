@@ -1,5 +1,6 @@
 #include <malloc.h>
 #include <stdio.h>
+#include <string.h>
 #include <gtk/gtk.h>
 #include "param.h"
 #include "data_window.h"
@@ -97,7 +98,9 @@ data_window_add(struct data_window *win, struct param_list *param, int count)
 			gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (win->treeview),-1,param[i].name,
 					cell,"text",i, NULL);
 		}
+#if 0
 		g_signal_connect(G_OBJECT(win->treeview), "click-column", G_CALLBACK(click_column), NULL);
+#endif
 		g_signal_connect(G_OBJECT(win->treeview), "row-activated", G_CALLBACK(select_row), win);
 	}
 

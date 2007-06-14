@@ -1,12 +1,3 @@
-enum search_param {
-	search_country,
-	search_postal,
-	search_town,
-	search_district,
-	search_street,
-	search_number
-};
-
 struct search_destination {
 	char *country_name;
 	char *country_car;
@@ -23,8 +14,16 @@ struct search_destination {
 	struct coord *c;
 };
 
-struct search;
-struct map_data;
+struct search_item {
+	int attrs;
+	struct attr attr[8];
+};
 
-void search_update(struct search *search, enum search_param what, char *val);
-struct search *search_new(struct map_data *mdat, char *country, char *postal, char *town, char *district, char *street, char *number, int (*func)(struct search_destination *dest, void *user_data), void *user_data);
+/* prototypes */
+struct attr;
+struct item;
+struct mapset;
+struct search;
+struct search *search_new(struct mapset *ms, struct item *item, struct attr *search_attr, int partial);
+struct item *search_get_item(struct search *this);
+void search_destroy(struct search *this);

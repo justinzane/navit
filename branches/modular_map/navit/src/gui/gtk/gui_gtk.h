@@ -3,8 +3,8 @@ struct menu_methods;
 struct navit;
 
 struct gui_priv {
-        GtkWindow *win;
-        GtkVBox *vbox;
+        GtkWidget *win;
+        GtkWidget *vbox;
 	GtkActionGroup *base_group;
 	GtkActionGroup *debug_group;
 	GtkActionGroup *dyn_group;

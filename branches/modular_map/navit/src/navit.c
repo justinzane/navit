@@ -48,6 +48,12 @@ navit_add_mapset(struct navit *this, struct mapset *ms)
 	this->mapsets = g_list_append(this->mapsets, ms);
 }
 
+struct mapset *
+navit_get_mapset(struct navit *this)
+{
+	return this->mapsets->data;
+}
+
 void
 navit_add_layout(struct navit *this, struct layout *lay)
 {
@@ -208,8 +214,6 @@ navit_init(struct navit *this)
 			while (! feof(f)) {
 				fgets(buffer, 2048, f);
 				if (coord_parse(buffer, projection_mg, &c)) {
-					printf("buffer='%s'\n", buffer);
-					printf("c=0x%x,0x%x\n", c.x, c.y);
 					flag=1;
 				}
 			}
@@ -220,7 +224,7 @@ navit_init(struct navit *this)
 	}
 	global_navit=this;
 
-
+	destination_address_tst(this);
 }
 
 void

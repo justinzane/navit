@@ -178,6 +178,31 @@ struct block_priv {
 	struct block_bt_priv bt;
 };
 
+struct block_offset {
+	unsigned short offset;
+	unsigned short block;
+};
+
+
+struct tree_search_node {
+	struct tree_hdr *hdr;
+	unsigned char *p;
+	unsigned char *last;
+	unsigned char *end;
+	int low;
+	int high;
+	int last_low;
+	int last_high;
+	};
+
+struct tree_search {
+	struct file *f;
+	int last_node;
+	int curr_node;
+	struct tree_search_node nodes[5];
+};
+
+
 struct map_rect_priv {
 	struct map_selection *xsel;
 	struct map_selection *cur_sel;
@@ -190,6 +215,14 @@ struct map_rect_priv {
 	struct town_priv town;
 	struct poly_priv poly;
 	struct street_priv street;
+	struct tree_search ts;
+	int search_country;
+	char *search_str;
+	int search_partial;
+	int search_linear;
+	unsigned char *search_p;
+	int search_blk_count;
+	struct block_offset *search_blk;
 	GHashTable *block_hash[file_end];
 };
 
@@ -200,7 +233,12 @@ int block_get_byindex(struct file *file, int idx, struct block_priv *blk);
 int tree_search_hv(char *dirname, char *filename, unsigned int search1, unsigned int search2, int *result);
 int town_get(struct map_rect_priv *mr, struct town_priv *poly, struct item *item);
 int town_get_byid(struct map_rect_priv *mr, struct town_priv *twn, int id_hi, int id_lo, struct item *item);
+struct item * town_search_get_item(struct map_rect_priv *mr);
 int poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item);
 int poly_get_byid(struct map_rect_priv *mr, struct poly_priv *poly, int id_hi, int id_lo, struct item *item);
 int street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *item);
 int street_get_byid(struct map_rect_priv *mr, struct street_priv *street, int id_hi, int id_lo, struct item *item);
+void tree_search_init(char *dirname, char *filename, struct tree_search *ts);
+void tree_search_free(struct tree_search *ts);
+int tree_search_next(struct tree_search *ts, unsigned char **p, int dir);
+int tree_search_next_lin(struct tree_search *ts, unsigned char **p);
