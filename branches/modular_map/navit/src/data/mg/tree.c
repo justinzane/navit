@@ -36,7 +36,7 @@ static int
 tree_search_h(struct file *file, unsigned int search)
 {
 	unsigned char *p=file->begin,*end;
-	int last,i=0;
+	int last,i=0,value,lower;
 	struct tree_hdr_h *thdr;
 	struct tree_leaf_h *tleaf;
 
@@ -51,12 +51,14 @@ tree_search_h(struct file *file, unsigned int search)
 			tleaf=(struct tree_leaf_h *)p;
 			p+=sizeof(*tleaf);
 			dbg(1,"low:0x%x high:0x%x match:0x%x val:0x%x search:0x%x\n", tleaf->lower, tleaf->higher, tleaf->match, tleaf->value, search);
-			if (tleaf->value == search)
+			value=tleaf->value;
+			if (value == search)
 				return tleaf->match;
-			if (tleaf->value > search) {
+			if (value > search) {
 				dbg(1,"lower\n");
-				if (tleaf->lower)
-					last=tleaf->lower;
+				lower=tleaf->lower;
+				if (lower)
+					last=lower;
 				break;
 			}
 			last=tleaf->higher;
@@ -72,24 +74,25 @@ static int
 tree_search_v(struct file *file, int offset, int search)
 {
 	unsigned char *p=file->begin+offset;
-	int i=0,count;
+	int i=0,count,next;
 	struct tree_hdr_v *thdr;
 	struct tree_leaf_v *tleaf;
 	while (i++ < 1000) {
 		thdr=(struct tree_hdr_v *)p;
 		p+=sizeof(*thdr);
-		count=thdr->count;
+		count=L(thdr->count);
 		dbg(1,"offset=0x%x count=0x%x\n", p-file->begin, count);
 		while (count--) {
 			tleaf=(struct tree_leaf_v *)p;
 			p+=sizeof(*tleaf);
 			dbg(1,"0x%x 0x%x\n", tleaf->key, search);
 			if (tleaf->key == search)
-				return tleaf->value;
+				return L(tleaf->value);
 		}
-		if (! thdr->next)
+		next=L(thdr->next);
+		if (! next)
 			break;
-		p=file->begin+thdr->next;
+		p=file->begin+next;
 	}
 	return 0;
 }
