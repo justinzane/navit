@@ -223,7 +223,7 @@ popup_display(struct navit *nav, void *popup, struct point *p)
 	GHashTable *display;
 	struct displayitem *di;
 
-	display=navit_get_display_list(nav);
+	display=navit_get_displaylist(nav);
 	dlh=graphics_displaylist_open(display);
 	while ((di=graphics_displaylist_next(dlh))) {
 		if (graphics_displayitem_within_dist(di, p, 5)) {

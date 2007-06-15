@@ -2,6 +2,7 @@
 enum projection;
 struct color;
 struct coord;
+struct displaylist;
 struct gui;
 struct layout;
 struct mapset;
@@ -23,5 +24,5 @@ void navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c, i
 struct gui *navit_get_gui(struct navit *this);
 struct transformation *navit_get_trans(struct navit *this);
 struct route *navit_get_route(struct navit *this);
-GHashTable *navit_get_display_list(struct navit *this);
+struct displaylist *navit_get_displaylist(struct navit *this);
 void navit_destroy(struct navit *this);

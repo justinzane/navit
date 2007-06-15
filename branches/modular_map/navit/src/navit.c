@@ -38,7 +38,7 @@ struct navit {
 	struct map_flags *flags;
 	int ready;
 	struct window *win;
-	GHashTable *display_list;
+	struct displaylist *displaylist;
 	int cursor_flag;
 	int update;
 	int follow;
@@ -68,7 +68,7 @@ void
 navit_draw(struct navit *this)
 {
 	transform_setup_source_rect(this->trans);
-	graphics_draw(this->gra, this->display_list, this->mapsets, this->trans, this->layouts, this->route);
+	graphics_draw(this->gra, this->displaylist, this->mapsets, this->trans, this->layouts, this->route);
 	this->ready=1;
 }
 
@@ -128,7 +128,7 @@ navit_new(const char *ui, const char *graphics, struct coord *center, enum proje
 
 	transform_setup(this->trans, center, zoom, 0);
 	/* this->flags=g_new0(struct map_flags, 1); */
-	this->display_list=g_hash_table_new(NULL,NULL);
+	this->displaylist=graphics_displaylist_new();
 	this->gui=gui_new(ui, 792, 547);
 	if (! this->gui) {
 		g_warning("failed to create gui '%s'", ui);
@@ -339,10 +339,10 @@ navit_get_route(struct navit *this)
 	return this->route;
 }
 
-GHashTable *
-navit_get_display_list(struct navit *this)
+struct displaylist *
+navit_get_displaylist(struct navit *this)
 {
-	return this->display_list;
+	return this->displaylist;
 }
 
 void

@@ -503,8 +503,12 @@ graphics_ready(struct graphics *this)
 	return this->ready;
 }
 
+struct displaylist {
+	GHashTable *dl;
+};
+
 void
-graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, struct transformation *trans, GList *layouts, struct route *route)
+graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *mapsets, struct transformation *trans, GList *layouts, struct route *route)
 {
 	int order=transform_get_order(trans);
 
@@ -514,7 +518,7 @@ graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, st
 	printf("scale=%d center=0x%x,0x%x mercator scale=%f\n", scale, co->trans->center.x, co->trans->center.y, transform_scale(co->trans->center.y));
 #endif
 	
-	xdisplay_free(display_list);
+	xdisplay_free(displaylist->dl);
 	dbg(0,"order=%d\n", order);
 
 
@@ -525,11 +529,11 @@ graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, st
 	}
 #endif
 	profile(0,NULL);
-	do_draw(display_list, trans, mapsets, order, route);
+	do_draw(displaylist->dl, trans, mapsets, order, route);
 	profile(1,"do_draw");
-	route_draw(route, trans, display_list);
+	route_draw(route, trans, displaylist->dl);
 	profile(1,"route_draw");
-	xdisplay_draw(display_list, gra, layouts, order);
+	xdisplay_draw(displaylist->dl, gra, layouts, order);
 	profile(1,"xdisplay_draw");
 	profile(0,"end");
   
@@ -542,12 +546,14 @@ graphics_draw(struct graphics *gra, GHashTable *display_list, GList *mapsets, st
 	gra->ready=1;
 }
 
+
 struct displaylist_handle {
 	GHashTable *dl;
 	GList *l;
 	gpointer hashkey;	
 	gpointer lastkey;
 };
+
 
 static void
 graphics_displaylist_hash_next(gpointer key, gpointer value, gpointer user_data)
@@ -591,6 +597,16 @@ void
 graphics_displaylist_close(struct displaylist_handle *dlh)
 {
 	g_free(dlh);
+}
+
+struct displaylist *
+graphics_displaylist_new(void)
+{
+	struct displaylist *ret=g_new(struct displaylist, 1);
+
+	ret->dl=g_hash_table_new(NULL,NULL);
+
+	return ret;
 }
 
 struct item *
