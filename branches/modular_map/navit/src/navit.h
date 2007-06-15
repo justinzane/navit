@@ -10,6 +10,7 @@ struct route;
 struct transformation;
 struct vehicle;
 void navit_add_mapset(struct navit *this, struct mapset *ms);
+struct mapset *navit_get_mapset(struct navit *this);
 void navit_add_layout(struct navit *this, struct layout *lay);
 void navit_draw(struct navit *this);
 void navit_zoom_in(struct navit *this, int factor);
@@ -18,7 +19,7 @@ struct navit *navit_new(const char *ui, const char *graphics, struct coord *cent
 void navit_init(struct navit *this);
 void navit_set_center(struct navit *this, struct coord *center);
 void navit_toggle_cursor(struct navit *this);
-void navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c);
+void navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c, int update, int follow);
 struct gui *navit_get_gui(struct navit *this);
 struct transformation *navit_get_trans(struct navit *this);
 struct route *navit_get_route(struct navit *this);

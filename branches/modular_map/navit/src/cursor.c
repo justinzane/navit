@@ -210,12 +210,6 @@ cursor_update(struct vehicle *v, void *data)
 		this->pos=*pos;
 		if (this->update_callback.func) 
 			(*this->update_callback.func)(this, this->update_callback.data);
-#if 0 /* FIXME */
-		track_update(this->co->track, pos, (int)(*dir));
-#endif
-#if 0 /* FIXME */
-		route_set_position(this->co->route, cursor_pos_get(this->co->cursor));
-#endif
 		if (!transform(this->trans, pro, &this->pos, &pnt) || !transform_within_border(this->trans, &pnt, border)) {
 			if (this->offscreen_callback.func) 
 				(*this->offscreen_callback.func)(this, this->offscreen_callback.data);

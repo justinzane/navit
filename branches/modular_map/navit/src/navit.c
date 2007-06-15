@@ -40,6 +40,10 @@ struct navit {
 	struct window *win;
 	GHashTable *display_list;
 	int cursor_flag;
+	int update;
+	int follow;
+	int update_curr;
+	int follow_curr;
 };
 
 void
@@ -278,29 +282,39 @@ navit_cursor_update(struct cursor *cursor, void *this_p)
 	struct navit *this=this_p;
 	struct coord *cursor_c=cursor_pos_get(cursor);
 	int dir=cursor_get_dir(cursor);
-	if (this->track) {
-		struct coord c=*cursor_c;
-		track_update(this->track, &c, dir);
-		cursor_c=&c;
-		cursor_pos_set(cursor, cursor_c);
+
+	if (this->update_curr == 1) {
+		this->update_curr=this->update;
+		if (this->track) {
+			struct coord c=*cursor_c;
+			track_update(this->track, &c, dir);
+			cursor_c=&c;
+			cursor_pos_set(cursor, cursor_c);
+			if (this->route)
+				route_set_position_from_track(this->route, this->track);
+		} else {
+			if (this->route)
+				route_set_position(this->route, cursor_c);
+		}
 		if (this->route)
-			route_set_position_from_track(this->route, this->track);
-	} else {
-		if (this->route)
-			route_set_position(this->route, cursor_c);
+			navigation_path_description(this->route, dir);
+	} else if (this->update_curr > 1)
+		this->update_curr--;
+	if (this->cursor_flag) {
+		if (this->follow_curr == 1) {
+			this->follow_curr=this->follow;
+			navit_set_center(this, cursor_c);
+		} else if (this->follow_curr > 1)
+			this->follow_curr--;
 	}
-	if (this->route)
-		navigation_path_description(this->route, dir);
-#if 1
-	if (this->cursor_flag)
-		navit_set_center(this, cursor_c);
-#endif
 }
 
 void
-navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c)
+navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c, int update, int follow)
 {
 	this->vehicle=v;
+	this->update_curr=this->update=update;
+	this->follow_curr=this->follow=follow;
 	this->cursor=cursor_new(this->gra, v, c, this->trans);
 	cursor_register_offscreen_callback(this->cursor, navit_cursor_offscreen, this);
 	cursor_register_update_callback(this->cursor, navit_cursor_update, this);

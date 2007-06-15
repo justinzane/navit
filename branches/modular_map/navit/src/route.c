@@ -1125,7 +1125,7 @@ route_draw_route_info(struct route_info *pos, struct route_info *dst, struct tra
 	item.map=NULL;
 	item.type=type_street_route;
 
-	dbg(0, "enter\n");
+	dbg(1, "enter\n");
 	h=route_info_open(pos, dst, 0);
 	dbg(1,"h=%p\n", h);
 	if (! h) {
