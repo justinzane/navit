@@ -290,7 +290,7 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 #if 0
 					speech_say(speech_handle, command);
 #endif
-					sprintf(buffer,"espeak -v german '%s' &", command);
+					sprintf(buffer,"espeak -v german '%s'", command);
 					system(buffer);
 					old_level=level;
 				}
