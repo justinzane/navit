@@ -565,19 +565,19 @@ static int tab_atan[]={0,262,524,787,1051,1317,1584,1853,2126,2401,2679,2962,324
 static int
 atan2_int_lookup(int val)
 {
-        int len=sizeof(tab)/sizeof(int);
-        int i=len/2;
-        int p=i-1;
-        for (;;) {
-                i>>=1;
-                if (val < tab[p])
-                        p-=i;
-                else
-                        if (val < tab[p+1])
-                                return p+(p>>1);
-                        else
-                                p+=i;
-        }
+	int len=sizeof(tab_atan)/sizeof(int);
+	int i=len/2;
+	int p=i-1;
+	for (;;) {
+		i>>=1;
+		if (val < tab_atan[p])
+			p-=i;
+		else
+			if (val < tab_atan[p+1])
+				return p+(p>>1);
+			else
+				p+=i;
+	}
 }
 
 static int
