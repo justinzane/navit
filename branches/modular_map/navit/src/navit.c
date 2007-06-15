@@ -174,6 +174,19 @@ navit_projection_set(struct menu *menu, void *this_p, void *pro_p)
 	transform_from_geo(pro, &g, c);
 	navit_draw(this);
 }
+
+static void
+navit_set_destination(struct menu *menu, void *this_p, void *c_p)
+{
+	struct navit *this=this_p;
+	struct coord *c=c_p;
+	if (this->route) {
+                route_set_destination(this->route, c);
+                navit_draw(this);
+        }
+
+}
+
 struct navit *global_navit;
 
 void
@@ -201,7 +214,7 @@ navit_init(struct navit *this)
 	{
 		struct mapset *ms=this->mapsets->data;
 		struct coord c;
-		int flag=0;
+		int pos,flag=0;
 		FILE *f;
 
 		char buffer[2048];
@@ -209,11 +222,19 @@ navit_init(struct navit *this)
 #if 1
 		this->track=track_new(ms);
 #endif
+		men=menu_add(this->menubar, "Route", menu_type_submenu, NULL, NULL, NULL);
+		men=menu_add(men, "Former Destinations", menu_type_submenu, NULL, NULL, NULL);
 		f=fopen("destination.txt", "r");
 		if (f) {
-			while (! feof(f)) {
-				fgets(buffer, 2048, f);
-				if (coord_parse(buffer, projection_mg, &c)) {
+			while (! feof(f) && fgets(buffer, 2048, f)) {
+				if ((pos=coord_parse(buffer, projection_mg, &c))) {
+					if (buffer[pos] && buffer[pos] != '\n' ) {
+						struct coord *cn=g_new(struct coord, 1);
+						*cn=c;
+						buffer[strlen(buffer)-1]='\0';
+						printf("%s", buffer+pos+1);
+						menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination, this, cn);
+					}
 					flag=1;
 				}
 			}

@@ -45,14 +45,18 @@ popup_set_destination(struct menu *menu, void *data1, void *data2)
 	struct navit *nav=data1;
 	struct coord *c=data2;
 	struct route *route;
+	struct coord_geo g;
 	char buffer[1024];
+	char buffer_geo[1024];
 	int fd;
 	route=navit_get_route(nav);
 	if (route) {
 		route_set_destination(route, c);
 		navit_draw(nav);
 	}
-	sprintf(buffer,"0x%x 0x%x\n", c->x, c->y);
+	transform_to_geo(transform_get_projection(navit_get_trans(nav)), c, &g);
+	transform_geo_text(&g, buffer_geo);	
+	sprintf(buffer,"0x%x 0x%x Map Point %s\n", c->x, c->y, buffer_geo);
 	fd=open("destination.txt", O_RDWR|O_CREAT|O_APPEND, 0644);
 	if (fd != -1)
 		write(fd, buffer, strlen(buffer));
