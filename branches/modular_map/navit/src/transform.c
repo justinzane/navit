@@ -369,7 +369,7 @@ transform_scale(int y)
 
 #ifdef AVOID_FLOAT
 static int
-tab[]={14142,13379,12806,12364,12018,11741,11517,11333,11180,11051,10943,10850,10770,10701,10640,10587,10540,10499,10462,10429,10400,10373,10349,10327,10307,10289,10273,10257,10243,10231,10219,10208};
+tab_sqrt[]={14142,13379,12806,12364,12018,11741,11517,11333,11180,11051,10943,10850,10770,10701,10640,10587,10540,10499,10462,10429,10400,10373,10349,10327,10307,10289,10273,10257,10243,10231,10219,10208};
 #endif
 
 double
@@ -381,7 +381,7 @@ transform_distance(struct coord *c1, struct coord *c2)
 	dy=c1->y-c2->y;
 	return sqrt(dx*dx+dy*dy)/scale;
 #else
-	int dx,dy,f,scale=15539,ret;
+	int dx,dy,f,scale=15539;
 	dx=c1->x-c2->x;
 	dy=c1->y-c2->y;
 	if (dx < 0)
@@ -401,12 +401,12 @@ transform_distance(struct coord *c1, struct coord *c2)
 		f=dx*8/dy-8;
 		if (f >= 32)
 			return dx*10000/scale;
-		return dx*tab[f]/scale;
+		return dx*tab_sqrt[f]/scale;
 	} else {
 		f=dy*8/dx-8;
 		if (f >= 32)
 			return dy*10000/scale;
-		return dy*tab[f]/scale;
+		return dy*tab_sqrt[f]/scale;
 	}
 #endif
 }
@@ -559,15 +559,72 @@ is_too_small(struct transformation *t, struct coord *c, int limit)
 	return 0;	
 }
 
+#ifdef AVOID_FLOAT
+static int tab_atan[]={0,262,524,787,1051,1317,1584,1853,2126,2401,2679,2962,3249,3541,3839,4142,4452,4770,5095,5430,5774,6128,6494,6873,7265,7673,8098,8541,9004,9490,10000,10538};
+
+static int
+atan2_int_lookup(int val)
+{
+        int len=sizeof(tab)/sizeof(int);
+        int i=len/2;
+        int p=i-1;
+        for (;;) {
+                i>>=1;
+                if (val < tab[p])
+                        p-=i;
+                else
+                        if (val < tab[p+1])
+                                return p+(p>>1);
+                        else
+                                p+=i;
+        }
+}
+
+static int
+atan2_int(int dx, int dy)
+{
+	int f,mul=1,add=0,ret;
+	if (! dx) {
+		return dy < 0 ? 180 : 0;
+	}
+	if (! dy) {
+		return dx < 0 ? -90 : 90;
+	}
+	if (dx < 0) {
+		dx=-dx;
+		mul=-1;
+	}
+	if (dy < 0) {
+		dy=-dy;
+		add=180*mul;
+		mul*=-1;
+	}
+	while (dx > 20000 || dy > 20000) {
+		dx/=10;
+		dy/=10;
+	}
+	if (dx > dy) {
+		ret=90-atan2_int_lookup(dy*10000/dx);
+	} else {
+		ret=atan2_int_lookup(dx*10000/dy);
+	}
+	return ret*mul+add;
+}
+#endif
 
 int
 transform_get_angle_delta(struct coord *c1, struct coord *c2, int dir)
 {
-	double angle;
 	int dx=c2->x-c1->x;
 	int dy=c2->y-c1->y;
+#ifndef AVOID_FLOAT 
+	double angle;
 	angle=atan2(dx,dy);
 	angle*=180/M_PI;
+#else
+	int angle;
+	angle=atan2_int(dx,dy);
+#endif
 	if (dir == -1)
 		angle=angle-180;
 	if (angle < 0)
