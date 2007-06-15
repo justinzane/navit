@@ -10,6 +10,7 @@ struct route_crossings {
 
 /* prototypes */
 struct coord;
+struct displaylist;
 struct item;
 struct map_selection;
 struct mapset;
@@ -51,4 +52,4 @@ struct coord *route_info_point(struct route_info *rinf, int point);
 struct route_info_handle *route_info_open(struct route_info *start, struct route_info *end, int dir);
 struct coord *route_info_get(struct route_info_handle *h);
 void route_info_close(struct route_info_handle *h);
-void route_draw(struct route *this, struct transformation *t, GHashTable *dsp);
+void route_draw(struct route *this, struct transformation *t, struct displaylist *dsp);

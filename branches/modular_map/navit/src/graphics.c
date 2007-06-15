@@ -27,6 +27,10 @@ struct graphics
 	int ready;
 };
 
+struct displaylist {
+	GHashTable *dl;
+};
+
 struct graphics *
 graphics_new(const char *type)
 {
@@ -229,7 +233,7 @@ xdisplay_free(GHashTable *display_list)
 }
 
 void
-display_add(GHashTable *display_list, struct item *item, int count, struct point *pnt, char *label)
+display_add(struct displaylist *displaylist, struct item *item, int count, struct point *pnt, char *label)
 {
 	struct displayitem *di;
 	int len;
@@ -255,9 +259,9 @@ display_add(GHashTable *display_list, struct item *item, int count, struct point
 	di->count=count;
 	memcpy(di->pnt, pnt, count*sizeof(*pnt));
 
-	l=g_hash_table_lookup(display_list, GINT_TO_POINTER(item->type));
+	l=g_hash_table_lookup(displaylist->dl, GINT_TO_POINTER(item->type));
 	l=g_list_prepend(l, di);
-	g_hash_table_insert(display_list, GINT_TO_POINTER(item->type), l);
+	g_hash_table_insert(displaylist->dl, GINT_TO_POINTER(item->type), l);
 }
 
 
@@ -424,7 +428,7 @@ xdisplay_draw(GHashTable *display_list, struct graphics *gra, GList *layouts, in
 extern void *route_selection;
 
 static void
-do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int order, struct route *route)
+do_draw(struct displaylist *displaylist, struct transformation *t, GList *mapsets, int order, struct route *route)
 {
 	struct map_selection sel;
 	struct map_rect *mr;
@@ -481,16 +485,16 @@ do_draw(GHashTable *display_list, struct transformation *t, GList *mapsets, int 
 					struct item ritem;
 					ritem=*item;
 					ritem.type=type_street_route;
-					display_add(display_list, &ritem, count, pnt, NULL);
+					display_add(displaylist, &ritem, count, pnt, NULL);
 				}
 			}
 			attr.u.str=NULL;
 			if (conv && item_attr_get(item, attr_label, &attr) && attr.u.str && attr.u.str[0]) {
 				char *str=map_convert_string(m, attr.u.str);
-				display_add(display_list, item, count, pnt, str);
+				display_add(displaylist, item, count, pnt, str);
 				map_convert_free(str);
 			} else
-				display_add(display_list, item, count, pnt, attr.u.str);
+				display_add(displaylist, item, count, pnt, attr.u.str);
 		}
 		map_rect_destroy(mr);
 	}
@@ -503,9 +507,6 @@ graphics_ready(struct graphics *this)
 	return this->ready;
 }
 
-struct displaylist {
-	GHashTable *dl;
-};
 
 void
 graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *mapsets, struct transformation *trans, GList *layouts, struct route *route)
@@ -529,9 +530,9 @@ graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *maps
 	}
 #endif
 	profile(0,NULL);
-	do_draw(displaylist->dl, trans, mapsets, order, route);
+	do_draw(displaylist, trans, mapsets, order, route);
 	profile(1,"do_draw");
-	route_draw(route, trans, displaylist->dl);
+	route_draw(route, trans, displaylist);
 	profile(1,"route_draw");
 	xdisplay_draw(displaylist->dl, gra, layouts, order);
 	profile(1,"xdisplay_draw");
@@ -567,12 +568,12 @@ graphics_displaylist_hash_next(gpointer key, gpointer value, gpointer user_data)
 }
 
 struct displaylist_handle *
-graphics_displaylist_open(GHashTable *display_list)
+graphics_displaylist_open(struct displaylist *displaylist)
 {
 	struct displaylist_handle *ret;
 
 	ret=g_new0(struct displaylist_handle, 1);
-	ret->dl=display_list;
+	ret->dl=displaylist->dl;
 	
 
 	return ret;

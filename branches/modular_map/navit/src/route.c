@@ -1111,7 +1111,7 @@ route_info_close(struct route_info_handle *h)
 
 
 static int
-route_draw_route_info(struct route_info *pos, struct route_info *dst, struct transformation *t, GHashTable *dsp)
+route_draw_route_info(struct route_info *pos, struct route_info *dst, struct transformation *t, struct displaylist *dsp)
 {
 	struct route_info_handle *h;
 	struct coord *c;
@@ -1152,7 +1152,7 @@ route_draw_route_info(struct route_info *pos, struct route_info *dst, struct tra
 }
 
 void
-route_draw(struct route *this, struct transformation *t, GHashTable *dsp)
+route_draw(struct route *this, struct transformation *t, struct displaylist *dsp)
 {
 	dbg(1,"enter\n");
 	if (! this->pos || ! this->dst)

@@ -107,10 +107,10 @@ void graphics_draw_restore(struct graphics *this, struct point *p, int w, int h)
 void graphics_draw_mode(struct graphics *this, enum draw_mode_num mode);
 void graphics_draw_lines(struct graphics *this, struct graphics_gc *gc, struct point *p, int count);
 void graphics_draw_circle(struct graphics *this, struct graphics_gc *gc, struct point *p, int r);
-void display_add(GHashTable *display_list, struct item *item, int count, struct point *pnt, char *label);
+void display_add(struct displaylist *displaylist, struct item *item, int count, struct point *pnt, char *label);
 int graphics_ready(struct graphics *this);
 void graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *mapsets, struct transformation *trans, GList *layouts, struct route *route);
-struct displaylist_handle *graphics_displaylist_open(GHashTable *display_list);
+struct displaylist_handle *graphics_displaylist_open(struct displaylist *displaylist);
 struct displayitem *graphics_displaylist_next(struct displaylist_handle *dlh);
 void graphics_displaylist_close(struct displaylist_handle *dlh);
 struct displaylist *graphics_displaylist_new(void);

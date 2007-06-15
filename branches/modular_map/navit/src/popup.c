@@ -220,7 +220,7 @@ static void
 popup_display(struct navit *nav, void *popup, struct point *p)
 {
 	struct displaylist_handle *dlh;
-	GHashTable *display;
+	struct displaylist *display;
 	struct displayitem *di;
 
 	display=navit_get_displaylist(nav);
