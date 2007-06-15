@@ -44,9 +44,25 @@ struct street_name_number_info {
 	struct street_name_segment *segment;
 };
 
+#ifdef __cplusplus
+extern "C"
+#endif
 int street_name_get_by_id(struct street_name *name, struct map_data *mdat, unsigned long id);
+
 void street_name_get(struct street_name *name, unsigned char **p);
+
+#ifdef __cplusplus
+extern "C"
+#endif
 int street_name_search(struct map_data *mdat, int country, int town_assoc, const char *name, int partial, int (*func)(struct street_name *name, void *data), void *data);
+
+#ifdef __cplusplus
+extern "C"
+#endif
 int street_name_get_info(struct street_name_info *inf, struct street_name *name);
+
+#ifdef __cplusplus
+extern "C"
+#endif
 int street_name_get_number_info(struct street_name_number_info *num, struct street_name_info *inf);
 
