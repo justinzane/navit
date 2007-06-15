@@ -343,7 +343,7 @@ navigation_crossings(struct mapset *ms, struct coord *cc)
 void
 navigation_item_get_data(struct item *item, struct coord *start, struct navigation_item *nitem)
 {
-	struct coord c[4];
+	struct coord c[5];
 	struct map_rect *mr;
 	struct attr attr;
 	int l,i=0,a1,a2,dir=0;
@@ -414,6 +414,7 @@ navigation_path_description(struct route *route, int dir)
 	struct route_info *dst;
 	int end_flag=0;
 
+	dbg(0,"enter\n");
 	ms=route_get_mapset(route);
 	pos=route_get_pos(route);
 	dst=route_get_dst(route);
@@ -474,6 +475,7 @@ navigation_path_description(struct route *route, int dir)
 	memset(&item_curr,0,sizeof(item_curr));
 	make_maneuver(&item_last,&item_curr);
 	data_window_end(navigation_window);
+	dbg(0,"return\n");
 #if 0
 	exit(0);	
 #endif
