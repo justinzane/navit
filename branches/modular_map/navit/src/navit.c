@@ -196,25 +196,25 @@ struct navit *global_navit;
 void
 navit_init(struct navit *this)
 {
-	struct menu *men,*men2;
+	struct menu *mapmen,*men,*men2;
 	struct map *map;
 	struct mapset_handle *handle;
 	struct mapset *ms=this->mapsets->data;
-	men=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
+	mapmen=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
+	// menu_add(map, "Test", menu_type_menu, NULL, NULL);
+	men=menu_add(mapmen, "Layout", menu_type_submenu, NULL, NULL, NULL);
+	menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
+	men=menu_add(mapmen, "Projection", menu_type_submenu, NULL, NULL, NULL);
+	menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, (void *)projection_mg);
+	menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, (void *)projection_garmin);
 	handle=mapset_open(ms);
 	while ((map=mapset_next(handle,0))) {
 		char *s=g_strdup_printf("%s:%s", map_get_type(map), map_get_filename(map));
-		men2=menu_add(men, s, menu_type_toggle, navit_map_toggle, this, map);
+		men2=menu_add(mapmen, s, menu_type_toggle, navit_map_toggle, this, map);
 		menu_set_toggle(men2, map_get_active(map));
 		g_free(s);
 	}
 	mapset_close(handle);
-	// menu_add(map, "Test", menu_type_menu, NULL, NULL);
-	men=menu_add(this->menubar, "Layout", menu_type_submenu, NULL, NULL, NULL);
-	menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
-	men=menu_add(this->menubar, "Projection", menu_type_submenu, NULL, NULL, NULL);
-	menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, (void *)projection_mg);
-	menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, (void *)projection_garmin);
 	{
 		struct mapset *ms=this->mapsets->data;
 		struct coord c;
