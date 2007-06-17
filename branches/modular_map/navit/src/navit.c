@@ -282,31 +282,32 @@ navit_cursor_update(struct cursor *cursor, void *this_p)
 	struct coord *cursor_c=cursor_pos_get(cursor);
 	int dir=cursor_get_dir(cursor);
 
-	if (this->update_curr == 1) {
-		this->update_curr=this->update;
-		if (this->track) {
-			struct coord c=*cursor_c;
-			if (track_update(this->track, &c, dir)) {
-				cursor_c=&c;
-				cursor_pos_set(cursor, cursor_c);
-				if (this->route)
-					route_set_position_from_track(this->route, this->track);
-			}
-		} else {
-			if (this->route)
-				route_set_position(this->route, cursor_c);
+	if (this->track) {
+		struct coord c=*cursor_c;
+		if (track_update(this->track, &c, dir)) {
+			cursor_c=&c;
+			cursor_pos_set(cursor, cursor_c);
+			if (this->route && this->update_curr == 1)
+				route_set_position_from_track(this->route, this->track);
 		}
-		if (this->route)
-			navigation_path_description(this->route, dir);
-	} else if (this->update_curr > 1)
-		this->update_curr--;
-	if (this->cursor_flag) {
-		if (this->follow_curr == 1) {
-			this->follow_curr=this->follow;
-			navit_set_center(this, cursor_c);
-		} else if (this->follow_curr > 1)
-			this->follow_curr--;
+	} else {
+		if (this->route && this->update_curr == 1)
+			route_set_position(this->route, cursor_c);
 	}
+	if (this->route && this->update_curr == 1)
+		navigation_path_description(this->route, dir);
+	if (this->cursor_flag) {
+		if (this->follow_curr == 1)
+			navit_set_center(this, cursor_c);
+	}
+	if (this->follow_curr > 1)
+		this->follow_curr--;
+	else
+		this->follow_curr=this->follow;
+	if (this->update_curr > 1)
+		this->update_curr--;
+	else
+		this->update_curr=this->update;
 }
 
 void

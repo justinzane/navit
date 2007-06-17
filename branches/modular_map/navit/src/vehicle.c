@@ -156,7 +156,6 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 		dbg(0, "no leading $\n");
 		return;
 	}
-	dbg(0, "len-3='%s' ", buffer+len-3);
 	if (buffer[len-3] != '*') {
 		dbg(0, "no *XX\n");
 		return;
@@ -249,11 +248,9 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 			if (! *p) break;
 			*p++='\0';
 		}
-		printf("GPRMC dir='%s' speed='%s'\n", item[7], item[6]);
 		sscanf(item[8],"%lf",&this->dir);
 		sscanf(item[7],"%lf",&this->speed);
 		this->speed *= 1.852;
-		printf("dir=%f speed=%f\n", this->dir, this->speed);
 		scale=transform_scale(this->current_pos.y);
 		speed=this->speed+(this->speed-this->speed_last)/2;
 #ifdef INTERPOLATION_TIME

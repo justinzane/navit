@@ -62,7 +62,7 @@ struct track {
 };
 
 
-int angle_factor=5;
+int angle_factor=10;
 int connected_pref=-10;
 int nostop_pref=10;
 
@@ -239,7 +239,13 @@ track_update(struct track *tr, struct coord *c, int angle)
 				tr->pos=i;
 				tr->curr[0]=sd->c[i];
 				tr->curr[1]=sd->c[i+1];
-				dbg(1,"lpnt.x=0x%x,lpnt.y=0x%x\n", lpnt.x, lpnt.y);
+				dbg(1,"lpnt.x=0x%x,lpnt.y=0x%x %d+%d+%d+%d=%d\n", lpnt.x, lpnt.y, 
+					transform_distance_line_sq(&sd->c[i], &sd->c[i+1], c, &lpnt),
+					track_angle_delta(angle, t->angle[i], 0)*angle_factor,
+					track_is_connected(tr->curr, &sd->c[i]) ? connected_pref : 0,
+					lpnt.x == tr->last_out.x && lpnt.y == tr->last_out.y ? nostop_pref : 0,
+					value
+				);
 				tr->last_out=lpnt;
 				min=value;
 			}
