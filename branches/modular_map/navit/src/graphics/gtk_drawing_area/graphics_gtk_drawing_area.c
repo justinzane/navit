@@ -725,7 +725,7 @@ graphics_gtk_drawing_area_new(struct graphics_methods *meth)
 	this->widget=draw;
 	
 	this->colormap=gdk_colormap_new(gdk_visual_get_system(),FALSE);
-	gtk_widget_set_events(draw, GDK_BUTTON_PRESS_MASK|GDK_BUTTON_RELEASE_MASK|GDK_POINTER_MOTION_MASK);
+	gtk_widget_set_events(draw, GDK_BUTTON_PRESS_MASK|GDK_BUTTON_RELEASE_MASK|GDK_POINTER_MOTION_MASK|GDK_KEY_PRESS_MASK);
 	g_signal_connect(G_OBJECT(draw), "expose_event", G_CALLBACK(expose), this); 
         g_signal_connect(G_OBJECT(draw), "configure_event", G_CALLBACK(configure), this);
 #if 0

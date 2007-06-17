@@ -310,7 +310,7 @@ register_my_stock_icons (void)
 static char layout[] =
 	"<ui>\
 		<menubar name=\"MenuBar\">\
-			<menu name=\"DisplayMenu\" action=\"DisplayMenuAction\">\
+			<menu name=\"Display\" action=\"DisplayMenuAction\">\
 				<menuitem name=\"Zoom in\" action=\"ZoomInAction\" />\
 				<menuitem name=\"Zoom out\" action=\"ZoomOutAction\" />\
 				<menuitem name=\"Cursor\" action=\"CursorAction\"/>\
@@ -318,7 +318,7 @@ static char layout[] =
 				<menuitem name=\"Quit\" action=\"QuitAction\" />\
 				<placeholder name=\"RouteMenuAdditions\" />\
 			</menu>\
-			<menu name=\"DataMenu\" action=\"DataMenuAction\">\
+			<menu name=\"Data\" action=\"DataMenuAction\">\
 				<menuitem name=\"Visible Blocks\" action=\"VisibleBlocksAction\" />\
 				<menuitem name=\"Visible Towns\" action=\"VisibleTownsAction\" />\
 				<menuitem name=\"Visible Polys\" action=\"VisiblePolysAction\" />\
@@ -326,7 +326,7 @@ static char layout[] =
 				<menuitem name=\"Visible Points\" action=\"VisiblePointsAction\" />\
 				<placeholder name=\"DataMenuAdditions\" />\
 			</menu>\
-			<menu name=\"RouteMenu\" action=\"RouteMenuAction\">\
+			<menu name=\"Route\" action=\"RouteMenuAction\">\
 				<menuitem name=\"Refresh\" action=\"RefreshAction\" />\
 				<menuitem name=\"Destination\" action=\"DestinationAction\" />\
 				<placeholder name=\"RouteMenuAdditions\" />\
@@ -368,16 +368,20 @@ add_menu(struct menu_priv *menu, struct menu_methods *meth, char *name, enum men
 
 	ret=g_new0(struct menu_priv, 1);
 	*meth=menu_methods;
-	dynname=g_strdup_printf("%d", menu->gui->dyn_counter++);
-	if (type == menu_type_toggle)
-		ret->action=GTK_ACTION(gtk_toggle_action_new(dynname, name, NULL, NULL));
-	else
-		ret->action=gtk_action_new(dynname, name, NULL, NULL);
-	if (callback)
-		ret->handler_id=g_signal_connect(ret->action, "activate", G_CALLBACK(activate), ret);
-	gtk_action_group_add_action(menu->gui->dyn_group, ret->action);
-	ret->merge_id=gtk_ui_manager_new_merge_id(menu->gui->menu_manager);
-	gtk_ui_manager_add_ui( menu->gui->menu_manager, ret->merge_id, menu->path, dynname, dynname, type == menu_type_submenu ? GTK_UI_MANAGER_MENU : GTK_UI_MANAGER_MENUITEM, FALSE);
+	if (! strcmp(menu->path, "/ui/MenuBar") && !strcmp(name,"Route")) {
+		dynname=g_strdup("Route");
+	} else {
+		dynname=g_strdup_printf("%d", menu->gui->dyn_counter++);
+		if (type == menu_type_toggle)
+			ret->action=GTK_ACTION(gtk_toggle_action_new(dynname, name, NULL, NULL));
+		else
+			ret->action=gtk_action_new(dynname, name, NULL, NULL);
+		if (callback)
+			ret->handler_id=g_signal_connect(ret->action, "activate", G_CALLBACK(activate), ret);
+		gtk_action_group_add_action(menu->gui->dyn_group, ret->action);
+		ret->merge_id=gtk_ui_manager_new_merge_id(menu->gui->menu_manager);
+		gtk_ui_manager_add_ui( menu->gui->menu_manager, ret->merge_id, menu->path, dynname, dynname, type == menu_type_submenu ? GTK_UI_MANAGER_MENU : GTK_UI_MANAGER_MENUITEM, FALSE);
+	}
 	ret->gui=menu->gui;
 	ret->path=g_strdup_printf("%s/%s", menu->path, dynname);
 	ret->type=type;
@@ -444,7 +448,7 @@ popup_deactivate(GtkWidget *widget, struct menu_priv *menu)
 }	
 
 static struct menu_priv *
-gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, struct navit *nav, int popup)
+gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, struct navit *nav, int popup, GtkWidget **widget_ret)
 {
 	struct menu_priv *ret;
 	GError *error;
@@ -474,6 +478,8 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 		}
 	}
 	widget=gtk_ui_manager_get_widget(this->menu_manager, path);
+	if (widget_ret)
+		*widget_ret=widget;
 	if (! popup) {
 		gtk_box_pack_start (GTK_BOX(this->vbox), widget, FALSE, FALSE, 0);
 		gtk_widget_show (widget);
@@ -487,17 +493,17 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 struct menu_priv *
 gui_gtk_toolbar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
 {
-	return gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav, 0);
+	return gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav, 0, NULL);
 }
 
 struct menu_priv *
 gui_gtk_menubar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
 {
-	return gui_gtk_ui_new(this, meth, "/ui/MenuBar", nav, 0);
+	return gui_gtk_ui_new(this, meth, "/ui/MenuBar", nav, 0, &this->menubar);
 }
 
 struct menu_priv *
 gui_gtk_popup_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
 {
-	return gui_gtk_ui_new(this, meth, "/ui/PopUp", nav, 1);
+	return gui_gtk_ui_new(this, meth, "/ui/PopUp", nav, 1, NULL);
 }

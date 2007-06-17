@@ -194,7 +194,7 @@ track_is_connected(struct coord *c1, struct coord *c2)
 	return 0;
 }
 
-void
+int
 track_update(struct track *tr, struct coord *c, int angle)
 {
 	struct track_line *t;
@@ -221,7 +221,8 @@ track_update(struct track *tr, struct coord *c, int angle)
 	}
 		
 	t=tr->lines;
-	g_assert(t != NULL);
+	if (! t)
+		return 0;
 	tr->curr_line=NULL;
 	while (t) {
 		struct street_data *sd=t->street;
@@ -246,35 +247,11 @@ track_update(struct track *tr, struct coord *c, int angle)
 		t=t->next;
 	}
 	dbg(0,"tr->curr_line=%p\n", tr->curr_line);
-	if (tr->curr_line) {
-		dbg(0,"found 0x%x,0x%x\n", tr->last_out.x, tr->last_out.y);
-		*c=tr->last_out;
-	}
-#if 0
-	t=tr->lines;
-	tm=t;
-	min=t->value;
-	while (t) {
-		if (t->value < min) {
-			min=t->value;
-			tm=t;	
-		}
-		t=t->next;
-	}
-	dist=transform_distance_sq(&tm->lpnt, c);
-	if (debug) printf("dist=%d id=0x%lx\n", dist, tm->segid);
-	*c=tm->lpnt;
-	tr->curr[0]=tm->c[0];
-	tr->curr[1]=tm->c[1];
-	tr->last_out=tm->lpnt;
-
-	printf("pos 0x%lx,0x%lx value %d dist %d angle %d vs %d (%d)\n", c->x, c->y, tm->value, dist, angle, tm->angle, track_angle_delta(angle, tm->angle, 0));
-	g_assert(dist < 10000);
-#if 0
-	profile_timer("track_update end");
-#endif
-#endif
-	
+	if (!tr->curr_line)
+		return 0;
+	dbg(0,"found 0x%x,0x%x\n", tr->last_out.x, tr->last_out.y);
+	*c=tr->last_out;
+	return 1;	
 }
 
 struct track *

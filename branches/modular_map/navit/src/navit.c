@@ -236,7 +236,6 @@ navit_init(struct navit *this)
 						struct coord *cn=g_new(struct coord, 1);
 						*cn=c;
 						buffer[strlen(buffer)-1]='\0';
-						printf("%s", buffer+pos+1);
 						menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination, this, cn);
 					}
 					flag=1;
@@ -287,11 +286,12 @@ navit_cursor_update(struct cursor *cursor, void *this_p)
 		this->update_curr=this->update;
 		if (this->track) {
 			struct coord c=*cursor_c;
-			track_update(this->track, &c, dir);
-			cursor_c=&c;
-			cursor_pos_set(cursor, cursor_c);
-			if (this->route)
-				route_set_position_from_track(this->route, this->track);
+			if (track_update(this->track, &c, dir)) {
+				cursor_c=&c;
+				cursor_pos_set(cursor, cursor_c);
+				if (this->route)
+					route_set_position_from_track(this->route, this->track);
+			}
 		} else {
 			if (this->route)
 				route_set_position(this->route, cursor_c);

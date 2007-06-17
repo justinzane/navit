@@ -7,6 +7,12 @@
 #include "graphics.h"
 #include "gui_gtk.h"
 
+void
+keypress(GtkWidget *widget, GdkEventKey *event, struct gui_priv *this)
+{
+	printf("keypress\n");
+	gtk_menu_shell_select_first(this->menubar, TRUE);
+}
 
 static int
 gui_gtk_set_graphics(struct gui_priv *this, struct graphics *gra)
@@ -16,6 +22,10 @@ gui_gtk_set_graphics(struct gui_priv *this, struct graphics *gra)
 	graphics=graphics_get_data(gra, "gtk_widget");
 	if (! graphics)
 		return 1;
+	GTK_WIDGET_SET_FLAGS (graphics, GTK_CAN_FOCUS);
+	gtk_widget_set_sensitive(graphics, TRUE);
+	gtk_widget_grab_focus(graphics);
+	g_signal_connect(G_OBJECT(graphics), "key-press-event", G_CALLBACK(keypress), this);
 	gtk_box_pack_end(GTK_BOX(this->vbox), graphics, TRUE, TRUE, 0);
 	gtk_widget_show_all(graphics);
 

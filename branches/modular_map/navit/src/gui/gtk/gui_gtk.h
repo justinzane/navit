@@ -5,6 +5,7 @@ struct navit;
 struct gui_priv {
         GtkWidget *win;
         GtkWidget *vbox;
+	GtkWidget *menubar;
 	GtkActionGroup *base_group;
 	GtkActionGroup *debug_group;
 	GtkActionGroup *dyn_group;
