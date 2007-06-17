@@ -10,6 +10,7 @@
 #ifdef HAVE_LIBGPS
 #include <gps.h>
 #endif
+#include "debug.h"
 #include "coord.h"
 #include "transform.h"
 #include "projection.h"
@@ -134,13 +135,44 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 {
 	char *p,*item[16];
 	double lat,lng,scale,speed;
-	int i,debug=0;
+	int i,bcsum;
+	int len=strlen(buffer);
+	unsigned char csum=0;
 
-	if (debug) {
-		printf("GPS %s\n", buffer);
-	}
-	write(vfd, buffer, strlen(buffer));
+	dbg(1, "buffer='%s' ", buffer);
+	write(vfd, buffer, len);
 	write(vfd, "\n", 1);
+	for (;;) {
+		if (len < 4) {
+			dbg(0, "too short\n");
+			return;
+		}
+		if (buffer[len-1] == '\r' || buffer[len-1] == '\n')
+			buffer[--len]='\0';
+		else
+			break;
+	}
+	if (buffer[0] != '$') {
+		dbg(0, "no leading $\n");
+		return;
+	}
+	dbg(0, "len-3='%s' ", buffer+len-3);
+	if (buffer[len-3] != '*') {
+		dbg(0, "no *XX\n");
+		return;
+	}
+	for (i = 1 ; i < len-3 ; i++) {
+		csum ^= (unsigned char)(buffer[i]);
+	}
+	if (!sscanf(buffer+len-2, "%x", &bcsum)) {
+		dbg(0, "no checksum\n");
+		return;
+	}
+	if (bcsum != csum) {
+		dbg(0, "wrong checksum\n");
+		return;
+	}
+
 	if (!strncmp(buffer,"$GPGGA",6)) {
 		/* $GPGGA,184424.505,4924.2811,N,01107.8846,E,1,05,2.5,408.6,M,,,,0000*0C
 			UTC of Fix,Latitude,N/S,Longitude,E/W,Quality,Satelites,HDOP,Altitude,"M"
@@ -197,6 +229,31 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 		sscanf(item[1],"%lf",&this->dir);
 		sscanf(item[7],"%lf",&this->speed);
 
+		scale=transform_scale(this->current_pos.y);
+		speed=this->speed+(this->speed-this->speed_last)/2;
+#ifdef INTERPOLATION_TIME
+		this->delta.x=sin(M_PI*this->dir/180)*speed*scale/3600*INTERPOLATION_TIME;
+		this->delta.y=cos(M_PI*this->dir/180)*speed*scale/3600*INTERPOLATION_TIME;
+#endif
+		this->speed_last=this->speed;
+	}
+	if (!strncmp(buffer,"$GPRMC",6)) {
+		/* $GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A */
+		/* Time,Active/Void,lat,N/S,long,W/E,speed in knots,track angle,date,magnetic variation */
+		i=0;
+		p=buffer;
+		while (i < 16) {
+			item[i++]=p;
+			while (*p && *p != ',') 
+				p++;	
+			if (! *p) break;
+			*p++='\0';
+		}
+		printf("GPRMC dir='%s' speed='%s'\n", item[7], item[6]);
+		sscanf(item[8],"%lf",&this->dir);
+		sscanf(item[7],"%lf",&this->speed);
+		this->speed *= 1.852;
+		printf("dir=%f speed=%f\n", this->dir, this->speed);
 		scale=transform_scale(this->current_pos.y);
 		speed=this->speed+(this->speed-this->speed_last)/2;
 #ifdef INTERPOLATION_TIME
