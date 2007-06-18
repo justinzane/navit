@@ -549,23 +549,9 @@ graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *maps
 
 
 struct displaylist_handle {
-	GHashTable *dl;
-	GList *l;
-	gpointer hashkey;	
-	gpointer lastkey;
+	GList *hl_head,*hl,*l;
 };
 
-
-static void
-graphics_displaylist_hash_next(gpointer key, gpointer value, gpointer user_data)
-{
-	struct displaylist_handle *dlh=user_data;
-	if (!dlh->l && (dlh->lastkey == dlh->hashkey || dlh->hashkey == NULL)) {
-		dlh->hashkey=key;
-		dlh->l=value;
-	}
-	dlh->lastkey=key;
-}
 
 struct displaylist_handle *
 graphics_displaylist_open(struct displaylist *displaylist)
@@ -573,8 +559,7 @@ graphics_displaylist_open(struct displaylist *displaylist)
 	struct displaylist_handle *ret;
 
 	ret=g_new0(struct displaylist_handle, 1);
-	ret->dl=displaylist->dl;
-	
+	ret->hl_head=ret->hl=g_hash_to_list(displaylist->dl);
 
 	return ret;
 }
@@ -584,10 +569,10 @@ graphics_displaylist_next(struct displaylist_handle *dlh)
 {
 	struct displayitem *ret;
 	if (! dlh->l) {
-		dlh->lastkey=NULL;
-		g_hash_table_foreach(dlh->dl, graphics_displaylist_hash_next, dlh);
-		if (!dlh->l)
+		if (!dlh->hl)
 			return NULL;
+		dlh->l=dlh->hl->data;
+		dlh->hl=g_list_next(dlh->hl);
 	}
 	ret=dlh->l->data;
 	dlh->l=g_list_next(dlh->l);
@@ -597,6 +582,7 @@ graphics_displaylist_next(struct displaylist_handle *dlh)
 void
 graphics_displaylist_close(struct displaylist_handle *dlh)
 {
+	g_list_free(dlh->hl_head);
 	g_free(dlh);
 }
 

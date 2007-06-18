@@ -9,6 +9,8 @@ enum item_type {
 #undef ITEM
 };
 
+#define item_is_equal(a,b) ((a).id_hi == (b).id_hi && (a).id_lo == (b).id_lo && (a).map == (b).map)
+
 struct coord;
 
 struct item_methods {
@@ -28,9 +30,12 @@ struct item {
 };
 
 /* prototypes */
+enum attr_type;
+enum item_type;
 struct attr;
 struct coord;
 struct item;
+struct item_hash;
 void item_coord_rewind(struct item *it);
 int item_coord_get(struct item *it, struct coord *c, int count);
 void item_attr_rewind(struct item *it);
@@ -38,3 +43,7 @@ int item_attr_get(struct item *it, enum attr_type attr_type, struct attr *attr);
 struct item *item_new(char *type, int zoom);
 enum item_type item_from_name(char *name);
 char *item_to_name(enum item_type item);
+struct item_hash *item_hash_new(void);
+void item_hash_insert(struct item_hash *h, struct item *item, void *val);
+void *item_hash_lookup(struct item_hash *h, struct item *item);
+void item_hash_destroy(struct item_hash *h);

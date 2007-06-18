@@ -75,3 +75,58 @@ item_to_name(enum item_type item)
 	}
 	return NULL; 
 }
+
+struct item_hash {
+	GHashTable *h;
+};
+
+static guint
+item_hash_hash(gconstpointer key)
+{
+	const struct item *itm=key;
+	gconstpointer hashkey=(gconstpointer)(itm->id_hi^itm->id_lo^((int) itm->map));
+	return g_direct_hash(hashkey);
+}
+
+static gboolean
+item_hash_equal(gconstpointer a, gconstpointer b)
+{
+	const struct item *itm_a=a;
+	const struct item *itm_b=b;
+	if (item_is_equal(*itm_a, *itm_b))
+		return TRUE;
+	return FALSE;
+}
+
+
+
+struct item_hash *
+item_hash_new(void)
+{
+	struct item_hash *ret=g_new(struct item_hash, 1);
+
+	ret->h=g_hash_table_new_full(item_hash_hash, item_hash_equal, g_free, NULL);
+	return ret;
+}
+
+void
+item_hash_insert(struct item_hash *h, struct item *item, void *val)
+{
+	struct item *hitem=g_new(struct item, 1);
+        *hitem=*item;
+	g_hash_table_insert(h->h, hitem, val);
+}
+
+void *
+item_hash_lookup(struct item_hash *h, struct item *item)
+{
+	 return g_hash_table_lookup(h->h, item);
+}
+
+
+void
+item_hash_destroy(struct item_hash *h)
+{
+	g_hash_table_destroy(h->h);
+	g_free(h);
+}
