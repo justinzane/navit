@@ -5,54 +5,54 @@
 #include "plugin.h"
 
 struct gui *
-gui_new(const char *type, int w, int h)
+gui_new(struct navit *nav, const char *type, int w, int h)
 {
 	struct gui *this;
-	struct gui_priv *(*guitype_new)(struct gui_methods *meth, int w, int h);
+	struct gui_priv *(*guitype_new)(struct navit *nav, struct gui_methods *meth, int w, int h);
 
         guitype_new=plugin_get_gui_type(type);
         if (! guitype_new)
                 return NULL;
 
 	this=g_new0(struct gui, 1);
-	this->priv=guitype_new(&this->meth, w, h);
+	this->priv=guitype_new(nav, &this->meth, w, h);
 	return this;
 }
 
 struct statusbar *
-gui_statusbar_new(struct gui *gui, struct navit *nav)
+gui_statusbar_new(struct gui *gui)
 {
 	struct statusbar *this;
 	this=g_new0(struct statusbar, 1);
-	this->priv=gui->meth.statusbar_new(gui->priv, &this->meth, nav);
+	this->priv=gui->meth.statusbar_new(gui->priv, &this->meth);
 	return this;
 }
 
 struct menu *
-gui_menubar_new(struct gui *gui, struct navit *nav)
+gui_menubar_new(struct gui *gui)
 {
 	struct menu *this;
 	this=g_new0(struct menu, 1);
-	this->priv=gui->meth.menubar_new(gui->priv, &this->meth, nav);
+	this->priv=gui->meth.menubar_new(gui->priv, &this->meth);
 	return this;
 }
 
 
 struct menu *
-gui_toolbar_new(struct gui *gui, struct navit *nav)
+gui_toolbar_new(struct gui *gui)
 {
 	struct menu *this;
 	this=g_new0(struct menu, 1);
-	this->priv=gui->meth.toolbar_new(gui->priv, &this->meth, nav);
+	this->priv=gui->meth.toolbar_new(gui->priv, &this->meth);
 	return this;
 }
 
 struct menu *
-gui_popup_new(struct gui *gui, struct navit *nav)
+gui_popup_new(struct gui *gui)
 {
 	struct menu *this;
 	this=g_new0(struct menu, 1);
-	this->priv=gui->meth.popup_new(gui->priv, &this->meth, nav);
+	this->priv=gui->meth.popup_new(gui->priv, &this->meth);
 	return this;
 }
 

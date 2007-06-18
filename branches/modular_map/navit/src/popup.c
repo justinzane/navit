@@ -242,7 +242,7 @@ popup(struct navit *nav, int button, struct point *p)
 	char buffer[1024];
 	struct coord_geo g;
 
-	popup=gui_popup_new(navit_get_gui(nav), nav);
+	popup=gui_popup_new(navit_get_gui(nav));
 	transform_reverse(navit_get_trans(nav), p, &c);
 	men=popup_printf(popup, menu_type_submenu, "Point 0x%x 0x%x", c.x, c.y);
 	popup_printf(men, menu_type_menu, "Screen %d %d", p->x, p->y);

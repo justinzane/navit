@@ -94,7 +94,7 @@ static struct statusbar_methods methods = {
 };
 
 struct statusbar_priv *
-gui_gtk_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth, struct navit *nav)
+gui_gtk_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth)
 {
 	struct statusbar_priv *this=g_new0(struct statusbar_priv, 1);
 	char *utf8;
@@ -116,6 +116,7 @@ gui_gtk_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth, stru
 	gtk_box_pack_start(GTK_BOX(this->hbox), this->gps, TRUE, TRUE, 2);
 	gtk_box_pack_start(GTK_BOX(this->hbox), gtk_vseparator_new(), TRUE, TRUE, 2);
 	gtk_box_pack_start(GTK_BOX(this->hbox), this->route, TRUE, TRUE, 2);
+	GTK_WIDGET_UNSET_FLAGS (this->hbox, GTK_CAN_FOCUS);
 
 	gtk_box_pack_end(GTK_BOX(gui->vbox), this->hbox, FALSE, FALSE, 0);
 	gtk_widget_show_all(this->hbox);

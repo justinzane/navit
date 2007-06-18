@@ -204,20 +204,20 @@ track_update(struct track *tr, struct coord *c, int angle)
 	int min,dist;
 	int debug=0;
 #endif
-	dbg(0,"enter(%p,%p,%d)\n", tr, c, angle);
-	dbg(0,"c=0x%x,0x%x\n", c->x, c->y);
+	dbg(1,"enter(%p,%p,%d)\n", tr, c, angle);
+	dbg(1,"c=0x%x,0x%x\n", c->x, c->y);
 
 	if (c->x == tr->last_in.x && c->y == tr->last_in.y) {
 		*c=tr->last_out;
-		return;
+		return 0;
 	}
 	tr->last_in=*c;
 	if (!tr->lines || transform_distance_sq(&tr->last_updated, c) > 250000) {
-		dbg(0, "update\n");
+		dbg(1, "update\n");
 		track_free_lines(tr);
 		track_doupdate_lines(tr, c);
 		tr->last_updated=*c;
-		dbg(0,"update end\n");
+		dbg(1,"update end\n");
 	}
 		
 	t=tr->lines;

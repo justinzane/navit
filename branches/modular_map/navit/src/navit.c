@@ -86,12 +86,8 @@ navit_button(void *data, int pressed, int button, struct point *p)
 	struct navit *this=data;
 	if (pressed && button == 1) {
 		int border=16;
-		struct transformation *t=this->trans;
-		struct coord *c;
-		if (! transform_within_border(t, p, border)) {
-			c=transform_center(t);
-			transform_reverse(t, p, c);
-			navit_draw(this);
+		if (! transform_within_border(this->trans, p, border)) {
+			navit_set_center_screen(this, p);
 		} else
 			popup(this, button, p);
 	}
@@ -129,15 +125,15 @@ navit_new(const char *ui, const char *graphics, struct coord *center, enum proje
 	transform_setup(this->trans, center, zoom, 0);
 	/* this->flags=g_new0(struct map_flags, 1); */
 	this->displaylist=graphics_displaylist_new();
-	this->gui=gui_new(ui, 792, 547);
+	this->gui=gui_new(this, ui, 792, 547);
 	if (! this->gui) {
 		g_warning("failed to create gui '%s'", ui);
 		navit_destroy(this);
 		return NULL;
 	}
-	this->menubar=gui_menubar_new(this->gui, this);
-	this->toolbar=gui_toolbar_new(this->gui, this);
-	this->statusbar=gui_statusbar_new(this->gui, this);
+	this->menubar=gui_menubar_new(this->gui);
+	this->toolbar=gui_toolbar_new(this->gui);
+	this->statusbar=gui_statusbar_new(this->gui);
 	this->gra=graphics_new(graphics);
 	if (! this->gra) {
 		g_warning("failed to create graphics '%s'", graphics);
@@ -258,6 +254,14 @@ navit_set_center(struct navit *this, struct coord *center)
 	*c=*center;
 	if (this->ready)
 		navit_draw(this);
+}
+
+void
+navit_set_center_screen(struct navit *this, struct point *p)
+{
+	struct coord c;
+	transform_reverse(this->trans, p, &c);
+	navit_set_center(this, &c);
 }
 
 void

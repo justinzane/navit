@@ -448,7 +448,7 @@ popup_deactivate(GtkWidget *widget, struct menu_priv *menu)
 }	
 
 static struct menu_priv *
-gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, struct navit *nav, int popup, GtkWidget **widget_ret)
+gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, int popup, GtkWidget **widget_ret)
 {
 	struct menu_priv *ret;
 	GError *error;
@@ -464,10 +464,10 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 		this->dyn_group = gtk_action_group_new ("DynamicActions");
 		register_my_stock_icons();
 		this->menu_manager = gtk_ui_manager_new ();
-		gtk_action_group_add_actions (this->base_group, entries, n_entries, nav);
-		gtk_action_group_add_toggle_actions (this->base_group, toggleentries, n_toggleentries, nav);
+		gtk_action_group_add_actions (this->base_group, entries, n_entries, this->nav);
+		gtk_action_group_add_toggle_actions (this->base_group, toggleentries, n_toggleentries, this->nav);
 		gtk_ui_manager_insert_action_group (this->menu_manager, this->base_group, 0);
-		gtk_action_group_add_actions (this->debug_group, debug_entries, n_debug_entries, nav);
+		gtk_action_group_add_actions (this->debug_group, debug_entries, n_debug_entries, this->nav);
 		gtk_ui_manager_insert_action_group (this->menu_manager, this->debug_group, 0);
 		gtk_ui_manager_add_ui_from_string (this->menu_manager, layout, strlen(layout), &error);
 		gtk_ui_manager_insert_action_group (this->menu_manager, this->dyn_group, 0);
@@ -478,6 +478,7 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 		}
 	}
 	widget=gtk_ui_manager_get_widget(this->menu_manager, path);
+	GTK_WIDGET_UNSET_FLAGS (widget, GTK_CAN_FOCUS);
 	if (widget_ret)
 		*widget_ret=widget;
 	if (! popup) {
@@ -491,19 +492,19 @@ gui_gtk_ui_new (struct gui_priv *this, struct menu_methods *meth, char *path, st
 }
 
 struct menu_priv *
-gui_gtk_toolbar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
+gui_gtk_toolbar_new(struct gui_priv *this, struct menu_methods *meth)
 {
-	return gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav, 0, NULL);
+	return gui_gtk_ui_new(this, meth, "/ui/ToolBar", 0, NULL);
 }
 
 struct menu_priv *
-gui_gtk_menubar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
+gui_gtk_menubar_new(struct gui_priv *this, struct menu_methods *meth)
 {
-	return gui_gtk_ui_new(this, meth, "/ui/MenuBar", nav, 0, &this->menubar);
+	return gui_gtk_ui_new(this, meth, "/ui/MenuBar", 0, &this->menubar);
 }
 
 struct menu_priv *
-gui_gtk_popup_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
+gui_gtk_popup_new(struct gui_priv *this, struct menu_methods *meth)
 {
-	return gui_gtk_ui_new(this, meth, "/ui/PopUp", nav, 1, NULL);
+	return gui_gtk_ui_new(this, meth, "/ui/PopUp", 1, NULL);
 }

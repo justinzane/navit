@@ -290,7 +290,7 @@ make_maneuver(struct navigation_item *old, struct navigation_item *new)
 #if 0
 					speech_say(speech_handle, command);
 #endif
-					sprintf(buffer,"espeak -v german '%s'", command);
+					sprintf(buffer,"espeak -v german '%s' &", command);
 					system(buffer);
 					old_level=level;
 				}
@@ -418,6 +418,8 @@ navigation_path_description(struct route *route, int dir)
 	ms=route_get_mapset(route);
 	pos=route_get_pos(route);
 	dst=route_get_dst(route);
+	if (! pos || ! dst)
+		return;
 	if (!navigation_window)
 		navigation_window=data_window("Navigation",NULL,navigation_goto);
 	data_window_begin(navigation_window);

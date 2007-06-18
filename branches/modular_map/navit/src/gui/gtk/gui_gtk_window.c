@@ -1,17 +1,69 @@
 #include <stdio.h>
+#include <gdk/gdkkeysyms.h>
+#if !defined(GDK_Book) || !defined(GDK_Calendar)
+#include <X11/XF86keysym.h>
+#endif
 #include <gtk/gtk.h>
 #include "navit.h"
+#include "debug.h"
 #include "gui.h"
 #include "coord.h"
+#include "point.h"
 #include "plugin.h"
 #include "graphics.h"
 #include "gui_gtk.h"
 
-void
+#ifndef GDK_Book
+#define GDK_Book XF86XK_Book
+#endif
+
+#ifndef GDK_Calendar
+#define GDK_Calendar XF86XK_Calendar
+#endif
+
+static gboolean
 keypress(GtkWidget *widget, GdkEventKey *event, struct gui_priv *this)
 {
-	printf("keypress\n");
-	gtk_menu_shell_select_first(this->menubar, TRUE);
+	int w,h;
+	struct point p;
+	if (event->type != GDK_KEY_PRESS)
+		return FALSE;
+	dbg(1,"keypress 0x%x\n", event->keyval);
+        transform_get_size(navit_get_trans(this->nav), &w, &h);
+	switch (event->keyval) {
+	case GDK_KP_Enter:
+		gtk_menu_shell_select_first(this->menubar, TRUE);
+		break;
+	case GDK_Up:
+		p.x=w/2;
+		p.y=0;
+		navit_set_center_screen(this->nav, &p);
+		break;
+	case GDK_Down:
+		p.x=w/2;
+		p.y=h;
+		navit_set_center_screen(this->nav, &p);
+		break;
+	case GDK_Left:
+		p.x=0;
+		p.y=h/2;
+		navit_set_center_screen(this->nav, &p);
+		break;
+	case GDK_Right:
+		p.x=w;
+		p.y=h/2;
+		navit_set_center_screen(this->nav, &p);
+		break;
+	case GDK_Book:
+		navit_zoom_in(this->nav, 2);
+		break;
+	case GDK_Calendar:
+		navit_zoom_out(this->nav, 2);
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static int
@@ -41,13 +93,14 @@ struct gui_methods gui_gtk_methods = {
 };
 
 static struct gui_priv *
-gui_gtk_new(struct gui_methods *meth, int w, int h) 
+gui_gtk_new(struct navit *nav, struct gui_methods *meth, int w, int h) 
 {
 	struct gui_priv *this;
 
 	*meth=gui_gtk_methods;
 
 	this=g_new0(struct gui_priv, 1);
+	this->nav=nav;
 	this->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	this->vbox = gtk_vbox_new(FALSE, 0);
 	gtk_window_set_default_size(GTK_WINDOW(this->win), w, h);

@@ -3,6 +3,7 @@ struct menu_methods;
 struct navit;
 
 struct gui_priv {
+	struct navit *nav;
         GtkWidget *win;
         GtkWidget *vbox;
 	GtkWidget *menubar;
@@ -14,8 +15,8 @@ struct gui_priv {
 	int dyn_counter;
 };
 
-struct menu_priv *gui_gtk_menubar_new(struct gui_priv *gui, struct menu_methods *meth, struct navit *nav);
-struct menu_priv *gui_gtk_toolbar_new(struct gui_priv *gui, struct menu_methods *meth, struct navit *nav);
-struct statusbar_priv *gui_gtk_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth, struct navit *nav);
-struct menu_priv *gui_gtk_popup_new(struct gui_priv *gui, struct menu_methods *meth, struct navit *nav);
+struct menu_priv *gui_gtk_menubar_new(struct gui_priv *gui, struct menu_methods *meth);
+struct menu_priv *gui_gtk_toolbar_new(struct gui_priv *gui, struct menu_methods *meth);
+struct statusbar_priv *gui_gtk_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth);
+struct menu_priv *gui_gtk_popup_new(struct gui_priv *gui, struct menu_methods *meth);
 
