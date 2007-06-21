@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <math.h>
@@ -51,6 +52,9 @@ struct vehicle {
 #ifdef HAVE_LIBGPS
 	struct gps_data_t *gps;
 #endif
+#define BUFFER_SIZE 256
+	char buffer[BUFFER_SIZE];
+	int buffer_pos;
 	GList *callbacks;
 };
 
@@ -266,10 +270,10 @@ vehicle_track(GIOChannel *iochan, GIOCondition condition, gpointer t)
 {
 	struct vehicle *this=t;
 	GError *error=NULL;
-	char buffer[4096];
 	char *str,*tok;
 	gsize size;
 
+	dbg(1,"enter\n");
 	if (condition == G_IO_IN) {
 #ifdef HAVE_LIBGPS
 		if (this->gps) {
@@ -279,25 +283,27 @@ vehicle_track(GIOChannel *iochan, GIOCondition condition, gpointer t)
 #else
 		{
 #endif
-			if (this->is_file) {
-				char *str;
-				g_io_channel_read_line(iochan, &str, NULL, NULL, &error);
-				if (str) {
-					vehicle_parse_gps(this, str);
-					g_free(str);
-				} else {
-					if (this->is_file) 
-						disable_watch(this);
-				}
-			} else {
-				g_io_channel_read_chars(iochan, buffer, 4096, &size, &error);
-				buffer[size]='\0';
-				str=buffer;
-				while ((tok=strtok(str, "\n"))) {
-					str=NULL;
-					vehicle_parse_gps(this, tok);
-				}
+			g_io_channel_read_chars(iochan, this->buffer+this->buffer_pos, BUFFER_SIZE-this->buffer_pos-1, &size, &error);
+			this->buffer_pos+=size;
+			this->buffer[this->buffer_pos]='\0';
+			dbg(1,"size=%d pos=%d buffer='%s'\n", size, this->buffer_pos, this->buffer);
+			str=this->buffer;
+			while ((tok=index(str, '\n'))) {
+				*tok++='\0';
+				dbg(1,"line='%s'\n", str);
+				vehicle_parse_gps(this, str);
+				str=tok;
 			}
+			if (str != this->buffer) {
+				size=this->buffer+this->buffer_pos-str;
+				memmove(this->buffer, str, size+1);
+				this->buffer_pos=size;
+				dbg(1,"now pos=%d buffer='%s'\n", this->buffer_pos, this->buffer);
+			} else if (this->buffer_pos == BUFFER_SIZE-1) {
+				dbg(0,"overflow\n");
+				this->buffer_pos=0;
+			}
+			
 		}
 
 		return TRUE;
@@ -382,6 +388,8 @@ vehicle_new(const char *url)
 #ifdef HAVE_LIBGPS
 	struct gps_data_t *gps=NULL;
 #endif
+	struct termios tio;
+
 	this=g_new0(struct vehicle,1);
 	this->fd=-1;
 
@@ -398,6 +406,14 @@ vehicle_new(const char *url)
 		stat(url+5, &st);
 		if (S_ISREG (st.st_mode)) {
 			this->is_file=1;
+		} else {
+			tcgetattr(fd, &tio);
+			cfmakeraw(&tio);
+			cfsetispeed(&tio, B4800);
+			cfsetospeed(&tio, B4800);
+			tio.c_cc[VMIN]=16;
+			tio.c_cc[VTIME]=1;
+			tcsetattr(fd, TCSANOW, &tio);
 		}
 		this->fd=fd;
 	} else if (! strncmp(url,"pipe:",5)) {
@@ -432,7 +448,6 @@ vehicle_new(const char *url)
 #endif
 	}
 	this->iochan=g_io_channel_unix_new(fd);
-	g_io_channel_set_encoding(this->iochan, NULL, &error);
 	enable_watch(this);
 	this->current_pos.x=0x130000;
 	this->current_pos.y=0x600000;
