@@ -14,6 +14,7 @@ struct attr {
 	union {
 		char *str;
 		int num;
+		struct item *item;
 	} u;
 };
 

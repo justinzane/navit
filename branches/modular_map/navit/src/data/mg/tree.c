@@ -205,13 +205,13 @@ int tree_search_next_lin(struct tree_search *ts, unsigned char **p)
 }
 
 void
-tree_search_init(char *dirname, char *filename, struct tree_search *ts)
+tree_search_init(char *dirname, char *filename, struct tree_search *ts, int offset)
 {
 	char buffer[4096];
 	sprintf(buffer, "%s/%s", dirname, filename);
 	ts->f=file_create_caseinsensitive(buffer);
 	ts->curr_node=-1;
-	tree_search_enter(ts, 0x1000);
+	tree_search_enter(ts, offset);
 }
 
 void

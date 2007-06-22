@@ -189,18 +189,33 @@ static struct map_search_priv *
 map_search_new_mg(struct map_priv *map, struct item *item, struct attr *search, int partial)
 {
 	struct map_rect_priv *mr=g_new0(struct map_rect_priv, 1);
-	dbg(0,"id_lo=0x%x\n", item->id_lo);
-	dbg(0,"search=%s\n", search->u.str);
+	dbg(1,"id_lo=0x%x\n", item->id_lo);
+	dbg(1,"search=%s\n", search->u.str);
 	mr->m=map;
-	tree_search_init(map->dirname, "town.b2", &mr->ts);
+	mr->search_type=search->type;
+	switch (search->type) {
+	case attr_town_name:
+		if (item->type != type_country_label)
+			return NULL;
+		tree_search_init(map->dirname, "town.b2", &mr->ts, 0x1000);
+		break;
+	case attr_street_name:
+		if (item->type != type_town_streets)
+			return NULL;
+		dbg(1,"street_assoc=0x%x\n", item->id_lo);
+		tree_search_init(map->dirname, "strname.b1", &mr->ts, 0);
+		break;
+	default:
+		dbg(0,"unknown search\n");
+		g_free(mr);
+		return NULL;
+	}
+	mr->search_item=*item;
 	mr->search_country=item->id_lo;
 	mr->search_str=search->u.str;
 	mr->search_partial=partial;
 	mr->current_file=file_town_twn-1;
 	file_next(mr);
-#if 0
-	tree_search(mr->m->dirname,"town.b2",item->id_lo,search->u.str,partial);
-#endif
 	return (struct map_search_priv *)mr;
 }
 
@@ -209,6 +224,8 @@ map_search_destroy_mg(struct map_search_priv *ms)
 {
 	struct map_rect_priv *mr=(struct map_rect_priv *)ms;
 
+	if (! mr)
+		return;
 	tree_search_free(&mr->ts);
 	g_free(mr);
 }
@@ -217,8 +234,17 @@ static struct item *
 map_search_get_item_mg(struct map_search_priv *ms)
 {
 	struct map_rect_priv *mr=(struct map_rect_priv *)ms;
-	
-	return town_search_get_item(mr);
+
+	if (! mr)
+		return NULL;
+	switch (mr->search_type) {
+	case attr_town_name:
+		return town_search_get_item(mr);
+	case attr_street_name:
+		return street_search_get_item(mr);
+	default:
+		return NULL;
+	}
 }
 
 static struct map_methods map_methods_mg = {

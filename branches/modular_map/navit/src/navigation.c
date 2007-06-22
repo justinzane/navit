@@ -482,3 +482,284 @@ navigation_path_description(struct route *route, int dir)
 	exit(0);	
 #endif
 }
+
+struct navigation_command {
+	struct navigation_itm *itm;
+	struct navigation_command *next;
+	int delta;
+};
+
+struct navigation {
+	struct mapset *ms;
+	struct navigation_itm *first;
+	struct navigation_itm *last;
+	struct navigation_command *cmd_first;
+	struct navigation_command *cmd_last;
+};
+
+struct navigation *
+navigation_new(struct mapset *ms)
+{
+	struct navigation *ret=g_new(struct navigation, 1);
+	ret->ms=ms;
+
+	return ret;	
+}
+
+struct navigation_itm {
+	char *name1;
+	char *name2;
+	struct coord start;
+	struct item item;
+	int angle_start;
+	int angle_end;
+	int time;
+	int length;
+	int dest_time;
+	int dest_length;
+	struct navigation_itm *next;
+	struct navigation_itm *prev;
+};
+
+struct navigation_itm *
+navigation_itm_new(struct navigation *this, struct item *item, struct coord *start)
+{
+	struct navigation_itm *ret=g_new0(struct navigation_itm, 1);
+	int l,i=0,a1,a2,dir=0;
+	struct map_rect *mr;
+	struct attr attr;
+	struct coord c[5];
+
+	if (item) {
+		mr=map_rect_new(item->map, NULL);
+		item=map_rect_get_item_byid(mr, item->id_hi, item->id_lo);
+		if (item_attr_get(item, attr_street_name, &attr))
+			ret->name1=g_strdup(attr.u.str);
+		if (item_attr_get(item, attr_street_name_systematic, &attr))
+			ret->name2=g_strdup(attr.u.str);
+		ret->item=*item;
+		l=-1;
+		while (item_coord_get(item, &c[i], 1)) {
+			dbg(1, "coord %d 0x%x 0x%x\n", i, c[i].x ,c[i].y);
+			l=i;
+			if (i < 4) 
+				i++;
+			else {
+				c[2]=c[3];
+				c[3]=c[4];
+			}
+		}
+		dbg(1,"count=%d\n", l);
+		if (l == 4)
+			l=3;
+		if (start->x != c[0].x || start->y != c[0].y)
+			dir=-1;
+		a1=road_angle(&c[0], &c[1], dir);
+		a2=road_angle(&c[l-1], &c[l], dir);
+		if (dir >= 0) {
+			ret->angle_start=a1;
+			ret->angle_end=a2;
+		} else {
+			ret->angle_start=a2;
+			ret->angle_end=a1;
+		}
+		dbg(0,"i=%d a1 %d a2 %d '%s' '%s'\n", i, a1, a2, ret->name1, ret->name2);
+		map_rect_destroy(mr);
+	}
+	if (start)
+		ret->start=*start;
+	if (! this->first)
+		this->first=ret;
+	if (this->last) {
+		this->last->next=ret;
+		ret->prev=this->last;
+	}
+	this->last=ret;
+	return ret;
+}
+
+void
+calculate_dest_distance(struct navigation *this)
+{
+	int len=0, time=0;
+	struct navigation_itm *itm=this->last;
+	while (itm) {
+		len+=itm->length;
+		time+=itm->time;
+		itm->dest_length=len;
+		itm->dest_time=time;
+		itm=itm->prev;
+	}
+	printf("len %d time %d\n", len, time);
+}
+
+static int
+is_same_street2(struct navigation_itm *old, struct navigation_itm *new)
+{
+	if (old->name1 && new->name1 && !strcmp(old->name1, new->name1)) {
+		dbg(1,"is_same_street: '%s' '%s' vs '%s' '%s' yes (1.)\n", old->name2, new->name2, old->name1, new->name1);
+		return 1;
+	}
+	if (old->name2 && new->name2 && !strcmp(old->name2, new->name2)) {
+		dbg(1,"is_same_street: '%s' '%s' vs '%s' '%s' yes (2.)\n", old->name2, new->name2, old->name1, new->name1);
+		return 1;
+	}
+	dbg(1,"is_same_street: '%s' '%s' vs '%s' '%s' no\n", old->name2, new->name2, old->name1, new->name1);
+	return 0;
+}
+
+static int
+maneuver_required2(struct navigation_itm *old, struct navigation_itm *new, int *delta)
+{
+	dbg(1,"enter %p %p %p\n",old, new, delta);
+	if (new->item.type == type_ramp && old && (old->item.type == type_highway_land || old->item.type == type_highway_city)) {
+		dbg(1, "maneuver_required: new is ramp from highway: yes\n");
+		return 1;
+	}
+	if (is_same_street2(old, new)) {
+		dbg(1, "maneuver_required: is_same_street: no\n");
+		return 0;
+	}
+#if 0
+	if (old->crossings_end == 2) {
+		dbg(1, "maneuver_required: only 2 connections: no\n");
+		return 0;
+	}
+#endif
+	*delta=new->angle_start-old->angle_end;
+	if (*delta < -180)
+		*delta+=360;
+	if (*delta > 180)
+		*delta-=360;
+	if (*delta < 20 && *delta >-20) {
+		dbg(1, "maneuver_required: delta(%d) < 20: no\n", *delta);
+		return 0;
+	}
+	dbg(1, "maneuver_required: delta=%d: yes\n", *delta);
+	return 1;
+}
+
+struct navigation_command *
+command_new(struct navigation *this, struct navigation_itm *itm, int delta)
+{
+	struct navigation_command *ret=g_new0(struct navigation_command, 1);
+	ret->delta=delta;
+	ret->itm=itm;
+	if (this->cmd_last)
+		this->cmd_last->next=ret;
+	this->cmd_last=ret;
+	if (!this->cmd_first)
+		this->cmd_first=ret;
+	return ret;
+}
+
+void
+make_maneuvers(struct navigation *this)
+{
+	struct navigation_itm *itm, *last=NULL, *last_itm=NULL;
+	itm=this->first;
+	int delta;
+	this->cmd_last=NULL;
+	this->cmd_first=NULL;
+	while (itm) {
+		if (last) {
+			if (maneuver_required2(last_itm, itm, &delta)) {
+				command_new(this, itm, delta);
+			}
+		} else
+			last=itm;
+		last_itm=itm;
+		itm=itm->next;
+	}
+}
+
+void
+show_maneuver(struct navigation_itm *itm, struct navigation_command *cmd)
+{
+	char *dir="rechts",*strength="";
+	int distance=itm->dest_length-cmd->itm->dest_length;
+	int delta=cmd->delta;
+	if (delta < 0) {
+		dir="links";
+		delta=-delta;
+	}
+	if (delta < 45) {
+		strength="leicht ";
+	} else if (delta < 105) {
+		strength="";
+	} else if (delta < 165) {
+		strength="scharf ";
+	} else {
+		dbg(0,"delta=%d\n", delta);
+		strength="unbekannt ";
+	}
+	printf("In %d m ", distance);
+	if (cmd->itm->next)
+		printf("%s%s abbiegen\n", strength, dir);
+	else
+		printf("haben Sie ihr Ziel erreicht\n", strength, dir);
+}
+
+void
+show_maneuvers(struct navigation *this)
+{
+	struct navigation_command *cmd=this->cmd_first;
+	struct navigation_itm *itm=this->first;
+	while (cmd) {
+		show_maneuver(itm, cmd);
+		itm=cmd->itm;
+		cmd=cmd->next;
+	}
+}
+
+void
+navigation_update(struct navigation *this, struct route *route)
+{
+	struct route_path_handle *rph;
+	struct route_path_segment *s;
+	struct navigation_itm *itm;
+	struct route_info *pos,*dst;
+	struct street_data *sd;
+	int len,end_flag=0;
+
+
+	pos=route_get_pos(route);
+	dst=route_get_dst(route);
+	if (! pos || ! dst)
+		return;
+	this->first=this->last=NULL;
+	len=route_info_length(pos, dst, 0);
+	if (len == -1) {
+		len=route_info_length(pos, NULL, 0);
+		end_flag=1;
+	}
+	sd=route_info_street(pos);
+	itm=navigation_itm_new(this, &sd->item, route_info_point(pos, -1));
+	itm->length=len;
+	itm->time=route_time(&sd->item, len);
+	rph=route_path_open(route);
+	while((s=route_path_get_segment(rph))) {
+		itm=navigation_itm_new(this, route_path_segment_get_item(s),route_path_segment_get_start(s));
+		itm->time=route_path_segment_get_time(s);
+		itm->length=route_path_segment_get_length(s);
+	}
+	if (end_flag) {
+		len=route_info_length(NULL, dst, 0);
+		printf("end %d\n", len);
+		sd=route_info_street(dst);
+		itm=navigation_itm_new(this, &sd->item, route_info_point(pos, 2));
+		itm->length=len;
+		itm->time=route_time(&sd->item, len);
+	}
+	itm=navigation_itm_new(this, NULL, NULL);
+	route_path_close(rph);
+	calculate_dest_distance(this);
+	make_maneuvers(this);
+	show_maneuvers(this);
+}
+
+void
+navigation_destroy(struct navigation *this)
+{
+	g_free(this);
+}

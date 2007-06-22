@@ -62,6 +62,13 @@ town_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 		attr->u.str=twn->district;
 		twn->attr_next=attr_debug;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_town_streets_item:
+		twn->town_attr_item.type=type_town_streets;
+		twn->town_attr_item.id_hi=twn->country | (file_town_twn << 16) | 0x10000000;
+		twn->town_attr_item.id_lo=twn->street_assoc;
+		attr->u.item=&twn->town_attr_item;
+		twn->attr_next=attr_debug;
+		return 1;
 	case attr_debug:
 		sprintf(twn->debug, "order %d\nsize %d\nstreet_assoc 0x%x", twn->order, twn->size, twn->street_assoc);
 		attr->u.str=twn->debug;
@@ -161,7 +168,8 @@ town_get_byid(struct map_rect_priv *mr, struct town_priv *twn, int id_hi, int id
 {
 	int country=id_hi & 0xffff;
 	int res;
-	tree_search_hv(mr->m->dirname, "town", (id_lo >> 8) | (country << 24), id_lo & 0xff, &res);
+	if (!tree_search_hv(mr->m->dirname, "town", (id_lo >> 8) | (country << 24), id_lo & 0xff, &res))
+		return 0;
 	block_get_byindex(mr->m->file[mr->current_file], res >> 16, &mr->b);
 	mr->b.p=mr->b.block_start+(res & 0xffff);
 	return town_get(mr, twn, item);
@@ -178,7 +186,7 @@ town_search_compare(unsigned char **p, struct map_rect_priv *mr)
 	name=get_string(p);
 	dbg(1,"name '%s' ",name);
 	mr->search_blk_count=get_u32(p);
-	mr->search_blk=(struct block_offset *)(*p);
+	mr->search_blk_off=(struct block_offset *)(*p);
 	dbg(1,"len %d ", mr->search_blk_count);
 	(*p)+=mr->search_blk_count*4;
 	d=mr->search_country-country;
@@ -239,11 +247,11 @@ town_search_get_item(struct map_rect_priv *mr)
 	}
 	if (! mr->search_blk_count)
 		return NULL;
-	dbg(1,"block 0x%x offset 0x%x\n", mr->search_blk->block, mr->search_blk->offset);
-	block_get_byindex(mr->m->file[mr->current_file], mr->search_blk->block, &mr->b);
-	mr->b.p=mr->b.block_start+mr->search_blk->offset;
+	dbg(1,"block 0x%x offset 0x%x\n", mr->search_blk_off->block, mr->search_blk_off->offset);
+	block_get_byindex(mr->m->file[mr->current_file], mr->search_blk_off->block, &mr->b);
+	mr->b.p=mr->b.block_start+mr->search_blk_off->offset;
 	town_get(mr, &mr->town, &mr->item);
-	mr->search_blk++;
+	mr->search_blk_off++;
 	mr->search_blk_count--;
 	return &mr->item;
 }

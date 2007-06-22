@@ -156,8 +156,8 @@ struct map_search *
 map_search_new(struct map *m, struct item *item, struct attr *search_attr, int partial)
 {
 	struct map_search *this;
-	dbg(0,"enter(%p,%p,%p,%d)\n", m, item, search_attr, partial);
-	dbg(0,"0x%x 0x%x 0x%x\n", attr_country_all, search_attr->type, attr_country_name);
+	dbg(1,"enter(%p,%p,%p,%d)\n", m, item, search_attr, partial);
+	dbg(1,"0x%x 0x%x 0x%x\n", attr_country_all, search_attr->type, attr_country_name);
 	this=g_new0(struct map_search,1);
 	this->m=m;
 	this->search_attr=*search_attr;
@@ -174,6 +174,8 @@ map_search_get_item(struct map_search *this)
 {
 	struct item *ret;
 
+	if (! this)
+		return NULL;
 	if (this->search_attr.type >= attr_country_all && this->search_attr.type <= attr_country_name) 
 		return country_search_get_item(this->priv);
 	ret=this->m->meth.map_search_get_item(this->priv);
@@ -185,6 +187,8 @@ map_search_get_item(struct map_search *this)
 void
 map_search_destroy(struct map_search *this)
 {
+	if (! this)
+		return;
 	if (this->search_attr.type >= attr_country_all && this->search_attr.type <= attr_country_name)
 		country_search_destroy(this->priv);
 	else

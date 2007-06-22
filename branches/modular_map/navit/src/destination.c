@@ -850,12 +850,12 @@ int destination_address(struct navit *nav)
 
 int destination_address_tst(struct navit *nav)
 {
-	struct search *search,*search2;
+	struct search *search1,*search2,*search3;
 	struct mapset *ms;
 	struct map *map;
 	struct item *item;
-	struct attr attr,attr2;
-	struct attr result;
+	struct attr attr1,attr2,attr3;
+	struct attr result,resulti;
 	int i;
 
 #if 1
@@ -868,27 +868,44 @@ int destination_address_tst(struct navit *nav)
 	debug_level_set("data_mg:town_search_compare", 1);
 	debug_level_set("data_mg:tree_search_enter", 1);
 #endif
-	attr.type=attr_country_all;
-	attr.u.str="D";
+	attr1.type=attr_country_all;
+	attr1.u.str="D";
 	attr2.type=attr_town_name;
-	attr2.u.str="berl";
-	search=mapset_search_new(ms,NULL,&attr,0);
-	while(item=mapset_search_get_item(search)) {
+	attr2.u.str="stuttga";
+	attr3.type=attr_street_name;
+	attr3.u.str="wall";
+	search1=mapset_search_new(ms,NULL,&attr1,0);
+	printf("searching country\n");
+	while(item=mapset_search_get_item(search1)) {
 		if (item_attr_get(item, attr_country_name, &result)) {
-			printf("%s 0x%x\n", result.u.str, item->id_lo);
+			printf("country %s 0x%x\n", result.u.str, item->id_lo);
 		}
+		printf("searching town\n");
 		search2=mapset_search_new(ms,item,&attr2,1);
 		i=0;
-		while((item=mapset_search_get_item(search2)) && i < 100) {
-			if (item_attr_get(item, attr_label, &result)) {
-				printf("%s\n", result.u.str);
+		while((item=mapset_search_get_item(search2))) {
+			if (!item_attr_get(item, attr_district_name, &result)) {
+				if (item_attr_get(item, attr_town_name, &result)) {
+					printf("town %s\n", result.u.str);
+					printf("searching street\n");
+					if (item_attr_get(item, attr_town_streets_item, &resulti))
+						search3=mapset_search_new(ms,resulti.u.item,&attr3,1);
+					else
+						search3=mapset_search_new(ms,item,&attr3,1);
+#if 1
+					while((item=mapset_search_get_item(search3))) {
+						printf("item\n");
+					}
+					mapset_search_destroy(search3);
+#endif
+				}
 			}
 			i++;
 		}
 		mapset_search_destroy(search2);
 		break;
 	}
-	mapset_search_destroy(search);
+	mapset_search_destroy(search1);
 	exit(0);
 #endif
 }

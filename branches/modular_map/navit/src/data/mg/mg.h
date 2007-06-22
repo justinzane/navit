@@ -38,6 +38,7 @@ struct town_priv {
 	int aidx;
 	enum attr_type attr_next;
 	char debug[256];
+	struct item town_attr_item;
 };
 
 struct poly_priv {
@@ -217,12 +218,15 @@ struct map_rect_priv {
 	struct street_priv street;
 	struct tree_search ts;
 	int search_country;
+	struct item search_item;
 	char *search_str;
 	int search_partial;
 	int search_linear;
 	unsigned char *search_p;
 	int search_blk_count;
-	struct block_offset *search_blk;
+	enum attr_type search_type;
+	struct block_offset *search_blk_off;
+	int search_block;
 	GHashTable *block_hash[file_end];
 };
 
@@ -238,7 +242,7 @@ int poly_get(struct map_rect_priv *mr, struct poly_priv *poly, struct item *item
 int poly_get_byid(struct map_rect_priv *mr, struct poly_priv *poly, int id_hi, int id_lo, struct item *item);
 int street_get(struct map_rect_priv *mr, struct street_priv *street, struct item *item);
 int street_get_byid(struct map_rect_priv *mr, struct street_priv *street, int id_hi, int id_lo, struct item *item);
-void tree_search_init(char *dirname, char *filename, struct tree_search *ts);
+void tree_search_init(char *dirname, char *filename, struct tree_search *ts, int offset);
 void tree_search_free(struct tree_search *ts);
 int tree_search_next(struct tree_search *ts, unsigned char **p, int dir);
 int tree_search_next_lin(struct tree_search *ts, unsigned char **p);

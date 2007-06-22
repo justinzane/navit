@@ -156,7 +156,7 @@ textfile_attr_rewind(void *priv_data)
 static void
 textfile_encode_attr(char *attr_val, enum attr_type attr_type, struct attr *attr)
 {
-	if (attr_type == attr_size) 
+	if (attr_type >= attr_type_int_begin && attr_type <= attr_type_int_end) 
 		attr->u.num=atoi(attr_val);
 	else
 		attr->u.str=attr_val;

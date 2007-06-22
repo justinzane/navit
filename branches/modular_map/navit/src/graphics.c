@@ -488,8 +488,9 @@ do_draw(struct displaylist *displaylist, struct transformation *t, GList *mapset
 					display_add(displaylist, &ritem, count, pnt, NULL);
 				}
 			}
-			attr.u.str=NULL;
-			if (conv && item_attr_get(item, attr_label, &attr) && attr.u.str && attr.u.str[0]) {
+			if (!item_attr_get(item, attr_label, &attr))
+				attr.u.str=NULL;
+			if (conv && attr.u.str && attr.u.str[0]) {
 				char *str=map_convert_string(m, attr.u.str);
 				display_add(displaylist, item, count, pnt, str);
 				map_convert_free(str);

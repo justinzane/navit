@@ -28,7 +28,7 @@ static int speed_list[]={
 	50, /* street_4_city */
 	80, /* highway_city */
 	60, /* street_1_land */
-	70, /* street_2_land */
+	65, /* street_2_land */
 	70, /* street_3_land */
 	80, /* street_4_land */
 	120, /* street_n_lanes */
@@ -679,7 +679,7 @@ route_path_new(struct route_graph *this, struct route_info *pos, struct route_in
 {
 	struct route_graph_point *start1=NULL,*start2=NULL,*start;
 	struct route_graph_segment *s=NULL;
-	int len=0;
+	int len=0,segs=0;
 	int ilen,hr,min,sec,time=0,seg_time,seg_len;
 	unsigned int val1=0xffffffff,val2=0xffffffff;
 	struct street_data *sd=pos->street;
@@ -715,6 +715,7 @@ route_path_new(struct route_graph *this, struct route_info *pos, struct route_in
 	ret->path_hash=item_hash_new();
 	dbg(0,"dir=%d\n", pos->dir);	
 	while ((s=start->seg)) {
+		segs++;
 #if 0
 		printf("start->value=%d 0x%x,0x%x\n", start->value, start->c.x, start->c.y);
 #endif
@@ -750,6 +751,7 @@ route_path_new(struct route_graph *this, struct route_info *pos, struct route_in
 	time+=route_time(&dst->street->item, ilen);
 	len+=ilen;
 
+	dbg(0, "%d segments\n", segs);
 	dbg(0, "len %5.3f\n", len/1000.0);
 	time/=10;
 	sec=time;

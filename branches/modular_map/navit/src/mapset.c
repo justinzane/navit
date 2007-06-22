@@ -82,7 +82,7 @@ struct mapset_search *
 mapset_search_new(struct mapset *ms, struct item *item, struct attr *search_attr, int partial)
 {
 	struct mapset_search *this;
-	dbg(0,"enter(%p,%p,%p,%d)\n", ms, item, search_attr, partial);
+	dbg(1,"enter(%p,%p,%p,%d)\n", ms, item, search_attr, partial);
 	this=g_new0(struct mapset_search,1);
 	this->map=ms->maps;
 	this->item=item;

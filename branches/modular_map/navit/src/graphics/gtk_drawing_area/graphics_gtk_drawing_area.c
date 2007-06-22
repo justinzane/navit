@@ -620,6 +620,35 @@ button_release(GtkWidget * widget, GdkEventButton * event, gpointer user_data)
 }
 
 static gint
+scroll(GtkWidget * widget, GdkEventScroll * event, gpointer user_data)
+{
+	struct graphics_priv *this=user_data;
+	struct point p;
+	int button;
+
+	p.x=event->x;
+	p.y=event->y;
+	if (this->button_callback) {
+		switch (event->direction) {
+		case GDK_SCROLL_UP:
+			button=4;
+			break;
+		case GDK_SCROLL_DOWN:
+			button=5;
+			break;
+		default:
+			button=-1;
+			break;
+		}
+		if (button != -1) {
+			(*this->button_callback)(this->button_callback_data, 1, button, &p);
+			(*this->button_callback)(this->button_callback_data, 0, button, &p);
+		}
+	}
+	return FALSE;
+}
+
+static gint
 motion_notify(GtkWidget * widget, GdkEventMotion * event, gpointer user_data)
 {
 	struct graphics_priv *this=user_data;
@@ -733,6 +762,7 @@ graphics_gtk_drawing_area_new(struct graphics_methods *meth)
 #endif
 	g_signal_connect(G_OBJECT(draw), "button_press_event", G_CALLBACK(button_press), this);
 	g_signal_connect(G_OBJECT(draw), "button_release_event", G_CALLBACK(button_release), this);
+	g_signal_connect(G_OBJECT(draw), "scroll_event", G_CALLBACK(scroll), this);
 	g_signal_connect(G_OBJECT(draw), "motion_notify_event", G_CALLBACK(motion_notify), this);
 	return this;
 }

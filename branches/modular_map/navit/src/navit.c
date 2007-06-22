@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <glib.h>
+#include "debug.h"
 #include "navit.h"
 #include "gui.h"
 #include "map.h"
@@ -31,6 +32,7 @@ struct navit {
 	struct statusbar *statusbar;
 	struct menu *menubar;
 	struct route *route;
+	struct navigation *navigation;
 	struct cursor *cursor;
 	struct speech *speech;
 	struct vehicle *vehicle;
@@ -91,8 +93,14 @@ navit_button(void *data, int pressed, int button, struct point *p)
 		} else
 			popup(this, button, p);
 	}
+	if (pressed && button == 2)
+		navit_set_center_screen(this, p);
 	if (pressed && button == 3)
 		popup(this, button, p);
+	if (pressed && button == 4)
+		navit_zoom_in(this, 2);
+	if (pressed && button == 5)
+		navit_zoom_out(this, 2);
 }
 
 void
@@ -219,6 +227,7 @@ navit_init(struct navit *this)
 
 		char buffer[2048];
 		this->route=route_new(ms);
+		this->navigation=navigation_new(ms);
 #if 1
 		this->track=track_new(ms);
 #endif
@@ -299,7 +308,7 @@ navit_cursor_update(struct cursor *cursor, void *this_p)
 			route_set_position(this->route, cursor_c);
 	}
 	if (this->route && this->update_curr == 1)
-		navigation_path_description(this->route, dir);
+		navigation_update(this->navigation, this->route);
 	if (this->cursor_flag) {
 		if (this->follow_curr == 1)
 			navit_set_center(this, cursor_c);
@@ -312,6 +321,18 @@ navit_cursor_update(struct cursor *cursor, void *this_p)
 		this->update_curr--;
 	else
 		this->update_curr=this->update;
+}
+
+void
+navit_set_position(struct navit *this, struct coord *c)
+{
+	if (this->route) {
+		route_set_position(this->route, c);
+		if (this->navigation) {
+			navigation_update(this->navigation, this->route);
+		}
+	}
+	navit_draw(this);
 }
 
 void

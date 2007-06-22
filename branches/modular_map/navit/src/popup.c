@@ -86,20 +86,8 @@ popup_set_position(struct menu *menu, void *data1, void *data2)
 {
 	struct navit *nav=data1;
 	struct coord *c=data2;
-	struct route *route;
 	dbg(0,"%p %p\n", nav, c);
-	route=navit_get_route(nav);
-	if (route) {
-		route_set_position(route, c);
-		navit_draw(nav);
-	}
-#if 0
-	struct popup_item *ref=param;
-	struct popup *popup=ref->param;
-	printf("Position %s\n", ref->text);
-	g_assert(popup->co->vehicle != NULL);
-	vehicle_set_position(popup->co->vehicle, &popup->c);	
-#endif
+	navit_set_position(nav, c);
 }
 
 #if 0
