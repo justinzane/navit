@@ -76,10 +76,10 @@ gui_gtk_set_graphics(struct gui_priv *this, struct graphics *gra)
 		return 1;
 	GTK_WIDGET_SET_FLAGS (graphics, GTK_CAN_FOCUS);
 	gtk_widget_set_sensitive(graphics, TRUE);
-	gtk_widget_grab_focus(graphics);
 	g_signal_connect(G_OBJECT(graphics), "key-press-event", G_CALLBACK(keypress), this);
 	gtk_box_pack_end(GTK_BOX(this->vbox), graphics, TRUE, TRUE, 0);
 	gtk_widget_show_all(graphics);
+	gtk_widget_grab_focus(graphics);
 
 	return 0;
 }
