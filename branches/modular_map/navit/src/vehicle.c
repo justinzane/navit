@@ -31,6 +31,7 @@ struct callback {
 };
 
 struct vehicle {
+	char *url;
 	GIOChannel *iochan;
 	guint watch;
 	int is_file;
@@ -265,6 +266,88 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 	}
 }
 
+static void
+vehicle_close(struct vehicle *this)
+{
+	GError *error=NULL;
+
+
+	g_io_channel_shutdown(this->iochan,0,&error);
+#ifdef HAVE_LIBGPS
+	if (this->gps)
+		gps_close(this->gps);
+#endif
+	if (this->file)
+		pclose(this->file);
+	if (this->fd != -1)
+		close(this->fd);
+}
+
+static int
+vehicle_open(struct vehicle *this)
+{
+	struct termios tio;
+	struct stat st;
+	int fd;
+#ifdef HAVE_LIBGPS
+	struct gps_data_t *gps=NULL;
+#endif
+	if (! strncmp(this->url,"file:",5)) {
+		fd=open(this->url+5,O_RDONLY|O_NDELAY);
+		if (fd < 0) {
+			g_warning("Failed to open %s", this->url);
+			return 0;
+		}
+		stat(this->url+5, &st);
+		if (S_ISREG (st.st_mode)) {
+			this->is_file=1;
+		} else {
+			tcgetattr(fd, &tio);
+			cfmakeraw(&tio);
+			cfsetispeed(&tio, B4800);
+			cfsetospeed(&tio, B4800);
+			tio.c_cc[VMIN]=16;
+			tio.c_cc[VTIME]=1;
+			tcsetattr(fd, TCSANOW, &tio);
+		}
+		this->fd=fd;
+	} else if (! strncmp(this->url,"pipe:",5)) {
+		this->file=popen(this->url+5, "r");
+		this->is_pipe=1;
+		if (! this->file) {
+			g_warning("Failed to open %s", this->url);
+			return 0;
+		}
+		fd=fileno(this->file);
+	} else if (! strncmp(this->url,"gpsd://",7)) {
+#ifdef HAVE_LIBGPS
+		url_=g_strdup(url);
+		colon=index(url_+7,':');
+		if (colon) {
+			*colon=0;
+			gps=gps_open(url_+7,colon+1);
+		} else
+			gps=gps_open(url+7,NULL);
+		g_free(url_);
+		if (! gps) {
+			g_warning("Failed to connect to %s", url);
+			return 0;
+		}
+		gps_query(gps, "w+x\n");
+		gps_set_raw_hook(gps, vehicle_gps_callback);
+		fd=gps->gps_fd;
+		this->gps=gps;
+#else
+		g_warning("No support for gpsd compiled in\n");
+		return 0;
+#endif
+	}
+	this->iochan=g_io_channel_unix_new(fd);
+	enable_watch(this);
+	return 1;
+}
+
+
 static gboolean
 vehicle_track(GIOChannel *iochan, GIOCondition condition, gpointer t)
 {
@@ -273,7 +356,7 @@ vehicle_track(GIOChannel *iochan, GIOCondition condition, gpointer t)
 	char *str,*tok;
 	gsize size;
 
-	dbg(1,"enter\n");
+	dbg(1,"enter condition=%d\n", condition);
 	if (condition == G_IO_IN) {
 #ifdef HAVE_LIBGPS
 		if (this->gps) {
@@ -283,7 +366,12 @@ vehicle_track(GIOChannel *iochan, GIOCondition condition, gpointer t)
 #else
 		{
 #endif
-			g_io_channel_read_chars(iochan, this->buffer+this->buffer_pos, BUFFER_SIZE-this->buffer_pos-1, &size, &error);
+			size=read(g_io_channel_unix_get_fd(iochan), this->buffer+this->buffer_pos, BUFFER_SIZE-this->buffer_pos-1);
+			if (size <= 0) {
+				vehicle_close(this);
+				vehicle_open(this);
+				return TRUE;
+			}
 			this->buffer_pos+=size;
 			this->buffer[this->buffer_pos]='\0';
 			dbg(1,"size=%d pos=%d buffer='%s'\n", size, this->buffer_pos, this->buffer);
@@ -382,73 +470,14 @@ struct vehicle *
 vehicle_new(const char *url)
 {
 	struct vehicle *this;
-	GError *error=NULL;
-	int fd=-1;
-	char *url_,*colon;
-#ifdef HAVE_LIBGPS
-	struct gps_data_t *gps=NULL;
-#endif
-	struct termios tio;
-
 	this=g_new0(struct vehicle,1);
+	this->url=g_strdup(url);
 	this->fd=-1;
 
 	if (! vfd) {
 		vfd=open("vlog.txt", O_RDWR|O_APPEND|O_CREAT, 0644);
 	}
-	if (! strncmp(url,"file:",5)) {
-		struct stat st;
-		fd=open(url+5,O_RDONLY|O_NDELAY);
-		if (fd < 0) {
-			g_warning("Failed to open %s", url);
-			return NULL;
-		}
-		stat(url+5, &st);
-		if (S_ISREG (st.st_mode)) {
-			this->is_file=1;
-		} else {
-			tcgetattr(fd, &tio);
-			cfmakeraw(&tio);
-			cfsetispeed(&tio, B4800);
-			cfsetospeed(&tio, B4800);
-			tio.c_cc[VMIN]=16;
-			tio.c_cc[VTIME]=1;
-			tcsetattr(fd, TCSANOW, &tio);
-		}
-		this->fd=fd;
-	} else if (! strncmp(url,"pipe:",5)) {
-		this->file=popen(url+5, "r");
-		this->is_pipe=1;
-		if (! this->file) {
-			g_warning("Failed to open %s", url);
-			return NULL;
-		}
-		fd=fileno(this->file);
-	} else if (! strncmp(url,"gpsd://",7)) {
-#ifdef HAVE_LIBGPS
-		url_=g_strdup(url);
-		colon=index(url_+7,':');
-		if (colon) {
-			*colon=0;
-			gps=gps_open(url_+7,colon+1);
-		} else
-			gps=gps_open(url+7,NULL);
-		g_free(url_);
-		if (! gps) {
-			g_warning("Failed to connect to %s", url);
-			return NULL;
-		}
-		gps_query(gps, "w+x\n");
-		gps_set_raw_hook(gps, vehicle_gps_callback);
-		fd=gps->gps_fd;
-		this->gps=gps;
-#else
-		g_warning("No support for gpsd compiled in\n");
-		return NULL;
-#endif
-	}
-	this->iochan=g_io_channel_unix_new(fd);
-	enable_watch(this);
+	vehicle_open(this);
 	this->current_pos.x=0x130000;
 	this->current_pos.y=0x600000;
 	this->curr.x=this->current_pos.x;
@@ -479,21 +508,11 @@ vehicle_callback_unregister(struct vehicle *this, void *handle)
 	g_list_remove(this->callbacks, handle);
 }
 
+
 void
 vehicle_destroy(struct vehicle *this)
 {
-	GError *error=NULL;
-
-
-	g_io_channel_shutdown(this->iochan,0,&error);
-#ifdef HAVE_LIBGPS
-	if (this->gps)
-		gps_close(this->gps);
-#endif
-	if (this->file)
-		pclose(this->file);
-	if (this->fd != -1)
-		close(this->fd);
-
+	vehicle_close(this);
+	g_free(this->url);
 	g_free(this);
 }
