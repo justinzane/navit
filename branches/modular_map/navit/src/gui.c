@@ -88,3 +88,10 @@ gui_set_graphics(struct gui *this, struct graphics *gra)
 	return this->meth.set_graphics(this->priv, gra);
 }
 
+int
+gui_run_main_loop(struct gui *this)
+{
+	if (! this->meth.run_main_loop)
+		return 1;
+	return this->meth.run_main_loop(this->priv);
+}

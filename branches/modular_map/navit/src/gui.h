@@ -10,6 +10,7 @@ struct gui_methods {
 	struct statusbar_priv *(*statusbar_new)(struct gui_priv *priv, struct statusbar_methods *meth);
 	struct menu_priv *(*popup_new)(struct gui_priv *priv, struct menu_methods *meth);
 	int (*set_graphics)(struct gui_priv *priv, struct graphics *gra);
+	int (*run_main_loop)(struct gui_priv *priv);
 };
 
 

@@ -205,60 +205,59 @@ navit_init(struct navit *this)
 	struct mapset_handle *handle;
 	struct mapset *ms=this->mapsets->data;
 
-	if (! this->menubar)
-		return;
-	mapmen=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
-	if (!mapmen)
-		return;
-	// menu_add(map, "Test", menu_type_menu, NULL, NULL);
-	men=menu_add(mapmen, "Layout", menu_type_submenu, NULL, NULL, NULL);
-	menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
-	men=menu_add(mapmen, "Projection", menu_type_submenu, NULL, NULL, NULL);
-	menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, (void *)projection_mg);
-	menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, (void *)projection_garmin);
-	handle=mapset_open(ms);
-	while ((map=mapset_next(handle,0))) {
-		char *s=g_strdup_printf("%s:%s", map_get_type(map), map_get_filename(map));
-		men2=menu_add(mapmen, s, menu_type_toggle, navit_map_toggle, this, map);
-		menu_set_toggle(men2, map_get_active(map));
-		g_free(s);
-	}
-	mapset_close(handle);
-	{
-		struct mapset *ms=this->mapsets->data;
-		struct coord c;
-		int pos,flag=0;
-		FILE *f;
-
-		char buffer[2048];
-		this->route=route_new(ms);
-		this->navigation=navigation_new(ms);
-#if 1
-		this->track=track_new(ms);
-#endif
-		men=menu_add(this->menubar, "Route", menu_type_submenu, NULL, NULL, NULL);
-		men=menu_add(men, "Former Destinations", menu_type_submenu, NULL, NULL, NULL);
-		f=fopen("destination.txt", "r");
-		if (f) {
-			while (! feof(f) && fgets(buffer, 2048, f)) {
-				if ((pos=coord_parse(buffer, projection_mg, &c))) {
-					if (buffer[pos] && buffer[pos] != '\n' ) {
-						struct coord *cn=g_new(struct coord, 1);
-						*cn=c;
-						buffer[strlen(buffer)-1]='\0';
-						menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination, this, cn);
-					}
-					flag=1;
-				}
-			}
-			fclose(f);
-			if (flag)
-				route_set_destination(this->route, &c);
+	if (this->menubar) {
+		mapmen=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
+		// menu_add(map, "Test", menu_type_menu, NULL, NULL);
+		men=menu_add(mapmen, "Layout", menu_type_submenu, NULL, NULL, NULL);
+		menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
+		men=menu_add(mapmen, "Projection", menu_type_submenu, NULL, NULL, NULL);
+		menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, (void *)projection_mg);
+		menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, (void *)projection_garmin);
+		handle=mapset_open(ms);
+		while ((map=mapset_next(handle,0))) {
+			char *s=g_strdup_printf("%s:%s", map_get_type(map), map_get_filename(map));
+			men2=menu_add(mapmen, s, menu_type_toggle, navit_map_toggle, this, map);
+			menu_set_toggle(men2, map_get_active(map));
+			g_free(s);
 		}
-	}
-	global_navit=this;
+		mapset_close(handle);
+		{
+			struct mapset *ms=this->mapsets->data;
+			struct coord c;
+			int pos,flag=0;
+			FILE *f;
 
-	destination_address_tst(this);
+			char buffer[2048];
+			this->route=route_new(ms);
+			this->navigation=navigation_new(ms);
+	#if 1
+			this->track=track_new(ms);
+	#endif
+			men=menu_add(this->menubar, "Route", menu_type_submenu, NULL, NULL, NULL);
+			men=menu_add(men, "Former Destinations", menu_type_submenu, NULL, NULL, NULL);
+			f=fopen("destination.txt", "r");
+			if (f) {
+				while (! feof(f) && fgets(buffer, 2048, f)) {
+					if ((pos=coord_parse(buffer, projection_mg, &c))) {
+						if (buffer[pos] && buffer[pos] != '\n' ) {
+							struct coord *cn=g_new(struct coord, 1);
+							*cn=c;
+							buffer[strlen(buffer)-1]='\0';
+							menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination, this, cn);
+						}
+						flag=1;
+					}
+				}
+				fclose(f);
+				if (flag)
+					route_set_destination(this->route, &c);
+			}
+		}
+		global_navit=this;
+
+		destination_address_tst(this);
+	}
+	gui_run_main_loop(this->gui);
 }
 
 void
