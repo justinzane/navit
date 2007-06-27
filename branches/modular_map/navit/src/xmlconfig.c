@@ -400,6 +400,8 @@ start_element (GMarkupParseContext *context,
 	*parent=new;
 	if (!find_boolean(new, "enabled", 1, 0))
 		return;
+	if (new->parent && !new->parent->element_object)
+		return;
 	if (!func->func(new)) {
 		return;
 	}
@@ -434,7 +436,7 @@ end_element (GMarkupParseContext *context,
 	struct xmlstate *curr, **state = user_data;
 
 	curr=*state;
-	if(!g_ascii_strcasecmp("navit", element_name)) 
+	if(!g_ascii_strcasecmp("navit", element_name) && curr->element_object) 
 		navit_init(curr->element_object);
 	*state=curr->parent;
 	g_free(curr);
