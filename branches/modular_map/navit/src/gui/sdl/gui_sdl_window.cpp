@@ -272,7 +272,6 @@ bool ShowKeyboard(const CEGUI::EventArgs& event){
 void Add_KeyBoard_key(char * key,int x,int y,int w){
 	
 	using namespace CEGUI;
-	printf("adding key %s\n",key);
 	char button_name [2];
 	sprintf(button_name,"%s",key);
 	FrameWindow* wnd = (FrameWindow*)WindowManager::getSingleton().createWindow("TaharezLook/Button", button_name);
