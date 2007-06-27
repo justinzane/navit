@@ -34,75 +34,75 @@ struct displaylist {
 struct graphics *
 graphics_new(const char *type)
 {
-	struct graphics *this;
+	struct graphics *this_;
 	struct graphics_priv * (*new)(struct graphics_methods *meth);
 
 	new=plugin_get_graphics_type(type);
 	if (! new)
 		return NULL;	
-	this=g_new0(struct graphics, 1);
-	this->priv=(*new)(&this->meth);
-	return this;
+	this_=g_new0(struct graphics, 1);
+	this_->priv=(*new)(&this_->meth);
+	return this_;
 }
 
 
 void
-graphics_init(struct graphics *this)
+graphics_init(struct graphics *this_)
 {
-	this->gc[0]=graphics_gc_new(this);
-	graphics_gc_set_background(this->gc[0], &(struct color) { 0xffff, 0xefef, 0xb7b7 });
-	graphics_gc_set_foreground(this->gc[0], &(struct color) { 0xffff, 0xefef, 0xb7b7 });
-	this->gc[1]=graphics_gc_new(this);
-	graphics_gc_set_background(this->gc[1], &(struct color) { 0x0000, 0x0000, 0x0000 });
-	graphics_gc_set_foreground(this->gc[1], &(struct color) { 0xffff, 0xffff, 0xffff });
-	this->gc[2]=graphics_gc_new(this);
-	graphics_gc_set_background(this->gc[2], &(struct color) { 0xffff, 0xffff, 0xffff });
-	graphics_gc_set_foreground(this->gc[2], &(struct color) { 0xffff, 0xffff, 0xffff });
-	this->meth.background_gc(this->priv, this->gc[0]->priv);
+	this_->gc[0]=graphics_gc_new(this_);
+	graphics_gc_set_background(this_->gc[0], &(struct color) { 0xffff, 0xefef, 0xb7b7 });
+	graphics_gc_set_foreground(this_->gc[0], &(struct color) { 0xffff, 0xefef, 0xb7b7 });
+	this_->gc[1]=graphics_gc_new(this_);
+	graphics_gc_set_background(this_->gc[1], &(struct color) { 0x0000, 0x0000, 0x0000 });
+	graphics_gc_set_foreground(this_->gc[1], &(struct color) { 0xffff, 0xffff, 0xffff });
+	this_->gc[2]=graphics_gc_new(this_);
+	graphics_gc_set_background(this_->gc[2], &(struct color) { 0xffff, 0xffff, 0xffff });
+	graphics_gc_set_foreground(this_->gc[2], &(struct color) { 0xffff, 0xffff, 0xffff });
+	this_->meth.background_gc(this_->priv, this_->gc[0]->priv);
 }
 
 void *
-graphics_get_data(struct graphics *this, char *type)
+graphics_get_data(struct graphics *this_, char *type)
 {
-	return (this->meth.get_data(this->priv, type));
+	return (this_->meth.get_data(this_->priv, type));
 }
 
 void
-graphics_register_resize_callback(struct graphics *this, void (*callback)(void *data, int w, int h), void *data)
+graphics_register_resize_callback(struct graphics *this_, void (*callback)(void *data, int w, int h), void *data)
 {
-	this->meth.register_resize_callback(this->priv, callback, data);
+	this_->meth.register_resize_callback(this_->priv, callback, data);
 }
 
 void
-graphics_register_button_callback(struct graphics *this, void (*callback)(void *data, int pressed, int button, struct point *p), void *data)
+graphics_register_button_callback(struct graphics *this_, void (*callback)(void *data, int pressed, int button, struct point *p), void *data)
 {
-	this->meth.register_button_callback(this->priv, callback, data);
+	this_->meth.register_button_callback(this_->priv, callback, data);
 }
 
 void
-graphics_register_motion_callback(struct graphics *this, void (*callback)(void *data, struct point *p), void *data)
+graphics_register_motion_callback(struct graphics *this_, void (*callback)(void *data, struct point *p), void *data)
 {
-	this->meth.register_motion_callback(this->priv, callback, data);
+	this_->meth.register_motion_callback(this_->priv, callback, data);
 }
 
 struct graphics_font *
 graphics_font_new(struct graphics *gra, int size)
 {
-	struct graphics_font *this;
+	struct graphics_font *this_;
 
-	this=g_new0(struct graphics_font,1);
-	this->priv=gra->meth.font_new(gra->priv, &this->meth, size);
-	return this;
+	this_=g_new0(struct graphics_font,1);
+	this_->priv=gra->meth.font_new(gra->priv, &this_->meth, size);
+	return this_;
 }
 
 struct graphics_gc *
 graphics_gc_new(struct graphics *gra)
 {
-	struct graphics_gc *this;
+	struct graphics_gc *this_;
 
-	this=g_new0(struct graphics_gc,1);
-	this->priv=gra->meth.gc_new(gra->priv, &this->meth);
-	return this;
+	this_=g_new0(struct graphics_gc,1);
+	this_->priv=gra->meth.gc_new(gra->priv, &this_->meth);
+	return this_;
 }
 
 void
@@ -126,35 +126,35 @@ graphics_gc_set_linewidth(struct graphics_gc *gc, int width)
 struct graphics_image *
 graphics_image_new(struct graphics *gra, char *path)
 {
-	struct graphics_image *this;
+	struct graphics_image *this_;
 
-	this=g_new0(struct graphics_image,1);
-	this->priv=gra->meth.image_new(gra->priv, &this->meth, path, &this->width, &this->height);
-	return this;
+	this_=g_new0(struct graphics_image,1);
+	this_->priv=gra->meth.image_new(gra->priv, &this_->meth, path, &this_->width, &this_->height);
+	return this_;
 }
 
 void
-graphics_draw_restore(struct graphics *this, struct point *p, int w, int h)
+graphics_draw_restore(struct graphics *this_, struct point *p, int w, int h)
 {
-	this->meth.draw_restore(this->priv, p, w, h);
+	this_->meth.draw_restore(this_->priv, p, w, h);
 }
 
 void
-graphics_draw_mode(struct graphics *this, enum draw_mode_num mode)
+graphics_draw_mode(struct graphics *this_, enum draw_mode_num mode)
 {
-	this->meth.draw_mode(this->priv, mode);
+	this_->meth.draw_mode(this_->priv, mode);
 }
 
 void
-graphics_draw_lines(struct graphics *this, struct graphics_gc *gc, struct point *p, int count)
+graphics_draw_lines(struct graphics *this_, struct graphics_gc *gc, struct point *p, int count)
 {
-	this->meth.draw_lines(this->priv, gc->priv, p, count);
+	this_->meth.draw_lines(this_->priv, gc->priv, p, count);
 }
 
 void
-graphics_draw_circle(struct graphics *this, struct graphics_gc *gc, struct point *p, int r)
+graphics_draw_circle(struct graphics *this_, struct graphics_gc *gc, struct point *p, int r)
 {
-	this->meth.draw_circle(this->priv, gc->priv, p, r);
+	this_->meth.draw_circle(this_->priv, gc->priv, p, r);
 }
 
 
@@ -503,9 +503,9 @@ do_draw(struct displaylist *displaylist, struct transformation *t, GList *mapset
 }
 
 int
-graphics_ready(struct graphics *this)
+graphics_ready(struct graphics *this_)
 {
-	return this->ready;
+	return this_->ready;
 }
 
 

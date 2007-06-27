@@ -30,4 +30,4 @@ struct statusbar *gui_statusbar_new(struct gui *gui);
 struct menu *gui_menubar_new(struct gui *gui);
 struct menu *gui_toolbar_new(struct gui *gui);
 struct menu *gui_popup_new(struct gui *gui);
-int gui_set_graphics(struct gui *this, struct graphics *gra);
+int gui_set_graphics(struct gui *this_, struct graphics *gra);

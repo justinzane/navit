@@ -1,4 +1,9 @@
 #ifndef PLUGIN_C
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct plugin {
 };
 
@@ -63,12 +68,12 @@ GList *plugin_types[plugin_type_last];
 struct type##_priv; \
 struct type##_methods; \
 void \
-plugin_register_##type##_type(const char *name, struct type##_priv *(*new) newargs) \
+plugin_register_##type##_type(const char *name, struct type##_priv *(*new_) newargs) \
 { \
         struct name_val *nv; \
         nv=g_new(struct name_val, 1); \
         nv->name=g_strdup(name); \
-	nv->val=new; \
+	nv->val=new_; \
 	plugin_types[plugin_type_##type]=g_list_append(plugin_types[plugin_type_##type], nv); \
 } \
  \
@@ -94,9 +99,12 @@ void plugin_call_##name(t1 p1,t2 p2,t3 p3,t4 p4);
 #define PLUGIN_TYPE(type,newargs) \
 struct type##_priv; \
 struct type##_methods; \
-void plugin_register_##type##_type(const char *name, struct type##_priv *(*new) newargs); \
+void plugin_register_##type##_type(const char *name, struct type##_priv *(*new_) newargs); \
 void *plugin_get_##type##_type(const char *name);
 
 #endif
 
 #include "plugin_def.h"
+#ifdef __cplusplus
+}
+#endif

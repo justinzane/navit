@@ -49,148 +49,148 @@ struct navit {
 };
 
 void
-navit_add_mapset(struct navit *this, struct mapset *ms)
+navit_add_mapset(struct navit *this_, struct mapset *ms)
 {
-	this->mapsets = g_list_append(this->mapsets, ms);
+	this_->mapsets = g_list_append(this_->mapsets, ms);
 }
 
 struct mapset *
-navit_get_mapset(struct navit *this)
+navit_get_mapset(struct navit *this_)
 {
-	return this->mapsets->data;
+	return this_->mapsets->data;
 }
 
 void
-navit_add_layout(struct navit *this, struct layout *lay)
+navit_add_layout(struct navit *this_, struct layout *lay)
 {
-	this->layouts = g_list_append(this->layouts, lay);
+	this_->layouts = g_list_append(this_->layouts, lay);
 }
 
 void
-navit_draw(struct navit *this)
+navit_draw(struct navit *this_)
 {
-	transform_setup_source_rect(this->trans);
-	graphics_draw(this->gra, this->displaylist, this->mapsets, this->trans, this->layouts, this->route);
-	this->ready=1;
+	transform_setup_source_rect(this_->trans);
+	graphics_draw(this_->gra, this_->displaylist, this_->mapsets, this_->trans, this_->layouts, this_->route);
+	this_->ready=1;
 }
 
 static void
 navit_resize(void *data, int w, int h)
 {
-	struct navit *this=data;
-	transform_set_size(this->trans, w, h);
-	navit_draw(this);
+	struct navit *this_=data;
+	transform_set_size(this_->trans, w, h);
+	navit_draw(this_);
 }
 
 static void
 navit_button(void *data, int pressed, int button, struct point *p)
 {
-	struct navit *this=data;
+	struct navit *this_=data;
 	if (pressed && button == 1) {
 		int border=16;
-		if (! transform_within_border(this->trans, p, border)) {
-			navit_set_center_screen(this, p);
+		if (! transform_within_border(this_->trans, p, border)) {
+			navit_set_center_screen(this_, p);
 		} else
-			popup(this, button, p);
+			popup(this_, button, p);
 	}
 	if (pressed && button == 2)
-		navit_set_center_screen(this, p);
+		navit_set_center_screen(this_, p);
 	if (pressed && button == 3)
-		popup(this, button, p);
+		popup(this_, button, p);
 	if (pressed && button == 4)
-		navit_zoom_in(this, 2);
+		navit_zoom_in(this_, 2);
 	if (pressed && button == 5)
-		navit_zoom_out(this, 2);
+		navit_zoom_out(this_, 2);
 }
 
 void
-navit_zoom_in(struct navit *this, int factor)
+navit_zoom_in(struct navit *this_, int factor)
 {
-	long scale=transform_get_scale(this->trans)/factor;
+	long scale=transform_get_scale(this_->trans)/factor;
 	if (scale < 1)
 		scale=1;
-	transform_set_scale(this->trans, scale);
-	navit_draw(this);
+	transform_set_scale(this_->trans, scale);
+	navit_draw(this_);
 }
 
 void
-navit_zoom_out(struct navit *this, int factor)
+navit_zoom_out(struct navit *this_, int factor)
 {
-	long scale=transform_get_scale(this->trans)*factor;
-	transform_set_scale(this->trans,scale);
-	navit_draw(this);
+	long scale=transform_get_scale(this_->trans)*factor;
+	transform_set_scale(this_->trans,scale);
+	navit_draw(this_);
 }
 
 struct navit *
 navit_new(const char *ui, const char *graphics, struct coord *center, enum projection pro, int zoom)
 {
-	struct navit *this=g_new0(struct navit, 1);
+	struct navit *this_=g_new0(struct navit, 1);
 
-	this->cursor_flag=1;
-	this->trans=transform_new();
-	transform_set_projection(this->trans, pro);
+	this_->cursor_flag=1;
+	this_->trans=transform_new();
+	transform_set_projection(this_->trans, pro);
 
-	transform_setup(this->trans, center, zoom, 0);
-	/* this->flags=g_new0(struct map_flags, 1); */
-	this->displaylist=graphics_displaylist_new();
-	this->gui=gui_new(this, ui, 792, 547);
-	if (! this->gui) {
+	transform_setup(this_->trans, center, zoom, 0);
+	/* this_->flags=g_new0(struct map_flags, 1); */
+	this_->displaylist=graphics_displaylist_new();
+	this_->gui=gui_new(this_, ui, 792, 547);
+	if (! this_->gui) {
 		g_warning("failed to create gui '%s'", ui);
-		navit_destroy(this);
+		navit_destroy(this_);
 		return NULL;
 	}
-	this->menubar=gui_menubar_new(this->gui);
-	this->toolbar=gui_toolbar_new(this->gui);
-	this->statusbar=gui_statusbar_new(this->gui);
-	this->gra=graphics_new(graphics);
-	if (! this->gra) {
+	this_->menubar=gui_menubar_new(this_->gui);
+	this_->toolbar=gui_toolbar_new(this_->gui);
+	this_->statusbar=gui_statusbar_new(this_->gui);
+	this_->gra=graphics_new(graphics);
+	if (! this_->gra) {
 		g_warning("failed to create graphics '%s'", graphics);
-		navit_destroy(this);
+		navit_destroy(this_);
 		return NULL;
 	}
-	graphics_register_resize_callback(this->gra, navit_resize, this);
-	graphics_register_button_callback(this->gra, navit_button, this);
-	if (gui_set_graphics(this->gui, this->gra)) {
+	graphics_register_resize_callback(this_->gra, navit_resize, this_);
+	graphics_register_button_callback(this_->gra, navit_button, this_);
+	if (gui_set_graphics(this_->gui, this_->gra)) {
 		g_warning("failed to connect graphics '%s' to gui '%s'\n", graphics, ui);
-		navit_destroy(this);
+		navit_destroy(this_);
 		return NULL;
 	}
-	graphics_init(this->gra);
-	return this;
+	graphics_init(this_->gra);
+	return this_;
 }
 
 static void
-navit_map_toggle(struct menu *menu, void *this_p, void *map_p)
+navit_map_toggle(struct menu *menu, void *this__p, void *map_p)
 {
 	if ((menu_get_toggle(menu) != 0) != (map_get_active(map_p) != 0)) {
 		map_set_active(map_p, (menu_get_toggle(menu) != 0));
-		navit_draw(this_p);
+		navit_draw(this__p);
 	}
 }
 
 static void
-navit_projection_set(struct menu *menu, void *this_p, void *pro_p)
+navit_projection_set(struct menu *menu, void *this__p, void *pro_p)
 {
-	struct navit *this=this_p;
+	struct navit *this_=this__p;
 	enum projection pro=(enum projection) pro_p;
 	struct coord_geo g;
 	struct coord *c;
 
-	c=transform_center(this->trans);
-	transform_to_geo(transform_get_projection(this->trans), c, &g);
-	transform_set_projection(this->trans, pro);
+	c=transform_center(this_->trans);
+	transform_to_geo(transform_get_projection(this_->trans), c, &g);
+	transform_set_projection(this_->trans, pro);
 	transform_from_geo(pro, &g, c);
-	navit_draw(this);
+	navit_draw(this_);
 }
 
 static void
-navit_set_destination(struct menu *menu, void *this_p, void *c_p)
+navit_set_destination(struct menu *menu, void *this__p, void *c_p)
 {
-	struct navit *this=this_p;
+	struct navit *this_=this__p;
 	struct coord *c=c_p;
-	if (this->route) {
-                route_set_destination(this->route, c);
-                navit_draw(this);
+	if (this_->route) {
+                route_set_destination(this_->route, c);
+                navit_draw(this_);
         }
 
 }
@@ -198,42 +198,42 @@ navit_set_destination(struct menu *menu, void *this_p, void *c_p)
 struct navit *global_navit;
 
 void
-navit_init(struct navit *this)
+navit_init(struct navit *this_)
 {
 	struct menu *mapmen,*men,*men2;
 	struct map *map;
 	struct mapset_handle *handle;
-	struct mapset *ms=this->mapsets->data;
+	struct mapset *ms=this_->mapsets->data;
 
-	if (this->menubar) {
-		mapmen=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
+	if (this_->menubar) {
+		mapmen=menu_add(this_->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
 		// menu_add(map, "Test", menu_type_menu, NULL, NULL);
 		men=menu_add(mapmen, "Layout", menu_type_submenu, NULL, NULL, NULL);
 		menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);
 		men=menu_add(mapmen, "Projection", menu_type_submenu, NULL, NULL, NULL);
-		menu_add(men, "M&G", menu_type_menu, navit_projection_set, this, (void *)projection_mg);
-		menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this, (void *)projection_garmin);
+		menu_add(men, "M&G", menu_type_menu, navit_projection_set, this_, (void *)projection_mg);
+		menu_add(men, "Garmin", menu_type_menu, navit_projection_set, this_, (void *)projection_garmin);
 		handle=mapset_open(ms);
 		while ((map=mapset_next(handle,0))) {
 			char *s=g_strdup_printf("%s:%s", map_get_type(map), map_get_filename(map));
-			men2=menu_add(mapmen, s, menu_type_toggle, navit_map_toggle, this, map);
+			men2=menu_add(mapmen, s, menu_type_toggle, navit_map_toggle, this_, map);
 			menu_set_toggle(men2, map_get_active(map));
 			g_free(s);
 		}
 		mapset_close(handle);
 		{
-			struct mapset *ms=this->mapsets->data;
+			struct mapset *ms=this_->mapsets->data;
 			struct coord c;
 			int pos,flag=0;
 			FILE *f;
 
 			char buffer[2048];
-			this->route=route_new(ms);
-			this->navigation=navigation_new(ms);
+			this_->route=route_new(ms);
+			this_->navigation=navigation_new(ms);
 	#if 1
-			this->track=track_new(ms);
+			this_->track=track_new(ms);
 	#endif
-			men=menu_add(this->menubar, "Route", menu_type_submenu, NULL, NULL, NULL);
+			men=menu_add(this_->menubar, "Route", menu_type_submenu, NULL, NULL, NULL);
 			men=menu_add(men, "Former Destinations", menu_type_submenu, NULL, NULL, NULL);
 			f=fopen("destination.txt", "r");
 			if (f) {
@@ -243,141 +243,141 @@ navit_init(struct navit *this)
 							struct coord *cn=g_new(struct coord, 1);
 							*cn=c;
 							buffer[strlen(buffer)-1]='\0';
-							menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination, this, cn);
+							menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination, this_, cn);
 						}
 						flag=1;
 					}
 				}
 				fclose(f);
 				if (flag)
-					route_set_destination(this->route, &c);
+					route_set_destination(this_->route, &c);
 			}
 		}
-		global_navit=this;
+		global_navit=this_;
 
-		destination_address_tst(this);
+		destination_address_tst(this_);
 	}
-	gui_run_main_loop(this->gui);
+	gui_run_main_loop(this_->gui);
 }
 
 void
-navit_set_center(struct navit *this, struct coord *center)
+navit_set_center(struct navit *this_, struct coord *center)
 {
-	struct coord *c=transform_center(this->trans);
+	struct coord *c=transform_center(this_->trans);
 	*c=*center;
-	if (this->ready)
-		navit_draw(this);
+	if (this_->ready)
+		navit_draw(this_);
 }
 
 void
-navit_set_center_screen(struct navit *this, struct point *p)
+navit_set_center_screen(struct navit *this_, struct point *p)
 {
 	struct coord c;
-	transform_reverse(this->trans, p, &c);
-	navit_set_center(this, &c);
+	transform_reverse(this_->trans, p, &c);
+	navit_set_center(this_, &c);
 }
 
 void
-navit_toggle_cursor(struct navit *this)
+navit_toggle_cursor(struct navit *this_)
 {
-	this->cursor_flag=1-this->cursor_flag;
+	this_->cursor_flag=1-this_->cursor_flag;
 }
 
 static void
-navit_cursor_offscreen(struct cursor *cursor, void *this_p)
+navit_cursor_offscreen(struct cursor *cursor, void *this__p)
 {
-	struct navit *this=this_p;
+	struct navit *this_=this__p;
 
-	if (this->cursor_flag)
-		navit_set_center(this, cursor_pos_get(cursor));
+	if (this_->cursor_flag)
+		navit_set_center(this_, cursor_pos_get(cursor));
 }
 
 static void
-navit_cursor_update(struct cursor *cursor, void *this_p)
+navit_cursor_update(struct cursor *cursor, void *this__p)
 {
-	struct navit *this=this_p;
+	struct navit *this_=this__p;
 	struct coord *cursor_c=cursor_pos_get(cursor);
 	int dir=cursor_get_dir(cursor);
 
-	if (this->track) {
+	if (this_->track) {
 		struct coord c=*cursor_c;
-		if (track_update(this->track, &c, dir)) {
+		if (track_update(this_->track, &c, dir)) {
 			cursor_c=&c;
 			cursor_pos_set(cursor, cursor_c);
-			if (this->route && this->update_curr == 1)
-				route_set_position_from_track(this->route, this->track);
+			if (this_->route && this_->update_curr == 1)
+				route_set_position_from_track(this_->route, this_->track);
 		}
 	} else {
-		if (this->route && this->update_curr == 1)
-			route_set_position(this->route, cursor_c);
+		if (this_->route && this_->update_curr == 1)
+			route_set_position(this_->route, cursor_c);
 	}
-	if (this->route && this->update_curr == 1)
-		navigation_update(this->navigation, this->route);
-	if (this->cursor_flag) {
-		if (this->follow_curr == 1)
-			navit_set_center(this, cursor_c);
+	if (this_->route && this_->update_curr == 1)
+		navigation_update(this_->navigation, this_->route);
+	if (this_->cursor_flag) {
+		if (this_->follow_curr == 1)
+			navit_set_center(this_, cursor_c);
 	}
-	if (this->follow_curr > 1)
-		this->follow_curr--;
+	if (this_->follow_curr > 1)
+		this_->follow_curr--;
 	else
-		this->follow_curr=this->follow;
-	if (this->update_curr > 1)
-		this->update_curr--;
+		this_->follow_curr=this_->follow;
+	if (this_->update_curr > 1)
+		this_->update_curr--;
 	else
-		this->update_curr=this->update;
+		this_->update_curr=this_->update;
 }
 
 void
-navit_set_position(struct navit *this, struct coord *c)
+navit_set_position(struct navit *this_, struct coord *c)
 {
-	if (this->route) {
-		route_set_position(this->route, c);
-		if (this->navigation) {
-			navigation_update(this->navigation, this->route);
+	if (this_->route) {
+		route_set_position(this_->route, c);
+		if (this_->navigation) {
+			navigation_update(this_->navigation, this_->route);
 		}
 	}
-	navit_draw(this);
+	navit_draw(this_);
 }
 
 void
-navit_vehicle_add(struct navit *this, struct vehicle *v, struct color *c, int update, int follow)
+navit_vehicle_add(struct navit *this_, struct vehicle *v, struct color *c, int update, int follow)
 {
-	this->vehicle=v;
-	this->update_curr=this->update=update;
-	this->follow_curr=this->follow=follow;
-	this->cursor=cursor_new(this->gra, v, c, this->trans);
-	cursor_register_offscreen_callback(this->cursor, navit_cursor_offscreen, this);
-	cursor_register_update_callback(this->cursor, navit_cursor_update, this);
+	this_->vehicle=v;
+	this_->update_curr=this_->update=update;
+	this_->follow_curr=this_->follow=follow;
+	this_->cursor=cursor_new(this_->gra, v, c, this_->trans);
+	cursor_register_offscreen_callback(this_->cursor, navit_cursor_offscreen, this_);
+	cursor_register_update_callback(this_->cursor, navit_cursor_update, this_);
 }
 
 
 struct gui *
-navit_get_gui(struct navit *this)
+navit_get_gui(struct navit *this_)
 {
-	return this->gui;
+	return this_->gui;
 }
 
 struct transformation *
-navit_get_trans(struct navit *this)
+navit_get_trans(struct navit *this_)
 {
-	return this->trans;
+	return this_->trans;
 }
 
 struct route *
-navit_get_route(struct navit *this)
+navit_get_route(struct navit *this_)
 {
-	return this->route;
+	return this_->route;
 }
 
 struct displaylist *
-navit_get_displaylist(struct navit *this)
+navit_get_displaylist(struct navit *this_)
 {
-	return this->displaylist;
+	return this_->displaylist;
 }
 
 void
-navit_destroy(struct navit *this)
+navit_destroy(struct navit *this_)
 {
-	g_free(this);
+	g_free(this_);
 }
 
