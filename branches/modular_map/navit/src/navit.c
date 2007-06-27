@@ -204,7 +204,12 @@ navit_init(struct navit *this)
 	struct map *map;
 	struct mapset_handle *handle;
 	struct mapset *ms=this->mapsets->data;
+
+	if (! this->menubar)
+		return;
 	mapmen=menu_add(this->menubar, "Map", menu_type_submenu, NULL, NULL, NULL);
+	if (!mapmen)
+		return;
 	// menu_add(map, "Test", menu_type_menu, NULL, NULL);
 	men=menu_add(mapmen, "Layout", menu_type_submenu, NULL, NULL, NULL);
 	menu_add(men, "Test", menu_type_menu, NULL, NULL, NULL);

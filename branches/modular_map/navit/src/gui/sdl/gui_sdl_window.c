@@ -24,25 +24,26 @@ gui_sdl_set_graphics(struct gui_priv *this, struct graphics *gra)
 	return 0;
 }
 
-struct menu_priv *
-gui_sdl_toolbar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
+static struct menu_priv *
+gui_sdl_toolbar_new(struct gui_priv *this, struct menu_methods *meth)
 {
 	return NULL; //gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav, 0);
 }
 
-struct statusbar_priv *gui_sdl_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth, struct navit *nav)
+static struct statusbar_priv *
+gui_sdl_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth)
 {
 	return NULL; //gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav, 0);
 }
 
-struct menu_priv *
-gui_sdl_menubar_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
+static struct menu_priv *
+gui_sdl_menubar_new(struct gui_priv *this, struct menu_methods *meth)
 {
 	return NULL; //gui_gtk_ui_new(this, meth, "/ui/MenuBar", nav, 0);
 }
 
-struct menu_priv *
-gui_sdl_popup_new(struct gui_priv *this, struct menu_methods *meth, struct navit *nav)
+static struct menu_priv *
+gui_sdl_popup_new(struct gui_priv *this, struct menu_methods *meth)
 {
 	return NULL; //gui_gtk_ui_new(this, meth, "/ui/PopUp", nav, 1);
 }
@@ -56,7 +57,7 @@ struct gui_methods gui_sdl_methods = {
 };
 
 
-void init_sdlgui()
+static void init_sdlgui(void)
 {
 	SDL_Surface * screen;
 // 	atexit (SDL_Quit);
@@ -222,7 +223,7 @@ void init_sdlgui()
 }
 
 static struct gui_priv *
-gui_sdl_new(struct gui_methods *meth, int w, int h) 
+gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h) 
 {
 	printf("Begin SDL init\n");
 	struct gui_priv *this;

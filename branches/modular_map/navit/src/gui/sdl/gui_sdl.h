@@ -21,8 +21,3 @@ struct gui_priv {
 };
 
 
-struct menu_priv *gui_sdl_menubar_new(struct gui_priv *gui, struct menu_methods *meth, struct navit *nav);
-struct menu_priv *gui_sdl_toolbar_new(struct gui_priv *gui, struct menu_methods *meth, struct navit *nav);
-struct statusbar_priv *gui_sdl_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth, struct navit *nav);
-struct menu_priv *gui_sdl_popup_new(struct gui_priv *gui, struct menu_methods *meth, struct navit *nav);
-

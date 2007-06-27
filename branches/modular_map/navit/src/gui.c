@@ -27,6 +27,10 @@ gui_statusbar_new(struct gui *gui)
 		return NULL;
 	this=g_new0(struct statusbar, 1);
 	this->priv=gui->meth.statusbar_new(gui->priv, &this->meth);
+	if (! this->priv) {
+		g_free(this);
+		return NULL;
+	}
 	return this;
 }
 
@@ -38,6 +42,10 @@ gui_menubar_new(struct gui *gui)
 		return NULL;
 	this=g_new0(struct menu, 1);
 	this->priv=gui->meth.menubar_new(gui->priv, &this->meth);
+	if (! this->priv) {
+		g_free(this);
+		return NULL;
+	}
 	return this;
 }
 
@@ -50,6 +58,10 @@ gui_toolbar_new(struct gui *gui)
 		return NULL;
 	this=g_new0(struct menu, 1);
 	this->priv=gui->meth.toolbar_new(gui->priv, &this->meth);
+	if (! this->priv) {
+		g_free(this);
+		return NULL;
+	}
 	return this;
 }
 
@@ -57,8 +69,14 @@ struct menu *
 gui_popup_new(struct gui *gui)
 {
 	struct menu *this;
+	if (! gui->meth.popup_new)
+		return NULL;
 	this=g_new0(struct menu, 1);
 	this->priv=gui->meth.popup_new(gui->priv, &this->meth);
+	if (! this->priv) {
+		g_free(this);
+		return NULL;
+	}
 	return this;
 }
 

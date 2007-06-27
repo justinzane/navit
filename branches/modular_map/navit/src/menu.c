@@ -31,6 +31,10 @@ menu_add(struct menu *menu, char *name, enum menu_type type, void (*callback)(st
 	struct menu *this;
         this=g_new0(struct menu, 1);
         this->priv=(*menu->meth.add)(menu->priv, &this->meth, name, type, callback, this, data1, data2);
+	if (! this->priv) {
+		g_free(this);
+		return NULL;
+	}
 
 	return this;	
 }
