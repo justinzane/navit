@@ -50,6 +50,7 @@ plugin_init(void)
 		g_error("plugins not supported");
 	}
 	plugin_load("gui/gtk/.libs/libgui_gtk.so.0");
+	plugin_load("gui/sdl/.libs/libgui_sdl.so.0");
 	plugin_load("graphics/gtk_drawing_area/.libs/libgraphics_gtk_drawing_area.so.0");
 	plugin_load("graphics/null/.libs/libgraphics_null.so.0");
 	plugin_load("data/mg/.libs/libdata_mg.so.0");
