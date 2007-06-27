@@ -266,6 +266,62 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 	}
 }
 
+#ifdef HAVE_LIBGPS
+static void
+vehicle_gps_callback(struct gps_data_t *data, char *buf, size_t len, int level)
+{
+	struct vehicle *this=vehicle_last;
+	double scale,speed;
+#if INTERPOLATION_TIME
+	if (! (data->set & TIME_SET)) {
+		return;
+	}
+	data->set &= ~TIME_SET;
+	if (this->time == data->fix.time)
+		return;
+	this->time=data->fix.time;
+#endif
+	if (data->set & SPEED_SET) {
+		this->speed_last=this->speed;
+		this->speed=data->fix.speed*3.6;
+		data->set &= ~SPEED_SET;
+	}
+	if (data->set & TRACK_SET) {
+		speed=this->speed+(this->speed-this->speed_last)/2;
+		this->dir=data->fix.track;
+		scale=transform_scale(this->current_pos.y);
+#ifdef INTERPOLATION_TIME
+		this->delta.x=sin(M_PI*this->dir/180)*speed*scale/3600*INTERPOLATION_TIME;
+		this->delta.y=cos(M_PI*this->dir/180)*speed*scale/3600*INTERPOLATION_TIME;
+#endif
+		data->set &= ~TRACK_SET;
+	}
+	if (data->set & LATLON_SET) {
+		this->geo.lat=data->fix.latitude;
+		this->geo.lng=data->fix.longitude;
+		transform_from_geo(projection_mg, &this->geo, &this->current_pos);
+		this->curr.x=this->current_pos.x;
+		this->curr.y=this->current_pos.y;
+		this->timer_count=0;
+		vehicle_call_callbacks(this);
+		data->set &= ~LATLON_SET;
+	}
+	if (data->set & ALTITUDE_SET) {
+		this->height=data->fix.altitude;
+		data->set &= ~ALTITUDE_SET;
+	}
+	if (data->set & SATELLITE_SET) {
+		this->sats=data->satellites;
+		data->set &= ~SATELLITE_SET;
+	}
+	if (data->set & STATUS_SET) {
+		this->qual=data->status;
+		data->set &= ~STATUS_SET;
+	}
+}
+#endif
+
+
 static void
 vehicle_close(struct vehicle *this)
 {
@@ -289,8 +345,10 @@ vehicle_open(struct vehicle *this)
 	struct termios tio;
 	struct stat st;
 	int fd;
+
 #ifdef HAVE_LIBGPS
 	struct gps_data_t *gps=NULL;
+	char *url_,*colon;
 #endif
 	if (! strncmp(this->url,"file:",5)) {
 		fd=open(this->url+5,O_RDONLY|O_NDELAY);
@@ -321,16 +379,16 @@ vehicle_open(struct vehicle *this)
 		fd=fileno(this->file);
 	} else if (! strncmp(this->url,"gpsd://",7)) {
 #ifdef HAVE_LIBGPS
-		url_=g_strdup(url);
+		url_=g_strdup(this->url);
 		colon=index(url_+7,':');
 		if (colon) {
 			*colon=0;
 			gps=gps_open(url_+7,colon+1);
 		} else
-			gps=gps_open(url+7,NULL);
+			gps=gps_open(this->url+7,NULL);
 		g_free(url_);
 		if (! gps) {
-			g_warning("Failed to connect to %s", url);
+			g_warning("Failed to connect to %s", this->url);
 			return 0;
 		}
 		gps_query(gps, "w+x\n");
@@ -410,61 +468,6 @@ disable_watch(struct vehicle *this)
 {
 	g_source_remove(this->watch);
 }
-
-#ifdef HAVE_LIBGPS
-static void
-vehicle_gps_callback(struct gps_data_t *data, char *buf, size_t len, int level)
-{
-	struct vehicle *this=vehicle_last;
-	double scale,speed;
-#if INTERPOLATION_TIME
-	if (! (data->set & TIME_SET)) {
-		return;
-	}
-	data->set &= ~TIME_SET;
-	if (this->time == data->fix.time)
-		return;
-	this->time=data->fix.time;
-#endif
-	if (data->set & SPEED_SET) {
-		this->speed_last=this->speed;
-		this->speed=data->fix.speed*3.6;
-		data->set &= ~SPEED_SET;
-	}
-	if (data->set & TRACK_SET) {
-		speed=this->speed+(this->speed-this->speed_last)/2;
-		this->dir=data->fix.track;
-		scale=transform_scale(this->current_pos.y);
-#ifdef INTERPOLATION_TIME
-		this->delta.x=sin(M_PI*this->dir/180)*speed*scale/3600*INTERPOLATION_TIME;
-		this->delta.y=cos(M_PI*this->dir/180)*speed*scale/3600*INTERPOLATION_TIME;
-#endif
-		data->set &= ~TRACK_SET;
-	}
-	if (data->set & LATLON_SET) {
-		this->geo.lat=data->fix.latitude;
-		this->geo.lng=data->fix.longitude;
-		transform_from_geo(projection_mg, &this->geo, &this->current_pos);
-		this->curr.x=this->current_pos.x;
-		this->curr.y=this->current_pos.y;
-		this->timer_count=0;
-		vehicle_call_callbacks(this);
-		data->set &= ~LATLON_SET;
-	}
-	if (data->set & ALTITUDE_SET) {
-		this->height=data->fix.altitude;
-		data->set &= ~ALTITUDE_SET;
-	}
-	if (data->set & SATELLITE_SET) {
-		this->sats=data->satellites;
-		data->set &= ~SATELLITE_SET;
-	}
-	if (data->set & STATUS_SET) {
-		this->qual=data->status;
-		data->set &= ~STATUS_SET;
-	}
-}
-#endif
 
 struct vehicle *
 vehicle_new(const char *url)
