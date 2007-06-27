@@ -14,6 +14,25 @@
 #include "gui_sdl.h"
 
 
+#include "CEGUI.h"
+
+#include <CEGUI/RendererModules/OpenGLGUIRenderer/openglrenderer.h>
+#include "CEGUIDefaultResourceProvider.h"
+
+// This is for 3d fonts
+#include "GL/glc.h"
+
+
+#define VM_2D 0
+#define VM_3D 1
+
+bool VIEW_MODE=VM_3D;
+
+CEGUI::OpenGLRenderer* renderer;
+
+CEGUI::Window* myRoot;
+
+
 static int
 gui_sdl_set_graphics(struct gui_priv *this_, struct graphics *gra)
 {
@@ -29,10 +48,95 @@ gui_sdl_set_graphics(struct gui_priv *this_, struct graphics *gra)
 	return 0;
 }
 
-static int gui_run_main_loop(struct gui_priv *this_, struct menu_methods *meth)
+static int gui_run_main_loop(struct gui_priv *this_)
 {
-	printf("main loop\n");
+	printf("Entering main loop\n");
+
+	bool must_quit = false;
+	
+	// get "run-time" in seconds
+	double last_time_pulse = static_cast<double>(SDL_GetTicks());
+
+	int frames=0;
+	char fps [12];
+	
+
+	while (!must_quit)
+	{
+		printf("loop");
+
+// 		profile_timer(NULL);
+		glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
+/*
+
+
+ 		glMatrixMode(GL_MODELVIEW);
+ 		glLoadIdentity();
+
+		if(VIEW_MODE==VM_3D){
+ 			gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
+		}
+  		
+// 		printf("eyeX=%f, eyeY=%f, eyeZ=%f, centerX=%f, centerY=%f, centerZ=%f, upX=%f, upY=%f, upZ=%f\n",eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
+
+		glColor4f(0.0f,0.7f,0.35f,1.0f);
+		glBegin(GL_POLYGON);
+			glVertex3f( -800,-600*3, 0.0f);
+			glVertex3f( -800,600*2, 0.0f);
+			glVertex3f( 1600,600*2, 0.0f);	
+			glVertex3f( 1600,-600*3, 0.0f);	
+		glEnd();
+
+		extern struct container *co;
+		profile_timer("3d view");
+
+		graphics_redraw(co);
+		profile_timer("graphics_redraw");
+
+ 		g_main_context_iteration (NULL, TRUE);
+		profile_timer("main context");
+
+		inject_input(must_quit);
+		profile_timer("inputs");
+
+		// Render the cursor.
+		int x=400;
+		int y=480;
+		float cursor_size=15.0f;
+		glColor4f(0.0f,1.0f,0.0f,0.75f);
+		glEnable(GL_BLEND);
+		glBegin(GL_TRIANGLES);
+			glVertex3f( x, y-cursor_size, 0.0f);
+			glVertex3f(x-cursor_size,y+cursor_size, 0.0f);
+			glVertex3f( x+cursor_size,y+cursor_size, 0.0f);	
+		glEnd();
+		glDisable(GL_BLEND);
+		profile_timer("cursor");
+
+		frames++;
+		if(SDL_GetTicks()-last_time_pulse>1000){
+			sprintf(fps,"%i",frames); // /(SDL_GetTicks()/1000));
+			frames=0;
+			last_time_pulse = SDL_GetTicks();
+		}
+
+
+		glcRenderStyle(GLC_TEXTURE);
+		glColor3f(1, 0, 0);
+		glRotatef(180,1,0,0);
+		glScalef(64, 64, 0);
+		glcRenderString(fps);
+		profile_timer("fps");
+*/
+ 		CEGUI::System::getSingleton().renderGUI();
+// 		profile_timer("GUI");
+
+		SDL_GL_SwapBuffers();
+	}
+
+
 }
+
 
 static struct menu_priv *
 gui_sdl_toolbar_new(struct gui_priv *this_, struct menu_methods *meth)
@@ -117,9 +221,41 @@ static void init_sdlgui(void)
 	SDL_EnableUNICODE (1);
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
-	/*
-	init_GL();
+	// GL Setup
+//  	glClearColor(1.0,0.9,0.7,0);
 
+	// Blue sky
+ 	glClearColor(0.3,0.7,1.0,0);
+
+	if(VIEW_MODE==VM_2D){
+		printf("Switching to 2D view\n");
+		glMatrixMode( GL_PROJECTION );
+		glLoadIdentity();
+	
+		glOrtho( 0, XRES, YRES, 0, -1, 1 );
+	
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+	} else {
+		printf("Switching to 3D view\n");
+		glViewport(0, 0, XRES, YRES);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(45, 1.0, 0.1, 2800.0);
+		// Rendu avec lissage de Gouraud 
+// 		glShadeModel(GL_SMOOTH);
+	// 	glEnable(GL_DEPTH_TEST);
+
+
+ 		glMatrixMode(GL_MODELVIEW);
+   		glLoadIdentity();
+	}
+
+// 	if( glGetError() != GL_NO_ERROR ) {
+// 		return 0;
+// 	}
+
+	
 // 	sdl_audio_init();
 
 	try
@@ -164,6 +300,7 @@ static void init_sdlgui(void)
 
  		CEGUI::System::getSingleton().setGUISheet(myRoot);
 
+	/*
 		myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/CountryEditbox")->subscribeEvent(Window::EventKeyUp, Event::Subscriber(DestinationEntryChange));
  		myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/CountryEditbox")->subscribeEvent(Window::EventMouseButtonDown, Event::Subscriber(handleMouseEnters));
 		myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/TownEditbox")->subscribeEvent(Window::EventKeyUp, Event::Subscriber(DestinationEntryChange));
@@ -186,7 +323,7 @@ static void init_sdlgui(void)
 		myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Listbox")->subscribeEvent(MultiColumnList::EventSelectionChanged, Event::Subscriber(ItemSelect));
 
 		myRoot->getChild("OSD/Scrollbar1")->subscribeEvent(Scrollbar::EventScrollPositionChanged, Event::Subscriber(MoveCamera));
-
+*/
 		
  		MultiColumnList* mcl = static_cast<MultiColumnList*>(WindowManager::getSingleton().getWindow("DestinationWindow/Listbox"));
 
@@ -206,7 +343,7 @@ static void init_sdlgui(void)
 		mcl2->addColumn("ETA", 3, cegui_absdim(80.0));
 		mcl2->addColumn("Instruction",4, cegui_absdim(300.0));
 
-		BuildKeyboard();
+// 		BuildKeyboard();
 		
 	}
 	catch (CEGUI::Exception& e)
@@ -230,7 +367,7 @@ static void init_sdlgui(void)
 // 	glcFontFace(font, "Italic");
 
 
-	*/
+	
 }
 
 static struct gui_priv *
