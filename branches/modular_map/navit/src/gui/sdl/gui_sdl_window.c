@@ -24,6 +24,11 @@ gui_sdl_set_graphics(struct gui_priv *this, struct graphics *gra)
 	return 0;
 }
 
+static int gui_run_main_loop(struct gui_priv *this, struct menu_methods *meth)
+{
+	printf("main loop\n");
+}
+
 static struct menu_priv *
 gui_sdl_toolbar_new(struct gui_priv *this, struct menu_methods *meth)
 {
@@ -54,6 +59,7 @@ struct gui_methods gui_sdl_methods = {
 	gui_sdl_statusbar_new,
 	gui_sdl_popup_new,
 	gui_sdl_set_graphics,
+	gui_run_main_loop,
 };
 
 
