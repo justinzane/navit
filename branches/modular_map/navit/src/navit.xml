@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE navit SYSTEM "navit.dtd">
-<navit gui="gtk" graphics="gtk_drawing_area" center="5031.51 N 735.83 E" zoom="8192" >
+<navit ui="gtk" graphics="gtk_drawing_area" center="5031.51 N 305.83 E" zoom="8192" >
 	<vehicle name="Meins" source="gpsd://localhost" color="#0000ff"/>
 	<vehicle name="Deins" source="gpsd://somehost" color="#0000aa"/> 
 	<mapset>
-		<map type="mg" enabled="yes" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map" />
-		<map type="mg" enabled="yes" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp3.smp" />
-		<map type="mg" enabled="yes" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp4.smp" />
+		<map type="mg" enabled="yes" data="/opt/reiseplaner/travel/DE.map" />
+		<map type="mg" enabled="yes" data="/opt/reiseplaner/travel/DE.map/smp3.smp" />
+		<map type="mg" enabled="yes" data="/opt/reiseplaner/travel/DE.map/smp4.smp" />
 	</mapset>
 	<layout name="Tag">
 		<layer name="sea" details="0">
@@ -415,47 +415,58 @@
 				<icon src="hospital.xpm" />
 			</item>
 		</layer>
-<!--
-		<layer name="sea" details="0">
-			<item type="sea" zoom="0-">
-				<polygon color="#82c8ea" />
-			</item>
-		</layer>
-		<layer name="wood" details="0">
-			<item type="wood" zoom="0-">
-				<polygon color="#8ec78d" />
-			</item>
-		</layer>
-		<layer name="highway" details="0">
-			<item type="highway" zoom="0-">
-				<line color="#ff0000" width="3" />
-				<line color="#ffff0a" width="1" />
-			</item>
-			<item type="highway" zoom="2-5">
-				<line color="#ff0000" width="5" />
-				<line color="#ffff0a" width="3" />
-				<text color="#000000" font="arial" size="12">
-			</item>
-		</layer>
-		<layer name="label" details="0">
-			<item type="town0" zoom="3-">
-				<circle radius="3" />
-				<text color="#000000" font="arial" size="12">
-			</item>
-		</layer>
-		<layer name="poi" details="0">
-			<item type="mcdonalds" zoom="3-">
-				<icon src="mcdonalds.xpm" />
-			</item>
-		</layer>
-		<layer name="wood" details="0">
-			<item type="wood" zoom="1-">
-				<polygon color="#8ec78d" />
-				<polyline color="#8ec78d" />
-			</item>
-		</layer>
+		<!--
+		    <layer name="sea" details="0">
+			    <item type="sea" zoom="0-">
+				    <polygon color="#82c8ea" />
+			    </item>
+		    </layer>
+		    <layer name="wood" details="0">
+			    <item type="wood" zoom="0-">
+				    <polygon color="#8ec78d" />
+			    </item>
+		    </layer>
+		    <layer name="highway" details="0">
+			    <item type="highway" zoom="0-">
+				    <line color="#ff0000" width="3" />
+				    <line color="#ffff0a" width="1" />
+			    </item>
+			    <item type="highway" zoom="2-5">
+				    <line color="#ff0000" width="5" />
+				    <line color="#ffff0a" width="3" />
+				    <text color="#000000" font="arial" size="12">
+				    </item>
+			    </layer>
+			    <layer name="label" details="0">
+				    <item type="town0" zoom="3-">
+					    <circle radius="3" />
+					    <text color="#000000" font="arial" size="12">
+					    </item>
+				    </layer>
+				    <layer name="poi" details="0">
+					    <item type="mcdonalds" zoom="3-">
+						    <icon src="mcdonalds.xpm" />
+					    </item>
+				    </layer>
+				    <layer name="wood" details="0">
+					    <item type="wood" zoom="1-">
+						    <polygon color="#8ec78d" />
+						    <polyline color="#8ec78d" />
+					    </item>
+				    </layer>
+				    -->
+			    </layout>
+			    <layout name="Nacht">
+			    </layout>
+		    </navit>
+		    <!--
+			<navit gui="sdl" graphics="gtk_drawing_area" center="5031.51 N 305.83 E" zoom="8192" >
+				<vehicle name="Meins" source="gpsd://localhost" color="#0000ff"/>
+				<vehicle name="Deins" source="gpsd://somehost" color="#0000aa"/> 
+				<mapset>
+					<map type="mg" enabled="yes" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map" />
+					<map type="mg" enabled="yes" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp3.smp" />
+					<map type="mg" enabled="yes" data="/nobackup/reiseplaner/DIRMAP_MAP/DIE.map/smp4.smp" />
+				</mapset>
+			</navit>
 -->
-	</layout>
-	<layout name="Nacht">
-	</layout>
-</navit>
