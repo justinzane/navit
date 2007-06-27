@@ -22,6 +22,7 @@
 // This is for 3d fonts
 #include "GL/glc.h"
 
+#include "sdl_events.h"
 
 #define VM_2D 0
 #define VM_3D 1
@@ -31,6 +32,16 @@ bool VIEW_MODE=VM_3D;
 CEGUI::OpenGLRenderer* renderer;
 
 CEGUI::Window* myRoot;
+
+GLdouble eyeX=400;
+GLdouble eyeY=900;
+GLdouble eyeZ=-800;
+GLdouble centerX=400;
+GLdouble centerY=300;
+GLdouble centerZ=0;
+GLdouble upX=0;
+GLdouble upY=-1;
+GLdouble upZ=0;
 
 
 static int
@@ -63,12 +74,8 @@ static int gui_run_main_loop(struct gui_priv *this_)
 
 	while (!must_quit)
 	{
-		printf("loop");
-
 // 		profile_timer(NULL);
 		glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
-/*
-
 
  		glMatrixMode(GL_MODELVIEW);
  		glLoadIdentity();
@@ -77,7 +84,6 @@ static int gui_run_main_loop(struct gui_priv *this_)
  			gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
 		}
   		
-// 		printf("eyeX=%f, eyeY=%f, eyeZ=%f, centerX=%f, centerY=%f, centerZ=%f, upX=%f, upY=%f, upZ=%f\n",eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
 
 		glColor4f(0.0f,0.7f,0.35f,1.0f);
 		glBegin(GL_POLYGON);
@@ -88,16 +94,16 @@ static int gui_run_main_loop(struct gui_priv *this_)
 		glEnd();
 
 		extern struct container *co;
-		profile_timer("3d view");
+// 		profile_timer("3d view");
 
-		graphics_redraw(co);
-		profile_timer("graphics_redraw");
+// 		graphics_redraw(co);
+// 		profile_timer("graphics_redraw");
 
  		g_main_context_iteration (NULL, TRUE);
-		profile_timer("main context");
+// 		profile_timer("main context");
 
 		inject_input(must_quit);
-		profile_timer("inputs");
+// 		profile_timer("inputs");
 
 		// Render the cursor.
 		int x=400;
@@ -111,7 +117,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
 			glVertex3f( x+cursor_size,y+cursor_size, 0.0f);	
 		glEnd();
 		glDisable(GL_BLEND);
-		profile_timer("cursor");
+// 		profile_timer("cursor");
 
 		frames++;
 		if(SDL_GetTicks()-last_time_pulse>1000){
@@ -126,8 +132,8 @@ static int gui_run_main_loop(struct gui_priv *this_)
 		glRotatef(180,1,0,0);
 		glScalef(64, 64, 0);
 		glcRenderString(fps);
-		profile_timer("fps");
-*/
+// 		profile_timer("fps");
+
  		CEGUI::System::getSingleton().renderGUI();
 // 		profile_timer("GUI");
 

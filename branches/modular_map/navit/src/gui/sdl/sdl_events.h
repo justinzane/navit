@@ -10,3 +10,9 @@ bool ButtonGo(const CEGUI::EventArgs& event);
 bool ZoomIn(const CEGUI::EventArgs& event);
 bool ZoomOut(const CEGUI::EventArgs& event);
 bool ButtonQuit(const CEGUI::EventArgs& event);
+
+void inject_time_pulse(double& last_time_pulse);
+
+ CEGUI::uint SDLKeyToCEGUIKey(SDLKey key);
+
+void inject_input(bool& must_quit);
