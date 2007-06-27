@@ -20,6 +20,29 @@ static void sigchld(int sig)
 	while (waitpid(-1, &status, WNOHANG) > 0);
 }
 
+
+gchar *get_home_directory(void)
+{
+	static gchar *homedir = NULL;
+
+	if (homedir) return homedir;
+	homedir = getenv("HOME");
+	if (!homedir)
+	{
+		struct passwd *p;
+
+// 		p = getpwuid(getuid());
+// 		if (p) homedir = p->pw_dir;
+	}
+	if (!homedir)
+	{
+		g_warning("Could not find home directory. Using current directory as home directory.");
+		homedir = ".";
+	}
+	return homedir;
+}
+
+
 int main(int argc, char **argv)
 {
 	GError *error = NULL;
@@ -45,8 +68,10 @@ int main(int argc, char **argv)
 	if (argc > 1) 
 		config_load(argv[1], &error);
 	else
-		if (file_exists("navit.xml.local"))
-			config_load("navit.xml.local", &error);
+		if (file_exists(g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL))) {
+			printf("loading config file from user's home : %s\n",g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL));
+			config_load(g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL), &error);
+		}
 		else	
 			config_load("navit.xml", &error);
 #if 1

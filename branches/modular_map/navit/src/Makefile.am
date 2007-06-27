@@ -9,8 +9,8 @@ AM_CPPFLAGS = @PACKAGE_CFLAGS@ @IMLIB2_CFLAGS@ -DMODULE=\"navit\"
 
 bin_PROGRAMS = navit
 
-pkglib_DATA = navit.xml
-EXTRA_DIST = navit.xml
+#pkglib_DATA = navit.xml
+#EXTRA_DIST = navit.xml
 
 navit_SOURCES = attr.c compass.c coord.c country.c cursor.c data_window.c debug.c destination.c \
 	file.c graphics.c gui.c item.c layout.c log.c main.c map.c \
