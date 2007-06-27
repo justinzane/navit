@@ -1,6 +1,11 @@
 #include "glib.h"
 #include <stdio.h>
 // #include <gtk/gtk.h>
+
+//  FIXME temporary fix for enum
+#include "projection.h"
+
+
 #include "navit.h"
 #include "gui.h"
 #include "coord.h"
@@ -10,7 +15,7 @@
 
 
 static int
-gui_sdl_set_graphics(struct gui_priv *this, struct graphics *gra)
+gui_sdl_set_graphics(struct gui_priv *this_, struct graphics *gra)
 {
 	/*
 	GtkWidget *graphics;
@@ -18,39 +23,39 @@ gui_sdl_set_graphics(struct gui_priv *this, struct graphics *gra)
 	graphics=graphics_get_data(gra, "gtk_widget");
 	if (! graphics)
 		return 1;
-	gtk_box_pack_end(GTK_BOX(this->vbox), graphics, TRUE, TRUE, 0);
+	gtk_box_pack_end(GTK_BOX(this_->vbox), graphics, TRUE, TRUE, 0);
 	gtk_widget_show_all(graphics);
 */
 	return 0;
 }
 
-static int gui_run_main_loop(struct gui_priv *this, struct menu_methods *meth)
+static int gui_run_main_loop(struct gui_priv *this_, struct menu_methods *meth)
 {
 	printf("main loop\n");
 }
 
 static struct menu_priv *
-gui_sdl_toolbar_new(struct gui_priv *this, struct menu_methods *meth)
+gui_sdl_toolbar_new(struct gui_priv *this_, struct menu_methods *meth)
 {
-	return NULL; //gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav, 0);
+	return NULL; //gui_gtk_ui_new(this_, meth, "/ui/ToolBar", nav, 0);
 }
 
 static struct statusbar_priv *
 gui_sdl_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth)
 {
-	return NULL; //gui_gtk_ui_new(this, meth, "/ui/ToolBar", nav, 0);
+	return NULL; //gui_gtk_ui_new(this_, meth, "/ui/ToolBar", nav, 0);
 }
 
 static struct menu_priv *
-gui_sdl_menubar_new(struct gui_priv *this, struct menu_methods *meth)
+gui_sdl_menubar_new(struct gui_priv *this_, struct menu_methods *meth)
 {
-	return NULL; //gui_gtk_ui_new(this, meth, "/ui/MenuBar", nav, 0);
+	return NULL; //gui_gtk_ui_new(this_, meth, "/ui/MenuBar", nav, 0);
 }
 
 static struct menu_priv *
-gui_sdl_popup_new(struct gui_priv *this, struct menu_methods *meth)
+gui_sdl_popup_new(struct gui_priv *this_, struct menu_methods *meth)
 {
-	return NULL; //gui_gtk_ui_new(this, meth, "/ui/PopUp", nav, 1);
+	return NULL; //gui_gtk_ui_new(this_, meth, "/ui/PopUp", nav, 1);
 }
 
 struct gui_methods gui_sdl_methods = {
@@ -232,25 +237,25 @@ static struct gui_priv *
 gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h) 
 {
 	printf("Begin SDL init\n");
-	struct gui_priv *this;
+	struct gui_priv *this_;
 
 	*meth=gui_sdl_methods;
 
-	this=g_new0(struct gui_priv, 1);
+	this_=g_new0(struct gui_priv, 1);
 	init_sdlgui();
 	printf("End SDL init\n");
 
 	/*
- 	this->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
- 	this->vbox = gtk_vbox_new(FALSE, 0);
-	gtk_window_set_default_size(GTK_WINDOW(this->win), w, h);
-	gtk_window_set_title(GTK_WINDOW(this->win), "Navit");
-	gtk_widget_realize(this->win);
-	gtk_container_add(GTK_CONTAINER(this->win), this->vbox);
-	gtk_widget_show_all(this->win);
+ 	this_->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ 	this_->vbox = gtk_vbox_new(FALSE, 0);
+	gtk_window_set_default_size(GTK_WINDOW(this_->win), w, h);
+	gtk_window_set_title(GTK_WINDOW(this_->win), "Navit");
+	gtk_widget_realize(this_->win);
+	gtk_container_add(GTK_CONTAINER(this_->win), this_->vbox);
+	gtk_widget_show_all(this_->win);
 	*/
 
-	return this;
+	return this_;
 }
 
 void
