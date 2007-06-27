@@ -16,8 +16,6 @@
 
 #include "CEGUI.h"
 
-#include <CEGUI/RendererModules/OpenGLGUIRenderer/openglrenderer.h>
-#include "CEGUIDefaultResourceProvider.h"
 
 // This is for 3d fonts
 #include "GL/glc.h"
@@ -29,10 +27,6 @@
 
 bool VIEW_MODE=VM_3D;
 
-CEGUI::OpenGLRenderer* renderer;
-
-CEGUI::Window* myRoot;
-
 GLdouble eyeX=400;
 GLdouble eyeY=900;
 GLdouble eyeZ=-800;
@@ -42,6 +36,12 @@ GLdouble centerZ=0;
 GLdouble upX=0;
 GLdouble upY=-1;
 GLdouble upZ=0;
+
+#include <CEGUI/RendererModules/OpenGLGUIRenderer/openglrenderer.h>
+#include "CEGUIDefaultResourceProvider.h"
+CEGUI::OpenGLRenderer* renderer;
+
+CEGUI::Window* myRoot;
 
 
 static int
@@ -178,6 +178,177 @@ struct gui_methods gui_sdl_methods = {
 };
 
 
+int init_GL() {
+
+//  	glClearColor(1.0,0.9,0.7,0);
+
+	// Blue sky
+ 	glClearColor(0.3,0.7,1.0,0);
+
+	if(VIEW_MODE==VM_2D){
+		printf("Switching to 2D view\n");
+// 		myRoot->getChild("OSD/ViewMode")->setText("2D");
+		glMatrixMode( GL_PROJECTION );
+		glLoadIdentity();
+	
+		glOrtho( 0, XRES, YRES, 0, -1, 1 );
+	
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+	} else {
+		printf("Switching to 3D view\n");
+// 		myRoot->getChild("OSD/ViewMode")->setText("3D");
+
+		// Dimensions de la fenetre de rendu 
+		glViewport(0, 0, XRES, YRES);
+		// Initialisation de la matrice de projection 
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(45, 1.0, 0.1, 2800.0);
+		// Rendu avec lissage de Gouraud 
+// 		glShadeModel(GL_SMOOTH);
+	// 	glEnable(GL_DEPTH_TEST);
+
+
+ 		glMatrixMode(GL_MODELVIEW);
+   		glLoadIdentity();
+// 		gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
+
+	}
+
+	if( glGetError() != GL_NO_ERROR ) {
+		return 0;
+	}
+	return 1;
+}
+
+bool ToggleView(const CEGUI::EventArgs& event)
+{
+	VIEW_MODE=!VIEW_MODE;
+
+	if(VIEW_MODE==VM_2D){
+ 		myRoot->getChild("OSD/ViewMode")->setText("2D");
+	} else {
+ 		myRoot->getChild("OSD/ViewMode")->setText("3D");
+	}
+	init_GL();
+}
+
+bool MoveCamera(const CEGUI::EventArgs& event){
+	
+	CEGUI::Scrollbar * sb = static_cast<const CEGUI::Scrollbar *>(myRoot->getChild("OSD/Scrollbar1"));
+// 	printf("moving : %f\n",sb->getScrollPosition());
+	eyeZ=-sb->getScrollPosition();
+	if (eyeZ>-100){
+		eyeZ=-100;
+	}
+}
+
+bool ShowKeyboard(const CEGUI::EventArgs& event){
+
+	/*
+	// The following can probably be removed.
+	using namespace CEGUI;
+	Editbox* country_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/CountryEditbox"));
+	Editbox* town_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/TownEditbox"));
+	Editbox* street_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/StreetEditbox"));
+
+	if (country_edit->hasInputFocus())
+	{	
+		SDL_dest.current_search==SRCH_COUNTRY;
+	} else if (town_edit->hasInputFocus())
+	{	
+		SDL_dest.current_search==SRCH_TOWN;
+	} else if (street_edit->hasInputFocus())
+	{	
+		SDL_dest.current_search==SRCH_STREET;
+	}
+
+	*/
+	myRoot->getChild("Navit/Keyboard")->getChild("Navit/Keyboard/Input")->setText("");
+	myRoot->getChild("Navit/Keyboard")->show();
+}
+
+void Add_KeyBoard_key(char * key,int x,int y,int w){
+	
+	using namespace CEGUI;
+	printf("adding key %s\n",key);
+	char button_name [2];
+	sprintf(button_name,"%s",key);
+	FrameWindow* wnd = (FrameWindow*)WindowManager::getSingleton().createWindow("TaharezLook/Button", button_name);
+	myRoot->getChild("Navit/Keyboard")->addChildWindow(wnd);
+	wnd->setPosition(UVector2(cegui_absdim(x), cegui_absdim( y)));
+	wnd->setSize(UVector2(cegui_absdim(w), cegui_absdim( 40)));
+	wnd->setText(key);
+// 	wnd->subscribeEvent(PushButton::EventClicked, Event::Subscriber(Handle_Virtual_Key_Down));
+	
+}	
+
+
+void BuildKeyboard(){
+	int w=55;
+	int offset_x=10;
+	int count_x=0;
+	
+	int y=25;
+	Add_KeyBoard_key("A",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("Z",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("E",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("R",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("T",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("Y",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("U",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("I",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("O",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("P",offset_x+(count_x++)*w,y,w);
+	count_x++;
+	Add_KeyBoard_key("7",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("8",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("9",offset_x+(count_x++)*w,y,w);
+
+	y=70;
+	count_x=0;
+	Add_KeyBoard_key("Q",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("S",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("D",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("F",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("G",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("H",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("J",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("K",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("L",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("M",offset_x+(count_x++)*w,y,w);
+	count_x++;
+	Add_KeyBoard_key("4",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("5",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("6",offset_x+(count_x++)*w,y,w);
+
+	y=115;
+	count_x=0;
+	Add_KeyBoard_key("W",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("X",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("C",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("V",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("B",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("N",offset_x+(count_x++)*w,y,w);
+	
+	Add_KeyBoard_key(" ",offset_x+(count_x++)*w,y,w*2);
+	count_x++;
+	Add_KeyBoard_key("BACK",offset_x+(count_x++)*w,y,w*2);
+	/*
+	count_x+=2;
+
+	Add_KeyBoard_key("1",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("2",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("3",offset_x+(count_x++)*w,y,w);
+	
+	y=160;
+	count_x=11;
+	Add_KeyBoard_key("0",offset_x+(count_x++)*w,y,w);
+	Add_KeyBoard_key("OK",offset_x+(count_x++)*w,y,w*2);
+*/
+}
+
 static void init_sdlgui(void)
 {
 	SDL_Surface * screen;
@@ -227,40 +398,7 @@ static void init_sdlgui(void)
 	SDL_EnableUNICODE (1);
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
-	// GL Setup
-//  	glClearColor(1.0,0.9,0.7,0);
-
-	// Blue sky
- 	glClearColor(0.3,0.7,1.0,0);
-
-	if(VIEW_MODE==VM_2D){
-		printf("Switching to 2D view\n");
-		glMatrixMode( GL_PROJECTION );
-		glLoadIdentity();
-	
-		glOrtho( 0, XRES, YRES, 0, -1, 1 );
-	
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-	} else {
-		printf("Switching to 3D view\n");
-		glViewport(0, 0, XRES, YRES);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluPerspective(45, 1.0, 0.1, 2800.0);
-		// Rendu avec lissage de Gouraud 
-// 		glShadeModel(GL_SMOOTH);
-	// 	glEnable(GL_DEPTH_TEST);
-
-
- 		glMatrixMode(GL_MODELVIEW);
-   		glLoadIdentity();
-	}
-
-// 	if( glGetError() != GL_NO_ERROR ) {
-// 		return 0;
-// 	}
-
+	init_GL();
 	
 // 	sdl_audio_init();
 
@@ -306,7 +444,7 @@ static void init_sdlgui(void)
 
  		CEGUI::System::getSingleton().setGUISheet(myRoot);
 
-	/*
+	
 		myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/CountryEditbox")->subscribeEvent(Window::EventKeyUp, Event::Subscriber(DestinationEntryChange));
  		myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/CountryEditbox")->subscribeEvent(Window::EventMouseButtonDown, Event::Subscriber(handleMouseEnters));
 		myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/TownEditbox")->subscribeEvent(Window::EventKeyUp, Event::Subscriber(DestinationEntryChange));
@@ -329,7 +467,7 @@ static void init_sdlgui(void)
 		myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Listbox")->subscribeEvent(MultiColumnList::EventSelectionChanged, Event::Subscriber(ItemSelect));
 
 		myRoot->getChild("OSD/Scrollbar1")->subscribeEvent(Scrollbar::EventScrollPositionChanged, Event::Subscriber(MoveCamera));
-*/
+
 		
  		MultiColumnList* mcl = static_cast<MultiColumnList*>(WindowManager::getSingleton().getWindow("DestinationWindow/Listbox"));
 
@@ -349,7 +487,7 @@ static void init_sdlgui(void)
 		mcl2->addColumn("ETA", 3, cegui_absdim(80.0));
 		mcl2->addColumn("Instruction",4, cegui_absdim(300.0));
 
-// 		BuildKeyboard();
+		BuildKeyboard();
 		
 	}
 	catch (CEGUI::Exception& e)

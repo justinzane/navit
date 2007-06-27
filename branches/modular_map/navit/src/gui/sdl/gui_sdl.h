@@ -20,4 +20,3 @@ struct gui_priv {
 	int dyn_counter;
 };
 
-

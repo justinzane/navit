@@ -1,4 +1,21 @@
+#include "CEGUI.h"
+#include "sdl_events.h"
 
+#include <CEGUI/RendererModules/OpenGLGUIRenderer/openglrenderer.h>
+
+//  FIXME temporary fix for enum
+#include "projection.h"
+
+#include "../../coord.h"
+
+struct sdl_destination{
+	int country;
+	int town;
+	int town_street_assoc;
+	int current_search;
+} SDL_dest;
+
+/*
 bool handleItemSelect(int r)
 {
 	using namespace CEGUI;
@@ -111,6 +128,8 @@ bool handleItemSelect(int r)
 
 	return true;
 }
+*/
+
 
 bool ItemSelect(const CEGUI::EventArgs& event)
 {
@@ -125,6 +144,10 @@ bool handleMouseEnters(const CEGUI::EventArgs& event)
 {
 
 	const CEGUI::WindowEventArgs& we =  static_cast<const CEGUI::WindowEventArgs&>(event);
+
+	// FIXME theses variables should be shared
+	extern CEGUI::OpenGLRenderer* renderer;
+	extern CEGUI::Window* myRoot;
 
 	using namespace CEGUI;
 	myRoot->getChild("Navit/Keyboard")->getChild("Navit/Keyboard/Input")->setText("");
@@ -161,6 +184,7 @@ bool handleMouseEnters(const CEGUI::EventArgs& event)
 	}
 }
 
+/*
 void handle_destination_change(){
 	using namespace CEGUI;
 
@@ -210,6 +234,26 @@ void handle_destination_change(){
 		}
 	}
 }
+*/
+
+/*
+void route_to(int x,int y){
+	struct coord pos;
+	pos.x=x;
+	pos.y=y; 
+	extern struct container *co;
+	route_set_position(co->route, cursor_pos_get(co->cursor));
+	using namespace CEGUI;
+	WindowManager::getSingleton().getWindow("DestinationWindow")->hide();
+	WindowManager::getSingleton().getWindow("Navit/Routing/Tips")->show();
+	WindowManager::getSingleton().getWindow("Navit/ProgressWindow")->show();
+	route_set_destination(co->route, &pos);
+	WindowManager::getSingleton().getWindow("Navit/ProgressWindow")->hide();
+	WindowManager::getSingleton().getWindow("OSD/RoadbookButton")->show();
+	WindowManager::getSingleton().getWindow("OSD/ETA")->show();
+
+}
+*/
 
 bool DestinationEntryChange(const CEGUI::EventArgs& event)
 {
@@ -222,6 +266,10 @@ bool DestinationEntryChange(const CEGUI::EventArgs& event)
 bool DialogWindowSwitch(const CEGUI::EventArgs& event)
 {
 	using namespace CEGUI;
+
+	extern CEGUI::Window* myRoot;
+
+
 	const CEGUI::WindowEventArgs& we =  static_cast<const CEGUI::WindowEventArgs&>(event);
 	if(we.window->getParent()->getChild("DestinationWindow")->isVisible()){
 		we.window->getParent()->getChild("DestinationWindow")->hide();
@@ -242,6 +290,7 @@ bool DialogWindowSwitch(const CEGUI::EventArgs& event)
 bool RoadBookSwitch(const CEGUI::EventArgs& event)
 {
 	using namespace CEGUI;
+	extern CEGUI::Window* myRoot;
 
 // 	const CEGUI::WindowEventArgs& we =  static_cast<const CEGUI::WindowEventArgs&>(event);
 	if(myRoot->getChild("Navit/RoadBook")->isVisible()){
@@ -257,6 +306,8 @@ bool RoadBookSwitch(const CEGUI::EventArgs& event)
 bool ButtonGo(const CEGUI::EventArgs& event)
 {
 	using namespace CEGUI;
+	extern CEGUI::Window* myRoot;
+	
 	MultiColumnList* mcl = static_cast<MultiColumnList*>(WindowManager::getSingleton().getWindow("DestinationWindow/Listbox"));
 	// First, make sure the user selected an entry in the town choice. If he hadn't, select the first for him.
 	if(SDL_dest.current_search==SRCH_TOWN){
@@ -270,7 +321,7 @@ bool ButtonGo(const CEGUI::EventArgs& event)
 	Window* Dest_x = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Dest_x"));
 	Window* Dest_y = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Dest_y"));
 	
-	route_to(atoi(Dest_x->getText().c_str()),atoi(Dest_y->getText().c_str()));
+// 	route_to(atoi(Dest_x->getText().c_str()),atoi(Dest_y->getText().c_str()));
 
 	return true;
 }
@@ -278,19 +329,23 @@ bool ButtonGo(const CEGUI::EventArgs& event)
 
 bool ZoomIn(const CEGUI::EventArgs& event)
 {
+	/*
 	extern struct container *co;
 	struct transformation *t=co->trans;
 	if(t->scale>1){
 		t->scale/=2;
 	}
+	*/
 
 }
 
 bool ZoomOut(const CEGUI::EventArgs& event)
 {
+	/*
 	extern struct container *co;
 	struct transformation *t=co->trans;
 	t->scale*=2;
+	*/
 }
 
 bool ButtonQuit(const CEGUI::EventArgs& event)
@@ -298,7 +353,94 @@ bool ButtonQuit(const CEGUI::EventArgs& event)
 	exit(0);
 }
 
+bool Handle_Virtual_Key_Down(const CEGUI::EventArgs& event){
+	
+	using namespace CEGUI;
 
+	extern CEGUI::Window* myRoot;
+
+	const CEGUI::WindowEventArgs& we =  static_cast<const CEGUI::WindowEventArgs&>(event);
+	String senderID = we.window->getName();
+
+	Window* editbox = myRoot->getChild("Navit/Keyboard")->getChild("Navit/Keyboard/Input");
+	String content=editbox->getText();
+
+
+	if(senderID=="OK"){
+		printf("Validating : %s\n",content.c_str());
+		myRoot->getChild("Navit/Keyboard")->hide();
+		return 0;
+	} else if(senderID=="BACK"){
+		content=content.substr(0, content.length()-1);
+		editbox->setText(content);
+	} else {
+		content+=senderID;
+		editbox->setText(content);
+	}
+
+	Window* country_edit = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/CountryEditbox"));
+	Window* town_edit = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/TownEditbox"));
+	Window* street_edit = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/StreetEditbox"));
+
+	switch (SDL_dest.current_search) {
+		case SRCH_COUNTRY:
+			country_edit->setText(content);
+			break;
+		case SRCH_TOWN :
+			town_edit->setText(content);
+			break;
+		case SRCH_STREET :
+			street_edit->setText(content);
+			break;
+	}
+	handle_destination_change();
+}
+
+
+
+// Nothing really interesting below.
+
+void handle_mouse_down(Uint8 button)
+{
+	switch ( button )
+	{
+		// handle real mouse buttons
+		case SDL_BUTTON_LEFT:
+			CEGUI::System::getSingleton().injectMouseButtonDown(CEGUI::LeftButton);
+			break;
+		case SDL_BUTTON_MIDDLE:
+			CEGUI::System::getSingleton().injectMouseButtonDown(CEGUI::MiddleButton);
+			break;
+		case SDL_BUTTON_RIGHT:
+			CEGUI::System::getSingleton().injectMouseButtonDown(CEGUI::RightButton);
+			break;
+		
+		// handle the mouse wheel
+		case SDL_BUTTON_WHEELDOWN:
+			CEGUI::System::getSingleton().injectMouseWheelChange( -1 );
+			break;
+		case SDL_BUTTON_WHEELUP:
+			CEGUI::System::getSingleton().injectMouseWheelChange( +1 );
+			break;
+	}
+}
+
+
+void handle_mouse_up(Uint8 button)
+{
+	switch ( button )
+	{
+	case SDL_BUTTON_LEFT:
+		CEGUI::System::getSingleton().injectMouseButtonUp(CEGUI::LeftButton);
+		break;
+	case SDL_BUTTON_MIDDLE:
+		CEGUI::System::getSingleton().injectMouseButtonUp(CEGUI::MiddleButton);
+		break;
+	case SDL_BUTTON_RIGHT:
+		CEGUI::System::getSingleton().injectMouseButtonUp(CEGUI::RightButton);
+		break;
+	}
+}
 
 void inject_time_pulse(double& last_time_pulse)
 {
