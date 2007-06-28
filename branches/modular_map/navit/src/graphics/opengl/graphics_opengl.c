@@ -43,7 +43,6 @@ struct graphics_font_priv {
 };
 
 struct graphics_gc_priv {
-	GdkGC *gc;
 	struct graphics_priv *gr;
 };
 
@@ -120,26 +119,30 @@ static struct graphics_font_priv *font_new(struct graphics_priv *gr, struct grap
 static void
 gc_destroy(struct graphics_gc_priv *gc)
 {
-	g_object_unref(gc->gc);
 	g_free(gc);
 }
 
 static void
 gc_set_linewidth(struct graphics_gc_priv *gc, int w)
 {
+#if 0
 	gdk_gc_set_line_attributes(gc->gc, w, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+#endif
 }
 
 static void
 gc_set_dashes(struct graphics_gc_priv *gc, unsigned char *dash_list, int n)
 {
+#if 0
 	gdk_gc_set_dashes(gc->gc, 0, (gint8 *)dash_list, n);
 	gdk_gc_set_line_attributes(gc->gc, 1, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+#endif
 }
 
 static void
 gc_set_color(struct graphics_gc_priv *gc, struct color *c, int fg)
 {
+#if 0
 	GdkColor gdkc;
 	gdkc.pixel=0;
 	gdkc.red=c->r;
@@ -150,6 +153,7 @@ gc_set_color(struct graphics_gc_priv *gc, struct color *c, int fg)
 		gdk_gc_set_foreground(gc->gc, &gdkc);
 	else
 		gdk_gc_set_background(gc->gc, &gdkc);
+#endif
 }
 
 static void
@@ -177,7 +181,6 @@ static struct graphics_gc_priv *gc_new(struct graphics_priv *gr, struct graphics
 	struct graphics_gc_priv *gc=g_new(struct graphics_gc_priv, 1);
 
 	*meth=gc_methods;
-	gc->gc=gdk_gc_new(gr->widget->window);
 	gc->gr=gr;
 	return gc;
 }
@@ -291,25 +294,31 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 static void
 draw_polygon(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int count)
 {
+#if 0
 	if (gr->mode == draw_mode_begin || gr->mode == draw_mode_end)
 		gdk_draw_polygon(gr->drawable, gc->gc, TRUE, (GdkPoint *)p, count);
 	if (gr->mode == draw_mode_end || gr->mode == draw_mode_cursor)
 		gdk_draw_polygon(gr->widget->window, gc->gc, TRUE, (GdkPoint *)p, count);
+#endif
 }
 
 static void
 draw_rectangle(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int w, int h)
 {
+#if 0
 	gdk_draw_rectangle(gr->drawable, gc->gc, TRUE, p->x, p->y, w, h);
+#endif
 }
 
 static void
 draw_circle(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int r)
 {
+#if 0
 	if (gr->mode == draw_mode_begin || gr->mode == draw_mode_end)
 		gdk_draw_arc(gr->drawable, gc->gc, FALSE, p->x-r/2, p->y-r/2, r, r, 0, 64*360);
 	if (gr->mode == draw_mode_end || gr->mode == draw_mode_cursor)
 		gdk_draw_arc(gr->widget->window, gc->gc, FALSE, p->x-r/2, p->y-r/2, r, r, 0, 64*360);
+#endif
 }
 
 
@@ -435,6 +444,7 @@ display_text_render(char *text, struct graphics_font_priv *font, int dx, int dy,
 static void
 display_text_draw(struct text_render *text, struct graphics_priv *gr, struct graphics_gc_priv *fg, struct graphics_gc_priv *bg)
 {
+#if 0
 	int i;
 	struct text_glyph *g, **gp;
 
@@ -454,6 +464,7 @@ display_text_draw(struct text_render *text, struct graphics_priv *gr, struct gra
 		if (g->w && g->h) 
 			gdk_draw_gray_image(gr->drawable, fg->gc, g->x, g->y, g->w, g->h, GDK_RGB_DITHER_NONE, g->pixmap, g->w);
 	}
+#endif
 }
 
 static void
@@ -476,6 +487,7 @@ display_text_free(struct text_render *text)
 static void
 draw_text(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct graphics_gc_priv *bg, struct graphics_font_priv *font, char *text, struct point *p, int dx, int dy)
 {
+#if 0
 	struct text_render *t;
 
 	if (! font)
@@ -492,13 +504,16 @@ draw_text(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct graphics
 		gdk_gc_set_function(fg->gc, GDK_COPY);
         	gdk_gc_set_function(bg->gc, GDK_COPY);
 	}
+#endif
 }
 
 static void
 draw_image(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct point *p, struct graphics_image_priv *img)
 {
+#if 0
 	gdk_draw_pixbuf(gr->drawable, fg->gc, img->pixbuf, 0, 0, p->x, p->y,
 		    img->w, img->h, GDK_RGB_DITHER_NONE, 0, 0);
+#endif
 }
 
 #ifdef HAVE_IMLIB2
@@ -593,6 +608,7 @@ background_gc(struct graphics_priv *gr, struct graphics_gc_priv *gc)
 static void
 draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
 {
+#if 0
 	struct graphics_priv *overlay;
 	GtkWidget *widget=gr->widget;
 
@@ -616,6 +632,7 @@ draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
 		}
 	}
 	gr->mode=mode;
+#endif
 }
 
 /* Events */

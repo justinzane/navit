@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE navit SYSTEM "navit.dtd">
-<navit ui="gtk" graphics="gtk_drawing_area" center="5031.51 N 305.83 E" zoom="8192" >
+<navit gui="gtk" graphics="gtk_drawing_area" center="5031.51 N 735.83 E" zoom="8192" >
 	<vehicle name="Meins" source="gpsd://localhost" color="#0000ff"/>
 	<vehicle name="Deins" source="gpsd://somehost" color="#0000aa"/> 
 	<mapset>
