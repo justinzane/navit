@@ -5,6 +5,7 @@
 
 //  FIXME temporary fix for enum
 #include "projection.h"
+#include "navit.h"
 
 #include "../../coord.h"
 
@@ -326,9 +327,11 @@ bool ButtonGo(const CEGUI::EventArgs& event)
 	return true;
 }
 
+extern "C" struct navit *global_navit;
 
 bool ZoomIn(const CEGUI::EventArgs& event)
 {
+	navit_zoom_in(global_navit, 2);
 	/*
 	extern struct container *co;
 	struct transformation *t=co->trans;
@@ -341,6 +344,7 @@ bool ZoomIn(const CEGUI::EventArgs& event)
 
 bool ZoomOut(const CEGUI::EventArgs& event)
 {
+	navit_zoom_out(global_navit, 2);
 	/*
 	extern struct container *co;
 	struct transformation *t=co->trans;

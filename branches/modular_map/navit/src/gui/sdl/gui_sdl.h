@@ -17,6 +17,7 @@ struct gui_priv {
 	GtkActionGroup *dyn_group;
 	GtkUIManager *menu_manager;
         void *statusbar;*/
+	struct navit *nav;
 	int dyn_counter;
 };
 

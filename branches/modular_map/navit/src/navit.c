@@ -253,10 +253,10 @@ navit_init(struct navit *this_)
 					route_set_destination(this_->route, &c);
 			}
 		}
-		global_navit=this_;
 
 		destination_address_tst(this_);
 	}
+	global_navit=this_;
 	gui_run_main_loop(this_->gui);
 }
 

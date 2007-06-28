@@ -533,7 +533,8 @@ graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *maps
 	profile(0,NULL);
 	do_draw(displaylist, trans, mapsets, order, route);
 	profile(1,"do_draw");
-	route_draw(route, trans, displaylist);
+	if (route)
+		route_draw(route, trans, displaylist);
 	profile(1,"route_draw");
 	xdisplay_draw(displaylist->dl, gra, layouts, order);
 	profile(1,"xdisplay_draw");

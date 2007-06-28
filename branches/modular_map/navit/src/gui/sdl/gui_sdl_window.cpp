@@ -72,8 +72,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
 	int frames=0;
 	char fps [12];
 	
-	navit_draw(this);
-
+	navit_draw(this_->nav);
 	while (!must_quit)
 	{
 // 		profile_timer(NULL);
@@ -538,6 +537,7 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 	gtk_container_add(GTK_CONTAINER(this_->win), this_->vbox);
 	gtk_widget_show_all(this_->win);
 	*/
+	this_->nav=nav;
 
 	return this_;
 }

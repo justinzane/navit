@@ -1,4 +1,5 @@
 #define GDK_ENABLE_BROKEN
+#include <math.h>
 #include "config.h"
 #include <gtk/gtk.h>
 #include <ft2build.h>
@@ -7,6 +8,7 @@
 #include <Imlib2.h>
 #endif
 #include <gdk/gdkx.h>
+#include <GL/glc.h>
 #include "point.h"
 #include "graphics.h"
 #include "color.h"
@@ -44,6 +46,8 @@ struct graphics_font_priv {
 
 struct graphics_gc_priv {
 	struct graphics_priv *gr;
+	float fr,fg,fb,fa;
+	float br,bg,bb,ba;
 };
 
 struct graphics_image_priv {
@@ -140,32 +144,21 @@ gc_set_dashes(struct graphics_gc_priv *gc, unsigned char *dash_list, int n)
 }
 
 static void
-gc_set_color(struct graphics_gc_priv *gc, struct color *c, int fg)
-{
-#if 0
-	GdkColor gdkc;
-	gdkc.pixel=0;
-	gdkc.red=c->r;
-	gdkc.green=c->g;
-	gdkc.blue=c->b;
-	gdk_colormap_alloc_color(gc->gr->colormap, &gdkc, FALSE, TRUE);
-	if (fg)
-		gdk_gc_set_foreground(gc->gc, &gdkc);
-	else
-		gdk_gc_set_background(gc->gc, &gdkc);
-#endif
-}
-
-static void
 gc_set_foreground(struct graphics_gc_priv *gc, struct color *c)
 {
-	gc_set_color(gc, c, 1);
+	gc->fr=c->r/65535.0;
+	gc->fg=c->g/65535.0;
+	gc->fb=c->b/65535.0;
+	gc->fa=0;
 }
 
 static void
 gc_set_background(struct graphics_gc_priv *gc, struct color *c)
 {
-	gc_set_color(gc, c, 0);
+	gc->br=c->r/65535.0;
+	gc->bg=c->g/65535.0;
+	gc->bb=c->b/65535.0;
+	gc->ba=0;
 }
 
 static struct graphics_gc_methods gc_methods = {
@@ -207,6 +200,7 @@ image_new(struct graphics_priv *gr, struct graphics_image_methods *meth, char *n
 static void
 draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int count)
 {
+	int i;
 /*
 	if (gr->mode == draw_mode_begin || gr->mode == draw_mode_end) 
 		gdk_draw_lines(gr->drawable, gc->gc, (GdkPoint *)p, count);
@@ -214,71 +208,62 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 		gdk_draw_lines(gr->widget->window, gc->gc, (GdkPoint *)p, count);
 */
 
+	for (i = 0 ; i < count-1 ; i++) {
 
-/*
-//  GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alpha, int linewidth,char * label,int attr) { 
+	//   	glEnable( GL_POLYGON_SMOOTH );
+	//  	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+	// 	glEnable( GL_BLEND );
 
+		float dx=p[i+1].x-p[i].x;
+		float dy=p[i+1].y-p[i].y;
 
-	// FIXME We need to use GL display list rather than these crappy gl lines. each too much cpu for GL_POLYGON_SMOOTH
-
-//   	glEnable( GL_POLYGON_SMOOTH );
-//  	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-// 	glEnable( GL_BLEND );
-
-	float dx=x2-x1;
-	float dy=y2-y1;
-
-	float cx=(x2+x1)/2;
-	float cy=(y2+y1)/2;
+		float cx=(p[i+1].x+p[i].x)/2;
+		float cy=(p[i+1].y+p[i].y)/2;
 
 
-	int w=round(sqrt(pow((dx),2)+pow((dy),2)));
+		int w=round(sqrt(pow((dx),2)+pow((dy),2)));
 
-	float angle=atan (dy/dx) * 180 / PI;
+		float angle=atan (dy/dx) * 180 / M_PI;
 
-	glPushMatrix();
-	glTranslatef(cx,cy,1);
-//  	glColor4f( 0,0,0,1);
-//  	glRasterPos2f( 1,1 );
-	glRotatef(angle,0.0,0.0,1.0);
+		glPushMatrix();
+		glTranslatef(cx,cy,1);
+	//  	glColor4f( 0,0,0,1);
+	//  	glRasterPos2f( 1,1 );
+		glRotatef(angle,0.0,0.0,1.0);
 
-	extern int color[][3];
-	float r=(float)(color[fill][0])/65535;
-	float g=(float)(color[fill][1])/65535;
-	float b=(float)(color[fill][2])/65535;
-	glColor4f( r, g, b, alpha/255);
+		glColor4f( gc->fr, gc->fg, gc->fb, gc->fa);
 
-	linewidth*=2;
+		int linewidth=3;
 
-	glBegin( GL_POLYGON );
-			glVertex2f( -w/2,-linewidth/2 );
-			glVertex2f( -w/2-4,0 );
-			glVertex2f( -w/2,+linewidth/2 );
-			glVertex2f( +w/2,+linewidth/2 );
-			glVertex2f( +w/2+4,0 );
-			glVertex2f( +w/2,-linewidth/2 );
-			glVertex2f( -w/2,+linewidth/2 );
-	glEnd();
+		glBegin( GL_POLYGON );
+				glVertex2f( -w/2,-linewidth/2 );
+				glVertex2f( -w/2-4,0 );
+				glVertex2f( -w/2,+linewidth/2 );
+				glVertex2f( +w/2,+linewidth/2 );
+				glVertex2f( +w/2+4,0 );
+				glVertex2f( +w/2,-linewidth/2 );
+				glVertex2f( -w/2,+linewidth/2 );
+		glEnd();
 
+		
+		// FIXME Roads label can maybe be drawn here, avoid the display_label loop, when playing with Z axis position.
+		/*
+		if(attr==1){
+			glcRenderStyle(GLC_TEXTURE);
+			glColor3f(0., 0., 0.);
+			glScalef(12, 12, 0.);
+			glcRenderString(">>");
+		} else if(attr==-1){
+			glcRenderStyle(GLC_TEXTURE);
+			glColor3f(0., 0., 0.);
+			glScalef(12, 12, 0.);
+			glcRenderString("<<");
+		}
 
-	// FIXME Roads label can maybe be drawn here, avoid the display_label loop, when playing with Z axis position.
-	/*
-	if(attr==1){
-		glcRenderStyle(GLC_TEXTURE);
-		glColor3f(0., 0., 0.);
-		glScalef(12, 12, 0.);
-		glcRenderString(">>");
-	} else if(attr==-1){
-		glcRenderStyle(GLC_TEXTURE);
-		glColor3f(0., 0., 0.);
-		glScalef(12, 12, 0.);
-		glcRenderString("<<");
+		*/
+
+		glPopMatrix();
 	}
-
-	*/
-
-/*
-	glPopMatrix();
 //  	glDisable( GL_BLEND );
 // 	glDisable( GL_POLYGON_SMOOTH );
 /*
@@ -300,6 +285,15 @@ draw_polygon(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point
 	if (gr->mode == draw_mode_end || gr->mode == draw_mode_cursor)
 		gdk_draw_polygon(gr->widget->window, gc->gc, TRUE, (GdkPoint *)p, count);
 #endif
+	int i;
+	glColor4f( gc->fr, gc->fg, gc->fb, gc->fa);
+	glBegin( GL_POLYGON );
+	for (i = 0 ; i < count ; i++) {
+		glVertex2i(p[i].x, p[i].y);		
+	}
+	glVertex2i(p[0].x, p[0].y);		
+	glEnd();
+	
 }
 
 static void
