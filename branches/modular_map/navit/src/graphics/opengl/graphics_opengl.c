@@ -204,10 +204,88 @@ image_new(struct graphics_priv *gr, struct graphics_image_methods *meth, char *n
 static void
 draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int count)
 {
+/*
 	if (gr->mode == draw_mode_begin || gr->mode == draw_mode_end) 
 		gdk_draw_lines(gr->drawable, gc->gc, (GdkPoint *)p, count);
 	if (gr->mode == draw_mode_end || gr->mode == draw_mode_cursor)
 		gdk_draw_lines(gr->widget->window, gc->gc, (GdkPoint *)p, count);
+*/
+
+
+/*
+//  GLDrawLineRGBA_labelled( int x1, int y1, int x2, int y2, int fill, int alpha, int linewidth,char * label,int attr) { 
+
+
+	// FIXME We need to use GL display list rather than these crappy gl lines. each too much cpu for GL_POLYGON_SMOOTH
+
+//   	glEnable( GL_POLYGON_SMOOTH );
+//  	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+// 	glEnable( GL_BLEND );
+
+	float dx=x2-x1;
+	float dy=y2-y1;
+
+	float cx=(x2+x1)/2;
+	float cy=(y2+y1)/2;
+
+
+	int w=round(sqrt(pow((dx),2)+pow((dy),2)));
+
+	float angle=atan (dy/dx) * 180 / PI;
+
+	glPushMatrix();
+	glTranslatef(cx,cy,1);
+//  	glColor4f( 0,0,0,1);
+//  	glRasterPos2f( 1,1 );
+	glRotatef(angle,0.0,0.0,1.0);
+
+	extern int color[][3];
+	float r=(float)(color[fill][0])/65535;
+	float g=(float)(color[fill][1])/65535;
+	float b=(float)(color[fill][2])/65535;
+	glColor4f( r, g, b, alpha/255);
+
+	linewidth*=2;
+
+	glBegin( GL_POLYGON );
+			glVertex2f( -w/2,-linewidth/2 );
+			glVertex2f( -w/2-4,0 );
+			glVertex2f( -w/2,+linewidth/2 );
+			glVertex2f( +w/2,+linewidth/2 );
+			glVertex2f( +w/2+4,0 );
+			glVertex2f( +w/2,-linewidth/2 );
+			glVertex2f( -w/2,+linewidth/2 );
+	glEnd();
+
+
+	// FIXME Roads label can maybe be drawn here, avoid the display_label loop, when playing with Z axis position.
+	/*
+	if(attr==1){
+		glcRenderStyle(GLC_TEXTURE);
+		glColor3f(0., 0., 0.);
+		glScalef(12, 12, 0.);
+		glcRenderString(">>");
+	} else if(attr==-1){
+		glcRenderStyle(GLC_TEXTURE);
+		glColor3f(0., 0., 0.);
+		glScalef(12, 12, 0.);
+		glcRenderString("<<");
+	}
+
+	*/
+
+/*
+	glPopMatrix();
+//  	glDisable( GL_BLEND );
+// 	glDisable( GL_POLYGON_SMOOTH );
+/*
+	if(label){
+		if((strlen(label)*6)<w){
+			SDL_print(label,cx, cy,-angle);
+		}
+	}
+*/
+
 }
 
 static void
@@ -661,7 +739,7 @@ motion_notify(GtkWidget * widget, GdkEventMotion * event, gpointer user_data)
 	return FALSE;
 }
 
-static struct graphics_priv *graphics_gtk_drawing_area_new_helper(struct graphics_methods *meth);
+static struct graphics_priv *graphics_opengl_new_helper(struct graphics_methods *meth);
 
 static struct graphics_priv *
 overlay_new(struct graphics_priv *gr, struct graphics_methods *meth, struct point *p, int w, int h)
