@@ -240,7 +240,6 @@ display_add(struct displaylist *displaylist, struct item *item, int count, struc
 	GList *l;
 	char *p;
 
-
 	len=sizeof(*di)+count*sizeof(*pnt);
 	if (label)
 		len+=strlen(label)+1;

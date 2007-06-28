@@ -24,11 +24,11 @@ struct transformation {
 struct transformation *
 transform_new(void)
 {
-	struct transformation *this;
+	struct transformation *this_;
 
-	this=g_new0(struct transformation, 1);
+	this_=g_new0(struct transformation, 1);
 
-	return this;
+	return this_;
 }
 
 void
@@ -158,15 +158,15 @@ transform_reverse(struct transformation *t, struct point *p, struct coord *c)
 }
 
 enum projection
-transform_get_projection(struct transformation *this)
+transform_get_projection(struct transformation *this_)
 {
-	return this->pro;
+	return this_->pro;
 }
 
 void
-transform_set_projection(struct transformation *this, enum projection pro)
+transform_set_projection(struct transformation *this_, enum projection pro)
 {
-	this->pro=pro;
+	this_->pro=pro;
 }
 
 static int
@@ -196,16 +196,16 @@ max4(int v1,int v2, int v3, int v4)
 }
 
 void
-transform_rect(struct transformation *this, enum projection pro, struct coord_rect *r)
+transform_rect(struct transformation *this_, enum projection pro, struct coord_rect *r)
 {
 	struct coord_geo g;
-	if (0 && this->pro == pro) {
-		*r=this->r;
+	if (0 && this_->pro == pro) {
+		*r=this_->r;
 	} else {
-		transform_to_geo(this->pro, &this->r.lu, &g);
+		transform_to_geo(this_->pro, &this_->r.lu, &g);
 		transform_from_geo(pro, &g, &r->lu);
 		dbg(1,"%f,%f", g.lat, g.lng);
-		transform_to_geo(this->pro, &this->r.rl, &g);
+		transform_to_geo(this_->pro, &this_->r.rl, &g);
 		dbg(1,": - %f,%f\n", g.lat, g.lng);
 		transform_from_geo(pro, &g, &r->rl);
 	}
@@ -213,24 +213,24 @@ transform_rect(struct transformation *this, enum projection pro, struct coord_re
 }
 
 struct coord *
-transform_center(struct transformation *this)
+transform_center(struct transformation *this_)
 {
-	return &this->center;
+	return &this_->center;
 }
 
 int
-transform_contains(struct transformation *this, enum projection pro, struct coord_rect *r)
+transform_contains(struct transformation *this_, enum projection pro, struct coord_rect *r)
 {
 	struct coord_geo g;
 	struct coord_rect r1;
-	if (this->pro != pro) {
+	if (this_->pro != pro) {
 		transform_to_geo(pro, &r->lu, &g);
-		transform_from_geo(this->pro, &g, &r1.lu);
+		transform_from_geo(this_->pro, &g, &r1.lu);
 		transform_to_geo(pro, &r->rl, &g);
-		transform_from_geo(this->pro, &g, &r1.rl);
+		transform_from_geo(this_->pro, &g, &r1.rl);
 		r=&r1;
 	}
-	return coord_rect_overlap(&this->r, r);
+	return coord_rect_overlap(&this_->r, r);
 	
 }
 
@@ -243,9 +243,9 @@ transform_set_angle(struct transformation *t,int angle)
 }
 
 int
-transform_get_angle(struct transformation *this,int angle)
+transform_get_angle(struct transformation *this_,int angle)
 {
-	return this->angle;
+	return this_->angle;
 }
 
 void
@@ -633,9 +633,9 @@ transform_get_angle_delta(struct coord *c1, struct coord *c2, int dir)
 }
 
 int
-transform_within_border(struct transformation *this, struct point *p, int border)
+transform_within_border(struct transformation *this_, struct point *p, int border)
 {
-	if (p->x < border || p->x > this->width-border || p->y < border || p->y > this->height-border)
+	if (p->x < border || p->x > this_->width-border || p->y < border || p->y > this_->height-border)
 		return 0;
 	return 1;
 }

@@ -7,6 +7,7 @@
 
 
 #include "navit.h"
+#include "transform.h"
 #include "gui.h"
 #include "coord.h"
 #include "plugin.h"
@@ -71,7 +72,10 @@ static int gui_run_main_loop(struct gui_priv *this_)
 
 	int frames=0;
 	char fps [12];
-	
+	struct transformation *t;
+
+	t=navit_get_trans(this_->nav);
+	transform_set_size(t, 640, 480);	
 	navit_draw(this_->nav);
 	while (!must_quit)
 	{

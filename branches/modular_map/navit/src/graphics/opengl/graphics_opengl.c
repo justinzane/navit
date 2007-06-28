@@ -48,6 +48,7 @@ struct graphics_gc_priv {
 	struct graphics_priv *gr;
 	float fr,fg,fb,fa;
 	float br,bg,bb,ba;
+	int linewidth;
 };
 
 struct graphics_image_priv {
@@ -129,9 +130,7 @@ gc_destroy(struct graphics_gc_priv *gc)
 static void
 gc_set_linewidth(struct graphics_gc_priv *gc, int w)
 {
-#if 0
-	gdk_gc_set_line_attributes(gc->gc, w, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
-#endif
+	gc->linewidth=w;
 }
 
 static void
@@ -175,6 +174,7 @@ static struct graphics_gc_priv *gc_new(struct graphics_priv *gr, struct graphics
 
 	*meth=gc_methods;
 	gc->gr=gr;
+	gc->linewidth=1;
 	return gc;
 }
 
@@ -233,7 +233,7 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 
 		glColor4f( gc->fr, gc->fg, gc->fb, gc->fa);
 
-		int linewidth=3;
+		int linewidth=gc->linewidth;
 
 		glBegin( GL_POLYGON );
 				glVertex2f( -w/2,-linewidth/2 );
