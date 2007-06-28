@@ -47,6 +47,7 @@ CEGUI::Window* myRoot;
 static int
 gui_sdl_set_graphics(struct gui_priv *this_, struct graphics *gra)
 {
+	printf("setting up the graphics\n");
 	/*
 	GtkWidget *graphics;
 
