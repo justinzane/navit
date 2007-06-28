@@ -73,7 +73,10 @@ int main(int argc, char **argv)
 			config_load(g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL), &error);
 		}
 		else	
-			config_load("navit.xml", &error);
+			if (file_exists("navit.xml.local"))
+				config_load("navit.xml.local", &error);
+			else
+				config_load("navit.xml", &error);
 #if 1
 	gtk_main();
 #else
