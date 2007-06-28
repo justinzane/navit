@@ -56,6 +56,10 @@ town_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	case attr_town_name:
 		attr->u.str=twn->name;
+		twn->attr_next=attr_town_postal;
+		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_town_postal:
+		attr->u.str=twn->postal_code1;
 		twn->attr_next=attr_district_name;
 		return ((attr->u.str && attr->u.str[0]) ? 1:0);
 	case attr_district_name:

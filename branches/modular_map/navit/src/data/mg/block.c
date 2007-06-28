@@ -137,7 +137,7 @@ block_init(struct map_rect_priv *mr)
 }
 
 
-static int
+int
 block_next_lin(struct map_rect_priv *mr)
 {
 	for (;;) {

@@ -184,7 +184,7 @@ navit_projection_set(struct menu *menu, void *this__p, void *pro_p)
 }
 
 static void
-navit_set_destination(struct menu *menu, void *this__p, void *c_p)
+navit_set_destination_menu(struct menu *menu, void *this__p, void *c_p)
 {
 	struct navit *this_=this__p;
 	struct coord *c=c_p;
@@ -193,6 +193,23 @@ navit_set_destination(struct menu *menu, void *this__p, void *c_p)
                 navit_draw(this_);
         }
 
+}
+
+void
+navit_set_destination(struct navit *this_, struct coord *c, char *description)
+{
+	int fd;
+	char *buffer;
+	buffer=g_strdup_printf("0x%x 0x%x %s\n", c->x, c->y, description);
+	fd=open("destination.txt", O_RDWR|O_CREAT|O_APPEND, 0644);
+	if (fd != -1)
+		write(fd, buffer, strlen(buffer));
+	close(fd);
+	g_free(buffer);
+	if (this_->route) {
+                route_set_destination(this_->route, c);
+                navit_draw(this_);
+        }
 }
 
 struct navit *global_navit;
@@ -243,7 +260,7 @@ navit_init(struct navit *this_)
 							struct coord *cn=g_new(struct coord, 1);
 							*cn=c;
 							buffer[strlen(buffer)-1]='\0';
-							menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination, this_, cn);
+							menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination_menu, this_, cn);
 						}
 						flag=1;
 					}
@@ -254,7 +271,6 @@ navit_init(struct navit *this_)
 			}
 		}
 
-		destination_address_tst(this_);
 	}
 	global_navit=this_;
 	gui_run_main_loop(this_->gui);

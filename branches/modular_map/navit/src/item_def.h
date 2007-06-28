@@ -2,7 +2,7 @@ ITEM2(0x00000000,none)
 ITEM2(0x00000001,point_unspecified)
 ITEM(town_streets)
 ITEM(street_name)
-ITEM(street_name_segment)
+ITEM(street_name_numbers)
 ITEM(street_number)
 /* Point */
 ITEM2(0x00010000,town_label)

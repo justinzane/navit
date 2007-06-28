@@ -20,7 +20,41 @@ street_name_get(struct street_name *name, unsigned char **p)
 	name->aux_data=*p;
 	name->tmp_len=name->aux_len;
 	name->tmp_data=name->aux_data;
-	(*p)+=name->aux_len;
+	*p=start+name->len;
+}
+
+static void
+street_name_numbers_get(struct street_name_numbers *name_numbers, unsigned char **p)
+{
+	unsigned char *start=*p;
+	name_numbers->len=get_u16(p);
+	name_numbers->tag=get_u8(p);
+	name_numbers->dist=get_u32(p);
+	name_numbers->country=get_u32(p);
+	name_numbers->c=coord_get(p);
+	name_numbers->first=get_u24(p);
+	name_numbers->last=get_u24(p);
+	name_numbers->segment_count=get_u32(p);
+	name_numbers->segments=(struct street_name_segment *)(*p);
+	(*p)+=sizeof(struct street_name_segment)*name_numbers->segment_count;
+	name_numbers->aux_len=name_numbers->len-(*p-start);
+	name_numbers->aux_data=*p;
+	name_numbers->tmp_len=name_numbers->aux_len;
+	name_numbers->tmp_data=name_numbers->aux_data;
+	*p=start+name_numbers->len;
+}
+
+static void
+street_name_number_get(struct street_name_number *name_number, unsigned char **p)
+{
+	unsigned char *start=*p;
+        name_number->len=get_u16(p);
+        name_number->tag=get_u8(p);
+        name_number->c=coord_get(p);
+        name_number->first=get_u24(p);
+        name_number->last=get_u24(p);
+        name_number->segment=(struct street_name_segment *)p;
+	*p=start+name_number->len;
 }
 
 static void
@@ -455,6 +489,52 @@ street_search_compare(unsigned char **p, struct map_rect_priv *mr)
 }
 
 static void
+street_name_numbers_coord_rewind(void *priv_data)
+{
+	/* struct street_priv *street=priv_data; */
+
+}
+
+static void
+street_name_numbers_attr_rewind(void *priv_data)
+{
+	/* struct street_priv *street=priv_data; */
+
+}
+
+static int
+street_name_numbers_coord_get(void *priv_data, struct coord *c, int count)
+{
+	return 0;
+}
+
+static int
+street_name_numbers_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
+{
+	struct map_rect_priv *mr=priv_data;
+	struct item *item;
+
+	attr->type=attr_type;
+	switch (attr_type) {
+	default:
+		dbg(0,"unknown item\n");
+		return 0;
+	}
+}
+
+
+
+
+
+static struct item_methods street_name_numbers_meth = {
+	street_name_numbers_coord_rewind,
+	street_name_numbers_coord_get,
+	street_name_numbers_attr_rewind,
+	street_name_numbers_attr_get,
+};
+
+
+static void
 street_name_coord_rewind(void *priv_data)
 {
 	/* struct street_priv *street=priv_data; */
@@ -471,13 +551,87 @@ street_name_attr_rewind(void *priv_data)
 static int
 street_name_coord_get(void *priv_data, struct coord *c, int count)
 {
+	struct map_rect_priv *mr=priv_data;
+	struct street_name_numbers snns;
+	unsigned char *p=mr->street.name.aux_data;
+
+	dbg(0,"aux_data=%p\n", p);
+	if (count) {
+		street_name_numbers_get(&snns, &p);
+		*c=*(snns.c);
+		return 1;
+	}
+	
 	return 0;
 }
 
 static int
 street_name_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 {
-	return 0;
+	struct map_rect_priv *mr=priv_data;
+	struct item *item;
+
+	attr->type=attr_type;
+	switch (attr_type) {
+	case attr_street_name:
+		attr->u.str=mr->street.name.name2;
+		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_street_name_systematic:
+		attr->u.str=mr->street.name.name1;
+		return ((attr->u.str && attr->u.str[0]) ? 1:0);
+	case attr_street_name_numbers_item:
+		item=&mr->item3.item;
+		attr->u.item=item;
+		item->type=type_street_name_numbers;
+		item->id_hi=0;
+		item->id_lo=1;
+		item->meth=&street_name_numbers_meth;
+		item->map=NULL;
+		item->priv_data=mr;
+		{
+			int i;
+			struct street_name_numbers nns;
+			unsigned char *p=mr->street.name.aux_data;
+			unsigned char *end=p+mr->street.name.aux_len;
+			printf("len=0x%x\n", mr->street.name.aux_len);
+			for (i = 0 ; i < mr->street.name.aux_len ; i++) {
+				printf("%02x ",mr->street.name.aux_data[i]);
+			}
+			printf("\n");
+			{
+				while (p < end) {
+					unsigned char *pn,*pn_end;;
+					struct street_name_number nn;
+					street_name_numbers_get(&nns, &p);
+					printf("name_numbers:\n");
+					printf("  len 0x%x\n", nns.len);
+					printf("  tag 0x%x\n", nns.tag);
+					printf("  dist 0x%x\n", nns.dist);
+					printf("  country 0x%x\n", nns.country);
+					printf("  coord 0x%x,0x%x\n", nns.c->x, nns.c->y);
+					printf("  first %d\n", nns.first);
+					printf("  last %d\n", nns.last);
+					printf("  segment count 0x%x\n", nns.segment_count);
+					printf("  aux_len 0x%x\n", nns.aux_len);
+					pn=nns.aux_data;
+					pn_end=nns.aux_data+nns.aux_len;
+					while (pn < pn_end) {
+						printf("  number:\n");
+						street_name_number_get(&nn, &pn);
+						printf("    len 0x%x\n", nn.len);
+						printf("    tag 0x%x\n", nn.tag);
+						printf("    coord 0x%x,0x%x\n", nn.c->x, nn.c->y);
+						printf("    first %d\n", nn.first);
+						printf("    last %d\n", nn.last);
+					}
+				}
+			}
+		}
+		return 1;
+	default:
+		dbg(0,"unknown item\n");
+		return 0;
+	}
 }
 
 
@@ -533,12 +687,13 @@ street_search_get_item(struct map_rect_priv *mr)
 			return NULL;
 		}
 		if (!dir) {
-			dbg(0,"result country 0x%x assoc 0x%x name1 '%s' name2 '%s' dir=%d\n", mr->street.name.country, mr->street.name.townassoc, mr->street.name.name1, mr->street.name.name2, dir);
+			dbg(0,"result country 0x%x assoc 0x%x name1 '%s' name2 '%s' dir=%d aux_data=%p len=0x%x\n", mr->street.name.country, mr->street.name.townassoc, mr->street.name.name1, mr->street.name.name2, dir, mr->street.name.aux_data, mr->street.name.aux_len);
 			mr->item.type = type_street_name;
 			mr->item.id_hi=mr->street.name.country | (mr->current_file << 16) | 0x10000000;
 			mr->item.id_lo=last-mr->m->file[mr->current_file]->begin;
 			mr->item.meth=&street_name_meth;
 			mr->item.map=NULL;
+			mr->item.priv_data=mr;
 			return &mr->item;
 		}
 	}

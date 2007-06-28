@@ -18,6 +18,16 @@ struct block {
 	int count;
 };
 
+struct item_priv {
+	int cidx;
+	int aidx;
+	unsigned char *cstart,*cp,*cend;
+	unsigned char *astart,*ap,*aend;
+	enum attr_type attr_last;
+	enum attr_type attr_next;
+	struct item item;
+};
+
 struct town_priv {
 	unsigned int id; /*!< Identifier */
 	struct coord c; /*!< Coordinates */
@@ -104,6 +114,33 @@ struct street_name {
 	int tmp_len;
 	unsigned char *tmp_data;
 };
+
+struct street_name_numbers {
+	int len;
+	int tag;
+	int dist;
+	int country;
+	struct coord *c;
+	int first;
+	int last;
+	int segment_count;
+	struct street_name_segment *segments;
+	int aux_len;
+	unsigned char *aux_data;
+	int tmp_len;
+	unsigned char *tmp_data;
+};
+
+struct street_name_number {
+        int len;
+        int tag;
+        struct coord *c;
+        int first;
+        int last;
+        struct street_name_segment *segment;
+};
+
+
 
 struct street_priv {
 	struct file *name_file;
@@ -228,6 +265,7 @@ struct map_rect_priv {
 	struct block_offset *search_blk_off;
 	int search_block;
 	GHashTable *block_hash[file_end];
+	struct item_priv item3;
 };
 
 int block_init(struct map_rect_priv *mr);

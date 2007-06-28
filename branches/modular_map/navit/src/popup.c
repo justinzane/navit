@@ -48,34 +48,10 @@ popup_set_destination(struct menu *menu, void *data1, void *data2)
 	struct coord_geo g;
 	char buffer[1024];
 	char buffer_geo[1024];
-	int fd;
-	route=navit_get_route(nav);
-	if (route) {
-		route_set_destination(route, c);
-		navit_draw(nav);
-	}
 	transform_to_geo(transform_get_projection(navit_get_trans(nav)), c, &g);
 	transform_geo_text(&g, buffer_geo);	
-	sprintf(buffer,"0x%x 0x%x Map Point %s\n", c->x, c->y, buffer_geo);
-	fd=open("destination.txt", O_RDWR|O_CREAT|O_APPEND, 0644);
-	if (fd != -1)
-		write(fd, buffer, strlen(buffer));
-	close(fd);
-	
-#if 0
-	struct popup_item *ref=param;
-	struct popup *popup=ref->param;
-	struct container *co=popup->co;
-	printf("Destination %s\n", ref->text);
-
-#if 0 /* FIXME */
-	route_set_position(co->route, cursor_pos_get(co->cursor));
-	route_set_destination(co->route, &popup->c);
-#endif
-	graphics_redraw(popup->co);
-	if (co->statusbar && co->statusbar->statusbar_route_update)
-		co->statusbar->statusbar_route_update(co->statusbar, co->route);
-#endif
+	sprintf(buffer,"Map Point %s", buffer_geo);
+	navit_set_destination(nav, c, buffer);
 }
 
 
