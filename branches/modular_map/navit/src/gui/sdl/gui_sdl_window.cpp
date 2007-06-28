@@ -72,6 +72,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
 	int frames=0;
 	char fps [12];
 	
+	navit_draw(this);
 
 	while (!must_quit)
 	{
@@ -181,6 +182,7 @@ struct gui_methods gui_sdl_methods = {
 
 int init_GL() {
 
+	printf("init_GL()\n");
 //  	glClearColor(1.0,0.9,0.7,0);
 
 	// Blue sky
@@ -335,7 +337,7 @@ void BuildKeyboard(){
 	Add_KeyBoard_key(" ",offset_x+(count_x++)*w,y,w*2);
 	count_x++;
 	Add_KeyBoard_key("BACK",offset_x+(count_x++)*w,y,w*2);
-	/*
+	
 	count_x+=2;
 
 	Add_KeyBoard_key("1",offset_x+(count_x++)*w,y,w);
@@ -346,7 +348,7 @@ void BuildKeyboard(){
 	count_x=11;
 	Add_KeyBoard_key("0",offset_x+(count_x++)*w,y,w);
 	Add_KeyBoard_key("OK",offset_x+(count_x++)*w,y,w*2);
-*/
+
 }
 
 static void init_sdlgui(void)
@@ -487,7 +489,7 @@ static void init_sdlgui(void)
 		mcl2->addColumn("ETA", 3, cegui_absdim(80.0));
 		mcl2->addColumn("Instruction",4, cegui_absdim(300.0));
 
-		BuildKeyboard();
+//  		BuildKeyboard();
 		
 	}
 	catch (CEGUI::Exception& e)
@@ -499,7 +501,7 @@ static void init_sdlgui(void)
 
 	char * fontname="/usr/share/fonts/corefonts/verdana.ttf";
 
-	printf("Gui initialized\n");
+	printf("Gui initialized. Building fonts\n");
 
 
 	int ctx = 0;
@@ -510,6 +512,7 @@ static void init_sdlgui(void)
 	glcFont(font);
 // 	glcFontFace(font, "Italic");
 
+	printf("Fonts built. Ready to rock!\n");
 
 	
 }
