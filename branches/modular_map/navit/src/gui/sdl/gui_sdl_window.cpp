@@ -7,6 +7,7 @@
 
 
 #include "navit.h"
+#include "profile.h"
 #include "transform.h"
 #include "gui.h"
 #include "coord.h"
@@ -43,25 +44,22 @@ GLdouble upZ=0;
 #include "CEGUIDefaultResourceProvider.h"
 CEGUI::OpenGLRenderer* renderer;
 
+#undef profile
+#define profile(x,y)
+
 CEGUI::Window* myRoot;
 
+#define MODULE "gui_sdl"
 GLuint * DLid;
 
 static int
 gui_sdl_set_graphics(struct gui_priv *this_, struct graphics *gra)
 {
 	printf("setting up the graphics\n");
-	/*
-	GtkWidget *graphics;
 
-	graphics=graphics_get_data(gra, "gtk_widget");
-	if (! graphics)
+	DLid=(GLuint *)graphics_get_data(gra, "opengl_displaylist");
+	if (!DLid) 
 		return 1;
-	gtk_box_pack_end(GTK_BOX(this_->vbox), graphics, TRUE, TRUE, 0);
-	gtk_widget_show_all(graphics);
-*/
-	printf("binding the DL\n");
-	*DLid=(GLuint )graphics_get_data(gra,"DLid");
 	return 0;
 }
 
@@ -122,7 +120,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
 
 	while (!must_quit)
 	{
-// 		profile_timer(NULL);
+ 		profile(0,NULL);
 		glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 
  		glMatrixMode(GL_MODELVIEW);
@@ -145,9 +143,9 @@ static int gui_run_main_loop(struct gui_priv *this_)
 // 		profile_timer("3d view");
 
 // 		graphics_redraw(co);
-// 		profile_timer("graphics_redraw");
+ 		profile(0,"graphics_redraw");
 
-// 		g_main_context_iteration (NULL, TRUE);
+// 		g_main_context_iteration (NULL, FALSE);
 // 		profile_timer("main context");
 
 	//	graphics_get_data(this_->gra,DLid);
@@ -157,10 +155,9 @@ static int gui_run_main_loop(struct gui_priv *this_)
 
 		// glCallList(cursorDL);
 		inject_input(must_quit);
-// 		profile_timer("inputs");
+ 		profile(0,"inputs");
 
 		// Render the cursor.
-		/*
 		int x=400;
 		int y=480;
 		float cursor_size=15.0f;
@@ -172,8 +169,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
 			glVertex3f( x+cursor_size,y+cursor_size, 0.0f);	
 		glEnd();
 		glDisable(GL_BLEND);
-		*/
-// 		profile_timer("cursor");
+ 		profile(0,"cursor");
 
 		frames++;
 		if(SDL_GetTicks()-last_time_pulse>1000){
@@ -188,10 +184,10 @@ static int gui_run_main_loop(struct gui_priv *this_)
 		glRotatef(180,1,0,0);
 		glScalef(64, 64, 0);
 		glcRenderString(fps);
-// 		profile_timer("fps");
+ 		profile(0,"fps");
 
  		CEGUI::System::getSingleton().renderGUI();
-// 		profile_timer("GUI");
+ 		profile(0,"GUI");
 
 		SDL_GL_SwapBuffers();
 	}

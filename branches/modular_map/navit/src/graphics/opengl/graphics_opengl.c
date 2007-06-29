@@ -38,7 +38,7 @@ struct graphics_priv {
 	void *motion_callback_data;
 	void (*button_callback)(void *data, int press, int button, struct point *p);
 	void *button_callback_data;
-	GLuint *DLid;
+	GLuint DLid;
 };
 
 struct graphics_font_priv {
@@ -220,8 +220,6 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 	}
 */	
 
-/*	glNewList(gr->DLid,GL_COMPILE);
-
 	for (i = 0 ; i < count-1 ; i++) {
 
 	//   	glEnable( GL_POLYGON_SMOOTH );
@@ -275,18 +273,19 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 		}
 
 		*/
-/*
 		glPopMatrix();
 	}
 //  	glDisable( GL_BLEND );
 // 	glDisable( GL_POLYGON_SMOOTH );
 
+/*
 	if(label){
 		if((strlen(label)*6)<w){
 			SDL_print(label,cx, cy,-angle);
 		}
 	}
 */
+#if 0
 	if(gr->mode == draw_mode_cursor){
 		printf("Pushing a cursor\n");
 		glNewList(gr->DLid,GL_COMPILE);
@@ -303,6 +302,7 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
                 glDisable(GL_BLEND);
 		glEndList();
 	}		
+#endif
 	
 
 //		printf("Calling the DL\n");
@@ -635,6 +635,11 @@ background_gc(struct graphics_priv *gr, struct graphics_gc_priv *gc)
 static void
 draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
 {
+	if (mode == draw_mode_begin)
+		glNewList(gr->DLid,GL_COMPILE);
+	if (mode == draw_mode_end)
+		glEndList();
+
 #if 0
 	struct graphics_priv *overlay;
 	GtkWidget *widget=gr->widget;
@@ -805,9 +810,9 @@ overlay_new(struct graphics_priv *gr, struct graphics_methods *meth, struct poin
 static void *
 get_data(struct graphics_priv *this, char *type)
 {
-	if (strcmp(type,"gtk_widget"))
+	if (strcmp(type,"opengl_displaylist"))
 		return NULL;
-	return this->widget;
+        return &this->DLid;
 }
 
 static void
@@ -858,22 +863,14 @@ static struct graphics_methods graphics_methods = {
 };
 
 static struct graphics_priv *
-graphics_opengl_new_helper(struct graphics_methods *meth)
+graphics_opengl_new(struct graphics_methods *meth)
 {
 	struct graphics_priv *this=g_new0(struct graphics_priv,1);
 	*meth=graphics_methods;
-
-	return this;
-}
-
-static struct graphics_priv *
-graphics_opengl_new(struct graphics_methods *meth)
-{
 	
 // 	GtkWidget *draw;
 
 // 	draw=gtk_drawnig_area_new();
-	struct graphics_priv *this=graphics_opengl_new_helper(meth);
 	
         printf("Creating the DL from driver\n");
         this->DLid = glGenLists(1);
