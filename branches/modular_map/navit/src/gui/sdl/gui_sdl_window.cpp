@@ -21,6 +21,7 @@
 // This is for 3d fonts
 #include "GL/glc.h"
 
+
 #include "sdl_events.h"
 
 #define VM_2D 0
@@ -44,6 +45,7 @@ CEGUI::OpenGLRenderer* renderer;
 
 CEGUI::Window* myRoot;
 
+GLuint * DLid;
 
 static int
 gui_sdl_set_graphics(struct gui_priv *this_, struct graphics *gra)
@@ -58,8 +60,27 @@ gui_sdl_set_graphics(struct gui_priv *this_, struct graphics *gra)
 	gtk_box_pack_end(GTK_BOX(this_->vbox), graphics, TRUE, TRUE, 0);
 	gtk_widget_show_all(graphics);
 */
+	printf("binding the DL\n");
+	*DLid=(GLuint )graphics_get_data(gra,"DLid");
 	return 0;
 }
+
+
+void drawCursor() {
+	printf("Pushing a cursor from GUI\n");
+                int x=400;
+                int y=400;
+                float cursor_size=15.0f;
+                glColor4f(0.0f,0.0f,1.0f,0.75f);
+                glEnable(GL_BLEND);
+                glBegin(GL_TRIANGLES);
+                        glVertex3f( x, y-cursor_size, 0.0f);
+                        glVertex3f(x-cursor_size,y+cursor_size, 0.0f);
+                        glVertex3f( x+cursor_size,y+cursor_size, 0.0f);
+                glEnd();
+                glDisable(GL_BLEND);
+
+ }
 
 static int gui_run_main_loop(struct gui_priv *this_)
 {
@@ -77,6 +98,28 @@ static int gui_run_main_loop(struct gui_priv *this_)
 	t=navit_get_trans(this_->nav);
 	transform_set_size(t, 640, 480);	
 	navit_draw(this_->nav);
+/*
+        glNewList(DLid,GL_COMPILE);
+                int x=400;
+                int y=400;
+                float cursor_size=15.0f;
+                glColor4f(1.0f,0.0f,0.0f,0.75f);
+                glEnable(GL_BLEND);
+                glBegin(GL_TRIANGLES);
+                        glVertex3f( x, y-cursor_size, 0.0f);
+                        glVertex3f(x-cursor_size,y+cursor_size, 0.0f);
+                        glVertex3f( x+cursor_size,y+cursor_size, 0.0f);
+                glEnd();
+                glDisable(GL_BLEND);
+        glEndList();
+*/
+	GLuint cursorDL;
+	cursorDL=glGenLists(1);
+	glNewList(cursorDL,GL_COMPILE);
+		drawCursor();
+	glEndList();
+
+
 	while (!must_quit)
 	{
 // 		profile_timer(NULL);
@@ -89,7 +132,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
  			gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
 		}
   		
-
+/*
 		glColor4f(0.0f,0.7f,0.35f,1.0f);
 		glBegin(GL_POLYGON);
 			glVertex3f( -800,-600*3, 0.0f);
@@ -97,20 +140,27 @@ static int gui_run_main_loop(struct gui_priv *this_)
 			glVertex3f( 1600,600*2, 0.0f);	
 			glVertex3f( 1600,-600*3, 0.0f);	
 		glEnd();
-
-		extern struct container *co;
+*/
+		// extern struct container *co;
 // 		profile_timer("3d view");
 
 // 		graphics_redraw(co);
 // 		profile_timer("graphics_redraw");
 
- 		g_main_context_iteration (NULL, TRUE);
+// 		g_main_context_iteration (NULL, TRUE);
 // 		profile_timer("main context");
 
+	//	graphics_get_data(this_->gra,DLid);
+		
+		printf(".");
+		glCallList(*DLid);
+
+		// glCallList(cursorDL);
 		inject_input(must_quit);
 // 		profile_timer("inputs");
 
 		// Render the cursor.
+		/*
 		int x=400;
 		int y=480;
 		float cursor_size=15.0f;
@@ -122,6 +172,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
 			glVertex3f( x+cursor_size,y+cursor_size, 0.0f);	
 		glEnd();
 		glDisable(GL_BLEND);
+		*/
 // 		profile_timer("cursor");
 
 		frames++;
@@ -221,6 +272,10 @@ int init_GL() {
 // 		gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
 
 	}
+
+	//Display list code
+	//	GLuint glGenLists(GLsizei numberOfIDsRequired);
+	// linesDL = glGenLists(1);
 
 	if( glGetError() != GL_NO_ERROR ) {
 		return 0;

@@ -38,6 +38,7 @@ struct graphics_priv {
 	void *motion_callback_data;
 	void (*button_callback)(void *data, int press, int button, struct point *p);
 	void *button_callback_data;
+	GLuint *DLid;
 };
 
 struct graphics_font_priv {
@@ -200,13 +201,26 @@ image_new(struct graphics_priv *gr, struct graphics_image_methods *meth, char *n
 static void
 draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *p, int count)
 {
-	int i;
+	 // printf("draw_lines\n");
+// 	glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
+	 int i;
 /*
 	if (gr->mode == draw_mode_begin || gr->mode == draw_mode_end) 
 		gdk_draw_lines(gr->drawable, gc->gc, (GdkPoint *)p, count);
 	if (gr->mode == draw_mode_end || gr->mode == draw_mode_cursor)
 		gdk_draw_lines(gr->widget->window, gc->gc, (GdkPoint *)p, count);
 */
+	/*	
+	if(gr->mode == draw_mode_begin){
+		printf("B");
+	} else if (gr->mode == draw_mode_end){
+		printf("E");
+	} else {
+		printf("x");
+	}
+*/	
+
+/*	glNewList(gr->DLid,GL_COMPILE);
 
 	for (i = 0 ; i < count-1 ; i++) {
 
@@ -219,7 +233,7 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 
 		float cx=(p[i+1].x+p[i].x)/2;
 		float cy=(p[i+1].y+p[i].y)/2;
-
+//		printf("(%lx,%lx) -> (%lx,%lx) : (%lx,%lx)\n",p[i].x,p[i].y,p[i+1].x,p[i+1].y,dx,dy);
 
 		int w=round(sqrt(pow((dx),2)+pow((dy),2)));
 
@@ -261,19 +275,38 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 		}
 
 		*/
-
+/*
 		glPopMatrix();
 	}
 //  	glDisable( GL_BLEND );
 // 	glDisable( GL_POLYGON_SMOOTH );
-/*
+
 	if(label){
 		if((strlen(label)*6)<w){
 			SDL_print(label,cx, cy,-angle);
 		}
 	}
 */
+	if(gr->mode == draw_mode_cursor){
+		printf("Pushing a cursor\n");
+		glNewList(gr->DLid,GL_COMPILE);
+                int x=400;
+                int y=480;
+                float cursor_size=15.0f;
+                glColor4f(0.0f,1.0f,0.0f,0.75f);
+                glEnable(GL_BLEND);
+                glBegin(GL_TRIANGLES);
+                        glVertex3f( x, y-cursor_size, 0.0f);
+                        glVertex3f(x-cursor_size,y+cursor_size, 0.0f);
+                        glVertex3f( x+cursor_size,y+cursor_size, 0.0f);
+                glEnd();
+                glDisable(GL_BLEND);
+		glEndList();
+	}		
+	
 
+//		printf("Calling the DL\n");
+//		glCallList(gr->DLid);
 }
 
 static void
@@ -841,6 +874,11 @@ graphics_opengl_new(struct graphics_methods *meth)
 
 // 	draw=gtk_drawnig_area_new();
 	struct graphics_priv *this=graphics_opengl_new_helper(meth);
+	
+        printf("Creating the DL from driver\n");
+        this->DLid = glGenLists(1);
+
+
 /*
 	this->widget=draw;
 	
