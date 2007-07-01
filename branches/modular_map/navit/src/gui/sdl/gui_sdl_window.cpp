@@ -94,7 +94,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
 	struct transformation *t;
 
 	t=navit_get_trans(this_->nav);
-	transform_set_size(t, 640, 480);	
+	transform_set_size(t, 800, 600);	
 	navit_draw(this_->nav);
 /*
         glNewList(DLid,GL_COMPILE);
@@ -131,6 +131,7 @@ static int gui_run_main_loop(struct gui_priv *this_)
 		}
   		
 /*
+ 		// FIXME This is to draw a ground. This is ugly and need to be fixed. Without it, we see the color of sky under the roads.
 		glColor4f(0.0f,0.7f,0.35f,1.0f);
 		glBegin(GL_POLYGON);
 			glVertex3f( -800,-600*3, 0.0f);
@@ -139,13 +140,11 @@ static int gui_run_main_loop(struct gui_priv *this_)
 			glVertex3f( 1600,-600*3, 0.0f);	
 		glEnd();
 */
-		// extern struct container *co;
-// 		profile_timer("3d view");
 
-// 		graphics_redraw(co);
  		profile(0,"graphics_redraw");
-
-// 		g_main_context_iteration (NULL, FALSE);
+		printf("polling\n");
+ 		g_main_context_iteration (NULL, FALSE);
+		printf("done polling\n");
 // 		profile_timer("main context");
 
 	//	graphics_get_data(this_->gra,DLid);
