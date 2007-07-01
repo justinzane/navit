@@ -8,6 +8,7 @@
 #include "navit.h"
 
 #include "../../coord.h"
+#include "../../attr.h"
 
 struct sdl_destination{
 	int country;
@@ -15,6 +16,14 @@ struct sdl_destination{
 	int town_street_assoc;
 	int current_search;
 } SDL_dest;
+
+
+static struct search_param {
+	struct navit *nav;
+	struct mapset *ms;
+	struct search_list *sl;
+	struct attr attr;
+} search_param;
 
 /*
 bool handleItemSelect(int r)
@@ -287,7 +296,11 @@ bool DialogWindowSwitch(const CEGUI::EventArgs& event)
 	}
 
 	extern struct navit *sdl_gui_navit;
-	navit_get_mapset(sdl_gui_navit);
+
+	struct search_param *search=&search_param;
+
+	search->nav=sdl_gui_navit;
+	search->ms=navit_get_mapset(sdl_gui_navit);
 
 	return true;
 }

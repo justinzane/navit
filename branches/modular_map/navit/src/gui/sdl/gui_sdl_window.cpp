@@ -574,6 +574,7 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 {
 	printf("Begin SDL init\n");
 	struct gui_priv *this_;
+	sdl_gui_navit=nav;
 
 	*meth=gui_sdl_methods;
 

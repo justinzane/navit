@@ -1,1 +1,1 @@
-SUBDIRS=gtk_drawing_area null opengl
+SUBDIRS=gtk_drawing_area null
