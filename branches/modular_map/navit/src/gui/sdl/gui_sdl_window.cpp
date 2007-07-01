@@ -119,10 +119,12 @@ static int gui_run_main_loop(struct gui_priv *this_)
 		drawCursor();
 	glEndList();
 
+	bool enable_timer=0;
 
 	while (!must_quit)
 	{
- 		profile(0,NULL);
+		if(enable_timer)
+ 			profile(0,NULL);
 		glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 
  		glMatrixMode(GL_MODELVIEW);
@@ -143,7 +145,8 @@ static int gui_run_main_loop(struct gui_priv *this_)
 		glEnd();
 */
 
- 		profile(0,"graphics_redraw");
+ 		if(enable_timer)
+ 			profile(0,"graphics_redraw");
  		g_main_context_iteration (NULL, FALSE);
 // 		profile_timer("main context");
 
@@ -153,7 +156,8 @@ static int gui_run_main_loop(struct gui_priv *this_)
 
 		// glCallList(cursorDL);
 		inject_input(must_quit);
- 		profile(0,"inputs");
+ 		if(enable_timer)
+ 			profile(0,"inputs");
 
 		// Render the cursor.
 		int x=400;
@@ -167,7 +171,8 @@ static int gui_run_main_loop(struct gui_priv *this_)
 			glVertex3f( x+cursor_size,y+cursor_size, 0.0f);	
 		glEnd();
 		glDisable(GL_BLEND);
- 		profile(0,"cursor");
+ 		if(enable_timer)
+ 			profile(0,"cursor");
 
 		frames++;
 		if(SDL_GetTicks()-last_time_pulse>1000){
@@ -182,10 +187,12 @@ static int gui_run_main_loop(struct gui_priv *this_)
 		glRotatef(180,1,0,0);
 		glScalef(64, 64, 0);
 		glcRenderString(fps);
- 		profile(0,"fps");
+ 		if(enable_timer)
+ 			profile(0,"fps");
 
  		CEGUI::System::getSingleton().renderGUI();
- 		profile(0,"GUI");
+ 		if(enable_timer)
+ 			profile(0,"GUI");
 
 		SDL_GL_SwapBuffers();
 	}
@@ -575,7 +582,16 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 	printf("Begin SDL init\n");
 	struct gui_priv *this_;
 	sdl_gui_navit=nav;
-
+	if(sdl_gui_navit){	
+		printf("*** VALID navit instance in gui\n");
+	} else {
+		printf("*** Invalid navit instance in gui\n");
+	}
+	if(nav){	
+		printf("*** VALID source fffrfrnavit instance in gui\n");
+	} else {
+		printf("*** Invalid source navit instance in gui\n");
+	}
 	*meth=gui_sdl_methods;
 
 	this_=g_new0(struct gui_priv, 1);

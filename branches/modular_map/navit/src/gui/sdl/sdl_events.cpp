@@ -8,7 +8,11 @@
 #include "navit.h"
 
 #include "../../coord.h"
+
+// Theses are needed for searches
 #include "../../attr.h"
+#include "../../item.h"
+#include "../../search.h"
 
 struct sdl_destination{
 	int country;
@@ -194,39 +198,69 @@ bool handleMouseEnters(const CEGUI::EventArgs& event)
 	}
 }
 
-/*
-void handle_destination_change(){
-	using namespace CEGUI;
 
-	struct search_param *search=&search_param2;
+void handle_destination_change(){
+	printf("Called handle_destination_change\n");
+
+	using namespace CEGUI;
+	extern CEGUI::Window* myRoot;
+
+	struct search_param *search=&search_param;
+	struct search_list_result *res;
+
 	MultiColumnList* mcl = static_cast<MultiColumnList*>(WindowManager::getSingleton().getWindow("DestinationWindow/Listbox"));
 
 
 	if (SDL_dest.current_search==SRCH_COUNTRY)
 	{	
+		printf("Starting a country search\n");
 		Editbox* country_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/CountryEditbox"));
 		String content=country_edit->getText();
 
 		mcl->resetList();
 
-		country_search_by_name(content.c_str(), 1, destination_country_add, search);
+		search->attr.type=attr_country_all;
+
+		// FIXME the following codeblock could be shared between country, town and street search
+		search->attr.u.str=(char *)content.c_str();
+
+		search_list_search(search->sl, &search->attr, 1);
+		while((res=search_list_get_result(search->sl))) {
+			ListboxTextItem* itemListbox = new ListboxTextItem(res->country->name);
+			itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
+
+			mcl->addRow(itemListbox,0);
+	
+		}
 
 	} else if (SDL_dest.current_search==SRCH_TOWN)
 	{	
+		
 		Editbox* town_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/TownEditbox"));
 		String content=town_edit->getText();
+
+
+		mcl->resetList();
 
 		if(strlen(content.c_str())<4){
 
 		}  else {
-			extern struct container *co;
-			search->map_data=co->map_data;
+			printf("town searching for %s\n",content.c_str());
+			search->attr.type=attr_town_name;
+			search->attr.u.str=(char *)content.c_str();
 
-			mcl->resetList();
-			mcl->setSortColumnByID(0);
+			search_list_search(search->sl, &search->attr, 1);
+			while((res=search_list_get_result(search->sl))) {
+				ListboxTextItem* itemListbox = new ListboxTextItem(res->town->name);
+				itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
 
-			town_search_by_name(search->map_data, 33, content.c_str(), 1, destination_town_add, search);
+				mcl->addRow(itemListbox,0);
+	
+			}
+
 		}
+
+
 	} else if (SDL_dest.current_search==SRCH_STREET)
 	{	
 		Editbox* street_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/StreetEditbox"));
@@ -235,16 +269,27 @@ void handle_destination_change(){
 		if(strlen(content.c_str())<1){
 
 		}  else {
-			extern struct container *co;
-			search->map_data=co->map_data;
+			printf("street searching for %s\n",content.c_str());
+			search->attr.type=attr_street_name;
+			search->attr.u.str=(char *)content.c_str();
 
 			mcl->resetList();
+
+			search_list_search(search->sl, &search->attr, 1);
+			while((res=search_list_get_result(search->sl))) {
+				ListboxTextItem* itemListbox = new ListboxTextItem(res->street->name);
+				itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
+
+				mcl->addRow(itemListbox,0);
 	
-			street_name_search(search->map_data, 33, SDL_dest.town_street_assoc, content.c_str(), 1, destination_street_add, search);
+			}
+	
+// 			street_name_search(search->map_data, 33, SDL_dest.town_street_assoc, content.c_str(), 1, destination_street_add, search);
 		}
 	}
+
 }
-*/
+
 
 /*
 void route_to(int x,int y){
@@ -267,6 +312,7 @@ void route_to(int x,int y){
 
 bool DestinationEntryChange(const CEGUI::EventArgs& event)
 {
+	printf("got a destination event\n");
 	handleMouseEnters(event);
 	handle_destination_change();
 
@@ -278,7 +324,6 @@ bool DialogWindowSwitch(const CEGUI::EventArgs& event)
 	using namespace CEGUI;
 
 	extern CEGUI::Window* myRoot;
-
 
 	const CEGUI::WindowEventArgs& we =  static_cast<const CEGUI::WindowEventArgs&>(event);
 	if(we.window->getParent()->getChild("DestinationWindow")->isVisible()){
@@ -297,10 +342,18 @@ bool DialogWindowSwitch(const CEGUI::EventArgs& event)
 
 	extern struct navit *sdl_gui_navit;
 
+	if(sdl_gui_navit){	
+	} else {
+		printf("*** Invalid navit instance in sdl_events\n");
+	}
 	struct search_param *search=&search_param;
 
-	search->nav=sdl_gui_navit;
-	search->ms=navit_get_mapset(sdl_gui_navit);
+ 	printf("search->nav=sdl_gui_navit;\n");
+ 	search->nav=sdl_gui_navit;
+ 	printf("search->ms=navit_get_mapset(sdl_gui_navit);\n");
+ 	search->ms=navit_get_mapset(sdl_gui_navit);
+ 	printf("search->sl=search_list_new(search->ms);\n");
+ 	search->sl=search_list_new(search->ms);
 
 	return true;
 }
