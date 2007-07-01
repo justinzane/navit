@@ -270,6 +270,11 @@ vehicle_parse_gps(struct vehicle *this, char *buffer)
 static void
 vehicle_gps_callback(struct gps_data_t *data, char *buf, size_t len, int level)
 {
+	// If data->fix.speed is NAN, then the drawing gets jumpy. 
+	if(isnan(data->fix.speed)){
+		return 0;
+	}
+
 	struct vehicle *this=vehicle_last;
 	double scale,speed;
 #if INTERPOLATION_TIME

@@ -52,6 +52,8 @@ CEGUI::Window* myRoot;
 #define MODULE "gui_sdl"
 GLuint * DLid;
 
+struct navit *sdl_gui_navit;
+
 static int
 gui_sdl_set_graphics(struct gui_priv *this_, struct graphics *gra)
 {

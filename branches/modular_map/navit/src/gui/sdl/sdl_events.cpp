@@ -285,6 +285,10 @@ bool DialogWindowSwitch(const CEGUI::EventArgs& event)
 		mcl->resetList();
 		we.window->getParent()->getChild("DestinationWindow")->show();
 	}
+
+	extern struct navit *sdl_gui_navit;
+	navit_get_mapset(sdl_gui_navit);
+
 	return true;
 }
 

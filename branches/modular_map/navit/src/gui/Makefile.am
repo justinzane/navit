@@ -1,1 +1,1 @@
-SUBDIRS=gtk
+SUBDIRS=gtk sdl
