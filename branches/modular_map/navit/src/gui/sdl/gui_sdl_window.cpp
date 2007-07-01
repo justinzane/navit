@@ -142,14 +142,11 @@ static int gui_run_main_loop(struct gui_priv *this_)
 */
 
  		profile(0,"graphics_redraw");
-		printf("polling\n");
  		g_main_context_iteration (NULL, FALSE);
-		printf("done polling\n");
 // 		profile_timer("main context");
 
 	//	graphics_get_data(this_->gra,DLid);
 		
-		printf(".");
 		glCallList(*DLid);
 
 		// glCallList(cursorDL);

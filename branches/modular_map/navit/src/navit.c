@@ -7,6 +7,7 @@
 #include "map.h"
 #include "mapset.h"
 #include "coord.h"
+#include "point.h"
 #include "transform.h"
 #include "projection.h"
 #include "menu.h"
@@ -238,39 +239,42 @@ navit_init(struct navit *this_)
 			g_free(s);
 		}
 		mapset_close(handle);
-		{
-			struct mapset *ms=this_->mapsets->data;
-			struct coord c;
-			int pos,flag=0;
-			FILE *f;
+	}
+	{
+		struct mapset *ms=this_->mapsets->data;
+		struct coord c;
+		int pos,flag=0;
+		FILE *f;
 
-			char buffer[2048];
-			this_->route=route_new(ms);
-			this_->navigation=navigation_new(ms);
-	#if 1
-			this_->track=track_new(ms);
-	#endif
+		char buffer[2048];
+		this_->route=route_new(ms);
+		this_->navigation=navigation_new(ms);
+#if 1
+		this_->track=track_new(ms);
+#endif
+		men=NULL;
+		if (this_->menubar) {
 			men=menu_add(this_->menubar, "Route", menu_type_submenu, NULL, NULL, NULL);
 			men=menu_add(men, "Former Destinations", menu_type_submenu, NULL, NULL, NULL);
-			f=fopen("destination.txt", "r");
-			if (f) {
-				while (! feof(f) && fgets(buffer, 2048, f)) {
-					if ((pos=coord_parse(buffer, projection_mg, &c))) {
-						if (buffer[pos] && buffer[pos] != '\n' ) {
-							struct coord *cn=g_new(struct coord, 1);
-							*cn=c;
-							buffer[strlen(buffer)-1]='\0';
-							menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination_menu, this_, cn);
-						}
-						flag=1;
-					}
-				}
-				fclose(f);
-				if (flag)
-					route_set_destination(this_->route, &c);
-			}
 		}
-
+		f=fopen("destination.txt", "r");
+		if (f) {
+			while (! feof(f) && fgets(buffer, 2048, f)) {
+				if ((pos=coord_parse(buffer, projection_mg, &c))) {
+					if (buffer[pos] && buffer[pos] != '\n' ) {
+						struct coord *cn=g_new(struct coord, 1);
+						*cn=c;
+						buffer[strlen(buffer)-1]='\0';
+						if (men)
+							menu_add(men, buffer+pos+1, menu_type_menu, navit_set_destination_menu, this_, cn);
+					}
+					flag=1;
+				}
+			}
+			fclose(f);
+			if (flag)
+				route_set_destination(this_->route, &c);
+		}
 	}
 	global_navit=this_;
 	gui_run_main_loop(this_->gui);
@@ -284,6 +288,27 @@ navit_set_center(struct navit *this_, struct coord *center)
 	if (this_->ready)
 		navit_draw(this_);
 }
+
+static void
+navit_set_center_cursor(struct navit *this_, struct coord *cursor, int dir, int xpercent, int ypercent)
+{
+	struct coord *c=transform_center(this_->trans);
+	int width, height;
+	struct point p;
+	struct coord cnew;
+
+	transform_get_size(this_->trans, &width, &height);
+	*c=*cursor;
+	transform_set_angle(this_->trans, dir);
+	p.x=(100-xpercent)*width/100;
+	p.y=(100-ypercent)*height/100;
+	transform_reverse(this_->trans, &p, &cnew);
+	*c=cnew;
+	if (this_->ready)
+		navit_draw(this_);
+		
+}
+
 
 void
 navit_set_center_screen(struct navit *this_, struct point *p)
@@ -331,7 +356,7 @@ navit_cursor_update(struct cursor *cursor, void *this__p)
 		navigation_update(this_->navigation, this_->route);
 	if (this_->cursor_flag) {
 		if (this_->follow_curr == 1)
-			navit_set_center(this_, cursor_c);
+			navit_set_center_cursor(this_, cursor_c, dir, 50, 80);
 	}
 	if (this_->follow_curr > 1)
 		this_->follow_curr--;

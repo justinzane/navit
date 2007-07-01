@@ -618,11 +618,13 @@ overlay_draw(struct graphics_priv *parent, struct graphics_priv *overlay, int wi
 static void
 draw_restore(struct graphics_priv *gr, struct point *p, int w, int h)
 {
+#if 0
 	GtkWidget *widget=gr->widget;
 	gdk_draw_pixmap(widget->window,
                         widget->style->fg_gc[GTK_WIDGET_STATE(widget)],
                         gr->drawable,
                         p->x, p->y, p->x, p->y, w, h);
+#endif
 
 }
 
