@@ -10,6 +10,7 @@ struct displaylist;
 struct gui;
 struct layout;
 struct mapset;
+struct navigation;
 struct navit;
 struct point;
 struct route;
@@ -32,6 +33,7 @@ void navit_vehicle_add(struct navit *this_, struct vehicle *v, struct color *c, 
 struct gui *navit_get_gui(struct navit *this_);
 struct transformation *navit_get_trans(struct navit *this_);
 struct route *navit_get_route(struct navit *this_);
+struct navigation *navit_get_navigation(struct navit *this_);
 struct displaylist *navit_get_displaylist(struct navit *this_);
 void navit_destroy(struct navit *this_);
 /* end of prototypes */

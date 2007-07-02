@@ -1,12 +1,22 @@
+enum navigation_mode {
+	navigation_mode_long,
+	navigation_mode_short,
+	navigation_mode_speech,
+};
+
 /* prototypes */
-struct coord;
-struct item;
+enum navigation_mode;
+struct callback;
 struct mapset;
 struct navigation;
-struct navigation_item;
+struct navigation_list;
 struct route;
-void navigation_item_get_data(struct item *item, struct coord *start, struct navigation_item *nitem);
-void navigation_path_description(struct route *route, int dir);
 struct navigation *navigation_new(struct mapset *ms);
-void navigation_update(struct navigation *this, struct route *route);
-void navigation_destroy(struct navigation *this);
+struct navigation_list *navigation_list_new(struct navigation *this_);
+char *navigation_list_get(struct navigation_list *this_, enum navigation_mode mode);
+void navigation_list_destroy(struct navigation_list *this_);
+void navigation_update(struct navigation *this_, struct route *route);
+void navigation_destroy(struct navigation *this_);
+struct callback *navigation_register_callback(struct navigation *this_, enum navigation_mode mode, void (*func)(struct navigation *nav, void *data), void *data);
+void navigation_unregister_callback(struct navigation *this_, struct callback *cb);
+/* end of prototypes */

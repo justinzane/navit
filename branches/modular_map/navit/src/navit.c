@@ -228,6 +228,19 @@ navit_set_destination(struct navit *this_, struct coord *c, char *description)
 
 struct navit *global_navit;
 
+static void
+navit_show_roadbook(struct navigation *nav, void *data)
+{
+	struct navigation_list *list;
+	char *str;
+	
+	list=navigation_list_new(nav);
+	while ((str=navigation_list_get(list, navigation_mode_long))) {
+		printf("%s\n", str);
+	}
+	navigation_list_destroy(list);
+}
+
 void
 navit_init(struct navit *this_)
 {
@@ -262,6 +275,8 @@ navit_init(struct navit *this_)
 		char buffer[2048];
 		this_->route=route_new(ms);
 		this_->navigation=navigation_new(ms);
+		dbg(0,"navigation_register_callback(%p, ... %p)\n", this_->navigation, this_);
+		navigation_register_callback(this_->navigation, navigation_mode_long, navit_show_roadbook, this_);
 #if 1
 		this_->track=track_new(ms);
 #endif
@@ -420,6 +435,12 @@ struct route *
 navit_get_route(struct navit *this_)
 {
 	return this_->route;
+}
+
+struct navigation *
+navit_get_navigation(struct navit *this_)
+{
+	return this_->navigation;
 }
 
 struct displaylist *
