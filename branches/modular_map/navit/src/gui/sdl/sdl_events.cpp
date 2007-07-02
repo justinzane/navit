@@ -31,11 +31,31 @@ static struct search_param {
 
 // extern "C" struct navit *global_navit;
 
+void route_to(int x,int y){
+	struct coord pos;
+	pos.x=x;
+	pos.y=y; 
+	using namespace CEGUI;
+	extern struct navit *sdl_gui_navit;
 
-/*
+	WindowManager::getSingleton().getWindow("DestinationWindow")->hide();
+	WindowManager::getSingleton().getWindow("Navit/Routing/Tips")->show();
+	WindowManager::getSingleton().getWindow("Navit/ProgressWindow")->show();
+// 	route_set_destination(co->route, &pos);
+	// I could have been using search->nav instead of sdl_gui_navit. is it better this way?
+
+	navit_set_destination(sdl_gui_navit, &pos, "FIXME");
+	WindowManager::getSingleton().getWindow("Navit/ProgressWindow")->hide();
+	WindowManager::getSingleton().getWindow("OSD/RoadbookButton")->show();
+	WindowManager::getSingleton().getWindow("OSD/ETA")->show();
+
+}
+
+
 bool handleItemSelect(int r)
 {
 	using namespace CEGUI;
+	extern CEGUI::Window* myRoot;
 
 	MultiColumnList* mcl = static_cast<MultiColumnList*>(WindowManager::getSingleton().getWindow("DestinationWindow/Listbox"));
 	
@@ -49,7 +69,6 @@ bool handleItemSelect(int r)
 	Window* street_edit = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/StreetEditbox"));
 
 	if(SDL_dest.current_search==SRCH_COUNTRY){
-		extern Window* myRoot;
 		country_edit->setText(item->getText());
 		// Need to record the country here 
 		twn_edit->activate();
@@ -57,11 +76,10 @@ bool handleItemSelect(int r)
 		myRoot->getChild("Navit/Keyboard")->getChild("Navit/Keyboard/Input")->setText("");
 
 	} else 	if(SDL_dest.current_search==SRCH_TOWN){
-		extern Window* myRoot;
 		twn_edit->setText(item->getText());
-		SDL_dest.town_street_assoc=atoi(item_assoc->getText().c_str());
-		SDL_dest.town=atoi(itemid->getText().c_str());
-		printf(" town %s , id=%lx, assoc=%li\n",item->getText().c_str(),SDL_dest.town_street_assoc,SDL_dest.town_street_assoc);
+// 		SDL_dest.town_street_assoc=atoi(item_assoc->getText().c_str());
+// 		SDL_dest.town=atoi(itemid->getText().c_str());
+// 		printf(" town %s , id=%lx, assoc=%li\n",item->getText().c_str(),SDL_dest.town_street_assoc,SDL_dest.town_street_assoc);
 
 
 		ListboxItem * itemx = mcl->getItemAtGridReference(MCLGridRef(r,3));
@@ -80,15 +98,31 @@ bool handleItemSelect(int r)
 		myRoot->getChild("Navit/Keyboard")->getChild("Navit/Keyboard/Input")->setText("");
 
 	} else if(SDL_dest.current_search==SRCH_STREET){
-		extern Window* myRoot;
 		street_edit->setText(item->getText());
 
 		myRoot->getChild("Navit/Keyboard")->hide();
 
+		ListboxItem * itemx = mcl->getItemAtGridReference(MCLGridRef(r,3));
+		ListboxItem * itemy = mcl->getItemAtGridReference(MCLGridRef(r,4));
+	
+		Window* Dest_x = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Dest_x"));
+		Dest_x->setText(itemx->getText().c_str());
+
+		Window* Dest_y = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Dest_y"));
+		Dest_y->setText(itemy->getText().c_str());
+
+		mcl->resetList();
+
+		SDL_dest.current_search=SRCH_STREET;
+
+		myRoot->getChild("Navit/Keyboard")->getChild("Navit/Keyboard/Input")->setText("");
+
+
+		/*
 		ListboxItem * itemid = mcl->getItemAtGridReference(MCLGridRef(r,1));
 		int segment_id=atoi(itemid->getText().c_str());
 		printf("street seg id : %li\n",segment_id);
-		
+
 		extern struct container *co;
 		struct block_info res_blk_inf;
 		struct street_str *res_str;
@@ -129,7 +163,7 @@ bool handleItemSelect(int r)
 				}
 			}
 		}
-
+		*/
 // 		route_to(streetcoord->c->x,streetcoord->c->y);
 	} else if (SDL_dest.current_search==SRCH_NUMBER){
 
@@ -145,7 +179,7 @@ bool handleItemSelect(int r)
 
 	return true;
 }
-*/
+
 
 
 bool ItemSelect(const CEGUI::EventArgs& event)
@@ -154,14 +188,12 @@ bool ItemSelect(const CEGUI::EventArgs& event)
 
 	MultiColumnList* mcl = static_cast<MultiColumnList*>(WindowManager::getSingleton().getWindow("DestinationWindow/Listbox"));
 	ListboxItem * item = mcl->getFirstSelectedItem();
-#if 0
 	handleItemSelect(mcl->getItemRowIndex(item));
-#endif
 }
 
 bool handleMouseEnters(const CEGUI::EventArgs& event)
 {
-
+	// FIXME this whole function could maybe be removed
 	const CEGUI::WindowEventArgs& we =  static_cast<const CEGUI::WindowEventArgs&>(event);
 
 	// FIXME theses variables should be shared
@@ -195,9 +227,7 @@ bool handleMouseEnters(const CEGUI::EventArgs& event)
   		if(SDL_dest.current_search==SRCH_TOWN){
 			if (mcl->getRowCount()>0)
 			{
-#if 0
 				handleItemSelect(0);
-#endif
 			}			
 		}
 		SDL_dest.current_search=SRCH_STREET;
@@ -237,7 +267,6 @@ void handle_destination_change(){
 			itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
 
 			mcl->addRow(itemListbox,0);
-	
 		}
 
 	} else if (SDL_dest.current_search==SRCH_TOWN)
@@ -262,6 +291,27 @@ void handle_destination_change(){
 				itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
 
 				mcl->addRow(itemListbox,0);
+
+				char x [256];
+				sprintf(x,"%li",res->c->x);
+				ListboxTextItem* xitem = new ListboxTextItem(x);
+			
+				char y [256];
+				sprintf(y,"%li",res->c->y);
+			
+				ListboxTextItem* yitem = new ListboxTextItem(y);
+// 				item->setSelectionBrushImage(&ImagesetManager::getSingleton().getImageset("TaharezLook")->getImage("MultiListSelectionBrush"));
+			
+				try
+				{
+					mcl->setItem(xitem, 3, mcl->getRowCount()-1);
+					mcl->setItem(yitem, 4, mcl->getRowCount()-1);
+				}
+				// something went wrong, so cleanup the ListboxTextItem.
+				catch (InvalidRequestException)
+				{
+// 					delete item;
+				}
 	
 			}
 
@@ -288,6 +338,28 @@ void handle_destination_change(){
 				itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
 
 				mcl->addRow(itemListbox,0);
+
+				char x [256];
+				sprintf(x,"%li",res->c->x);
+				ListboxTextItem* xitem = new ListboxTextItem(x);
+			
+				char y [256];
+				sprintf(y,"%li",res->c->y);
+			
+				ListboxTextItem* yitem = new ListboxTextItem(y);
+// 				item->setSelectionBrushImage(&ImagesetManager::getSingleton().getImageset("TaharezLook")->getImage("MultiListSelectionBrush"));
+			
+				try
+				{
+					mcl->setItem(xitem, 3, mcl->getRowCount()-1);
+					mcl->setItem(yitem, 4, mcl->getRowCount()-1);
+				}
+				// something went wrong, so cleanup the ListboxTextItem.
+				catch (InvalidRequestException)
+				{
+// 					delete item;
+				}
+
 	
 			}
 	
@@ -297,25 +369,6 @@ void handle_destination_change(){
 
 }
 
-
-/*
-void route_to(int x,int y){
-	struct coord pos;
-	pos.x=x;
-	pos.y=y; 
-	extern struct container *co;
-	route_set_position(co->route, cursor_pos_get(co->cursor));
-	using namespace CEGUI;
-	WindowManager::getSingleton().getWindow("DestinationWindow")->hide();
-	WindowManager::getSingleton().getWindow("Navit/Routing/Tips")->show();
-	WindowManager::getSingleton().getWindow("Navit/ProgressWindow")->show();
-	route_set_destination(co->route, &pos);
-	WindowManager::getSingleton().getWindow("Navit/ProgressWindow")->hide();
-	WindowManager::getSingleton().getWindow("OSD/RoadbookButton")->show();
-	WindowManager::getSingleton().getWindow("OSD/ETA")->show();
-
-}
-*/
 
 bool DestinationEntryChange(const CEGUI::EventArgs& event)
 {
@@ -390,9 +443,7 @@ bool ButtonGo(const CEGUI::EventArgs& event)
 	if(SDL_dest.current_search==SRCH_TOWN){
 		if (mcl->getRowCount()>0)
 		{
-#if 0
 			handleItemSelect(0);
-#endif
 		}
 	}
 
@@ -400,8 +451,8 @@ bool ButtonGo(const CEGUI::EventArgs& event)
 	Window* Dest_x = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Dest_x"));
 	Window* Dest_y = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Dest_y"));
 	
-// 	navit_set_destination(struct navit *, struct coord *, char *description);
-// 	route_to(atoi(Dest_x->getText().c_str()),atoi(Dest_y->getText().c_str()));
+	extern struct navit *sdl_gui_navit;
+ 	route_to(atoi(Dest_x->getText().c_str()),atoi(Dest_y->getText().c_str()));
 
 	return true;
 }
