@@ -132,9 +132,9 @@ search_list_town_new(struct item *item)
 	else
 		ret->item=*item;
 	if (item_attr_get(item, attr_town_name, &attr))
-		ret->name=g_strdup(attr.u.str);
+		ret->name=map_convert_string(item->map,attr.u.str);
 	if (item_attr_get(item, attr_town_postal, &attr))
-		ret->postal=g_strdup(attr.u.str);
+		ret->postal=map_convert_string(item->map,attr.u.str);
 	if (item_coord_get(item, &c, 1)) {
 		ret->c=g_new(struct coord, 1);
 		*(ret->c)=c;
@@ -145,8 +145,8 @@ search_list_town_new(struct item *item)
 static void
 search_list_town_destroy(struct search_list_town *this_)
 {
-	g_free(this_->name);
-	g_free(this_->postal);
+	map_convert_free(this_->name);
+	map_convert_free(this_->postal);
 	g_free(this_);
 }
 
@@ -159,7 +159,7 @@ search_list_street_new(struct item *item)
 	
 	ret->item=*item;
 	if (item_attr_get(item, attr_street_name, &attr))
-		ret->name=g_strdup(attr.u.str);
+		ret->name=map_convert_string(item->map, attr.u.str);
 	if (item_coord_get(item, &c, 1)) {
 		ret->c=g_new(struct coord, 1);
 		*(ret->c)=c;
@@ -170,7 +170,7 @@ search_list_street_new(struct item *item)
 static void
 search_list_street_destroy(struct search_list_street *this_)
 {
-	g_free(this_->name);
+	map_convert_free(this_->name);
 	g_free(this_);
 }
 
