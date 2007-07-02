@@ -22,6 +22,7 @@ void navit_draw(struct navit *this_);
 void navit_zoom_in(struct navit *this_, int factor);
 void navit_zoom_out(struct navit *this_, int factor);
 struct navit *navit_new(const char *ui, const char *graphics, struct coord *center, enum projection pro, int zoom);
+void navit_set_destination(struct navit *this_, struct coord *c, char *description);
 void navit_init(struct navit *this_);
 void navit_set_center(struct navit *this_, struct coord *center);
 void navit_set_center_screen(struct navit *this_, struct point *p);

@@ -697,7 +697,7 @@ show_maneuver(struct navigation_itm *itm, struct navigation_command *cmd)
 	if (cmd->itm->next)
 		printf("%s%s abbiegen\n", strength, dir);
 	else
-		printf("haben Sie ihr Ziel erreicht\n", strength, dir);
+		printf("haben Sie ihr Ziel erreicht\n");
 }
 
 void

@@ -12,7 +12,7 @@ bin_PROGRAMS = navit
 #pkglib_DATA = navit.xml
 #EXTRA_DIST = navit.xml
 
-navit_SOURCES = attr.c compass.c coord.c country.c cursor.c data_window.c debug.c destination.c \
+navit_SOURCES = attr.c compass.c coord.c country.c cursor.c data_window.c debug.c \
 	file.c graphics.c gui.c item.c layout.c log.c main.c map.c \
 	mapset.c maptype.c menu.c navit.c navigation.c param.c phrase.c plugin.c popup.c \
 	profile.c python.c route.c search.c speech.c transform.c track.c \

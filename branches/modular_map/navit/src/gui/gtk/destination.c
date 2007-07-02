@@ -104,6 +104,8 @@ static void changed(GtkWidget *widget, struct search_param *search)
 	if (widget == search->entry_city) {
 		dbg(0,"town\n");
 		search->attr.type=attr_town_name;
+		if (strlen(search->attr.u.str) < 2) 
+			return;
 		set_columns(search, 1);
 	}
 	if (widget == search->entry_street) {
@@ -117,7 +119,6 @@ static void changed(GtkWidget *widget, struct search_param *search)
 	gtk_list_store_clear(search->liststore);
 	while((res=search_list_get_result(search->sl))) {
 		gtk_list_store_append(search->liststore,&iter);
-		printf("coord=%p\n", res->c);
 		gtk_list_store_set(search->liststore,&iter,COL_COUNT,res->c,-1);
 		if (widget == search->entry_country) {
 			if (res->country) {
