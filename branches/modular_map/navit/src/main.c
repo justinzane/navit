@@ -48,6 +48,7 @@ static gchar *get_home_directory(void)
 int main(int argc, char **argv)
 {
 	GError *error = NULL;
+	char *config_file = NULL;
 #if 0
 	GMainLoop *loop;
 #endif
@@ -68,18 +69,21 @@ int main(int argc, char **argv)
 #endif
 	plugin_init();
 	if (argc > 1) 
-		config_load(argv[1], &error);
-	else
-		if (file_exists(g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL))) {
-			printf("loading config file from user's home : %s\n",g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL));
-			config_load(g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL), &error);
-		}
-		else	
+		config_file=argv[1];
+	else {
+		config_file=g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL);
+		if (!file_exists(config_file)) {
 			if (file_exists("navit.xml.local"))
-				config_load("navit.xml.local", &error);
+				config_file="navit.xml.local";
 			else
-				config_load("navit.xml", &error);
-
+				config_file="navit.xml";
+		}
+	}
+	if (!config_load(config_file, &error)) {
+		g_error("Error parsing '%s': %s\n", config_file, error->message);
+	} else {
+		printf("Using '%s'\n", config_file);
+	}
 	if (main_loop_gui) {
 		gui_run_main_loop(main_loop_gui);
 	} else {
