@@ -6,6 +6,8 @@
 #include <gtk/gtk.h>
 #include "file.h"
 #include "debug.h"
+#include "navit.h"
+#include "gui.h"
 #ifdef HAVE_PYTHON
 #include "python.h"
 #endif
@@ -21,7 +23,7 @@ static void sigchld(int sig)
 }
 
 
-gchar *get_home_directory(void)
+static gchar *get_home_directory(void)
 {
 	static gchar *homedir = NULL;
 
@@ -77,15 +79,20 @@ int main(int argc, char **argv)
 				config_load("navit.xml.local", &error);
 			else
 				config_load("navit.xml", &error);
+
+	if (main_loop_gui) {
+		gui_run_main_loop(main_loop_gui);
+	} else {
 #if 1
-	gtk_main();
+		gtk_main();
 #else
-	loop = g_main_loop_new (NULL, TRUE);
-	if (g_main_loop_is_running (loop))
-	{
-		g_main_loop_run (loop);
-	}
+		loop = g_main_loop_new (NULL, TRUE);
+		if (g_main_loop_is_running (loop))
+		{
+			g_main_loop_run (loop);
+		}
 #endif
+	}
 
 	return 0;
 }

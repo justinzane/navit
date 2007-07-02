@@ -151,7 +151,9 @@ bool ItemSelect(const CEGUI::EventArgs& event)
 
 	MultiColumnList* mcl = static_cast<MultiColumnList*>(WindowManager::getSingleton().getWindow("DestinationWindow/Listbox"));
 	ListboxItem * item = mcl->getFirstSelectedItem();
+#if 0
 	handleItemSelect(mcl->getItemRowIndex(item));
+#endif
 }
 
 bool handleMouseEnters(const CEGUI::EventArgs& event)
@@ -190,7 +192,9 @@ bool handleMouseEnters(const CEGUI::EventArgs& event)
   		if(SDL_dest.current_search==SRCH_TOWN){
 			if (mcl->getRowCount()>0)
 			{
+#if 0
 				handleItemSelect(0);
+#endif
 			}			
 		}
 		SDL_dest.current_search=SRCH_STREET;
@@ -384,7 +388,9 @@ bool ButtonGo(const CEGUI::EventArgs& event)
 	if(SDL_dest.current_search==SRCH_TOWN){
 		if (mcl->getRowCount()>0)
 		{
+#if 0
 			handleItemSelect(0);
+#endif
 		}
 	}
 

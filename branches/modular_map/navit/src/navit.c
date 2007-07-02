@@ -49,6 +49,10 @@ struct navit {
 	int follow_curr;
 };
 
+struct gui *
+main_loop_gui;
+
+
 void
 navit_add_mapset(struct navit *this_, struct mapset *ms)
 {
@@ -139,6 +143,15 @@ navit_new(const char *ui, const char *graphics, struct coord *center, enum proje
 		g_warning("failed to create gui '%s'", ui);
 		navit_destroy(this_);
 		return NULL;
+	}
+	if (gui_has_main_loop(this_->gui)) {
+		if (! main_loop_gui) {
+			main_loop_gui=this_->gui;
+		} else {
+			g_warning("gui with main loop already active, ignoring this instance");
+			navit_destroy(this_);
+			return NULL;
+		}
 	}
 	this_->menubar=gui_menubar_new(this_->gui);
 	this_->toolbar=gui_toolbar_new(this_->gui);
@@ -277,7 +290,6 @@ navit_init(struct navit *this_)
 		}
 	}
 	global_navit=this_;
-	gui_run_main_loop(this_->gui);
 }
 
 void

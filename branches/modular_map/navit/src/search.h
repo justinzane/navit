@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
 struct search_list_country {
         struct item item;
         char *car;
@@ -37,3 +40,6 @@ void search_list_search(struct search_list *this_, struct attr *search_attr, int
 struct search_list_result *search_list_get_result(struct search_list *this_);
 void search_list_destroy(struct search_list *this_);
 /* end of prototypes */
+#ifdef __cplusplus
+}
+#endif

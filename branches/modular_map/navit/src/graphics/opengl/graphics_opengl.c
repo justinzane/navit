@@ -790,11 +790,11 @@ motion_notify(GtkWidget * widget, GdkEventMotion * event, gpointer user_data)
 	return FALSE;
 }
 
-static struct graphics_priv *graphics_opengl_new_helper(struct graphics_methods *meth);
 
 static struct graphics_priv *
 overlay_new(struct graphics_priv *gr, struct graphics_methods *meth, struct point *p, int w, int h)
 {
+#if 0
 	struct graphics_priv *this=graphics_gtk_drawing_area_new_helper(meth);
 	this->drawable=gdk_pixmap_new(gr->widget->window, w, h, -1);
 	this->colormap=gr->colormap;
@@ -807,6 +807,8 @@ overlay_new(struct graphics_priv *gr, struct graphics_methods *meth, struct poin
 	this->next=gr->overlays;
 	gr->overlays=this;
 	return this;
+#endif
+	return NULL;
 }
 
 static void *
