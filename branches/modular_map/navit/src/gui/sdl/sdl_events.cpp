@@ -338,7 +338,7 @@ bool DialogWindowSwitch(const CEGUI::EventArgs& event)
 		Window* street_edit = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/StreetEditbox"));
 		street_edit->setText("");
 		town_edit->activate();
-		SDL_dest.current_search=SRCH_TOWN;
+		SDL_dest.current_search=SRCH_COUNTRY;
 		MultiColumnList* mcl = static_cast<MultiColumnList*>(WindowManager::getSingleton().getWindow("DestinationWindow/Listbox"));
 		mcl->resetList();
 		we.window->getParent()->getChild("DestinationWindow")->show();

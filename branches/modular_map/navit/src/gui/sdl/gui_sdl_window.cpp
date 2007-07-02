@@ -93,7 +93,9 @@ static int gui_run_main_loop(struct gui_priv *this_)
 
 	int frames=0;
 	char fps [12];
+
 	struct transformation *t;
+
 
 	t=navit_get_trans(this_->nav);
 	transform_set_size(t, 800, 600);	
@@ -181,12 +183,16 @@ static int gui_run_main_loop(struct gui_priv *this_)
 			last_time_pulse = SDL_GetTicks();
 		}
 
+		myRoot->getChild("OSD/SpeedoMeter")->setText(fps);
 
+		/*
 		glcRenderStyle(GLC_TEXTURE);
 		glColor3f(1, 0, 0);
 		glRotatef(180,1,0,0);
 		glScalef(64, 64, 0);
 		glcRenderString(fps);
+		*/
+
  		if(enable_timer)
  			profile(0,"fps");
 
@@ -307,41 +313,22 @@ bool MoveCamera(const CEGUI::EventArgs& event){
 }
 
 bool ShowKeyboard(const CEGUI::EventArgs& event){
-
-	/*
-	// The following can probably be removed.
-	using namespace CEGUI;
-	Editbox* country_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/CountryEditbox"));
-	Editbox* town_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/TownEditbox"));
-	Editbox* street_edit = static_cast<Editbox*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/StreetEditbox"));
-
-	if (country_edit->hasInputFocus())
-	{	
-		SDL_dest.current_search==SRCH_COUNTRY;
-	} else if (town_edit->hasInputFocus())
-	{	
-		SDL_dest.current_search==SRCH_TOWN;
-	} else if (street_edit->hasInputFocus())
-	{	
-		SDL_dest.current_search==SRCH_STREET;
-	}
-
-	*/
 	myRoot->getChild("Navit/Keyboard")->getChild("Navit/Keyboard/Input")->setText("");
 	myRoot->getChild("Navit/Keyboard")->show();
 }
 
 void Add_KeyBoard_key(char * key,int x,int y,int w){
 	
+	printf("Adding key %s\n",key);
 	using namespace CEGUI;
-	char button_name [2];
+	char button_name [5];
 	sprintf(button_name,"%s",key);
 	FrameWindow* wnd = (FrameWindow*)WindowManager::getSingleton().createWindow("TaharezLook/Button", button_name);
 	myRoot->getChild("Navit/Keyboard")->addChildWindow(wnd);
 	wnd->setPosition(UVector2(cegui_absdim(x), cegui_absdim( y)));
 	wnd->setSize(UVector2(cegui_absdim(w), cegui_absdim( 40)));
 	wnd->setText(key);
-// 	wnd->subscribeEvent(PushButton::EventClicked, Event::Subscriber(Handle_Virtual_Key_Down));
+	wnd->subscribeEvent(PushButton::EventClicked, Event::Subscriber(Handle_Virtual_Key_Down));
 	
 }	
 
@@ -386,19 +373,20 @@ void BuildKeyboard(){
 
 	y=115;
 	count_x=0;
+
 	Add_KeyBoard_key("W",offset_x+(count_x++)*w,y,w);
 	Add_KeyBoard_key("X",offset_x+(count_x++)*w,y,w);
 	Add_KeyBoard_key("C",offset_x+(count_x++)*w,y,w);
 	Add_KeyBoard_key("V",offset_x+(count_x++)*w,y,w);
 	Add_KeyBoard_key("B",offset_x+(count_x++)*w,y,w);
 	Add_KeyBoard_key("N",offset_x+(count_x++)*w,y,w);
-	
+
 	Add_KeyBoard_key(" ",offset_x+(count_x++)*w,y,w*2);
 	count_x++;
-	Add_KeyBoard_key("BACK",offset_x+(count_x++)*w,y,w*2);
 	
-	count_x+=2;
-
+	Add_KeyBoard_key("BACK",offset_x+(count_x++)*w,y,w*2);	
+ 	count_x+=2;
+	
 	Add_KeyBoard_key("1",offset_x+(count_x++)*w,y,w);
 	Add_KeyBoard_key("2",offset_x+(count_x++)*w,y,w);
 	Add_KeyBoard_key("3",offset_x+(count_x++)*w,y,w);
@@ -406,7 +394,9 @@ void BuildKeyboard(){
 	y=160;
 	count_x=11;
 	Add_KeyBoard_key("0",offset_x+(count_x++)*w,y,w);
+	
 	Add_KeyBoard_key("OK",offset_x+(count_x++)*w,y,w*2);
+	
 
 }
 
@@ -548,7 +538,7 @@ static void init_sdlgui(void)
 		mcl2->addColumn("ETA", 3, cegui_absdim(80.0));
 		mcl2->addColumn("Instruction",4, cegui_absdim(300.0));
 
-//  		BuildKeyboard();
+ 		BuildKeyboard();
 		
 	}
 	catch (CEGUI::Exception& e)
@@ -588,7 +578,7 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 		printf("*** Invalid navit instance in gui\n");
 	}
 	if(nav){	
-		printf("*** VALID source fffrfrnavit instance in gui\n");
+		printf("*** VALID source navit instance in gui\n");
 	} else {
 		printf("*** Invalid source navit instance in gui\n");
 	}
