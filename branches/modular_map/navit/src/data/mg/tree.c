@@ -170,6 +170,17 @@ int tree_search_next(struct tree_search *ts, unsigned char **p, int dir)
 	dbg(1,"saving last3 %d %p\n", ts->curr_node, tsn->last);
 	if (*p < tsn->end)
 		return (tsn->low == 0xffffffff ? 1 : 0);
+	dbg(1,"end reached\n");
+	if (tsn->low != 0xffffffff) {
+		dbg(1,"low 0x%x\n", tsn->low);
+		tsn=tree_search_enter(ts, tsn->low);
+		*p=tsn->p;
+		tsn->high=get_u32(p);
+		ts->last_node=ts->curr_node;
+		dbg(1,"saving last4 %d 0x%x\n", ts->curr_node, tsn->last-ts->f->begin);
+		dbg(1,"high4=0x%x\n", tsn->high);
+		return 0;
+	}
 	return -1;
 }
 
