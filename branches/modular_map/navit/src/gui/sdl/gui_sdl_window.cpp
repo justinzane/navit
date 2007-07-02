@@ -319,7 +319,6 @@ bool ShowKeyboard(const CEGUI::EventArgs& event){
 
 void Add_KeyBoard_key(char * key,int x,int y,int w){
 	
-	printf("Adding key %s\n",key);
 	using namespace CEGUI;
 	char button_name [5];
 	sprintf(button_name,"%s",key);
@@ -550,7 +549,7 @@ static void init_sdlgui(void)
 
 	char * fontname="/usr/share/fonts/corefonts/verdana.ttf";
 
-	printf("Gui initialized. Building fonts\n");
+// 	printf("Gui initialized. Building fonts\n");
 
 
 	int ctx = 0;
@@ -561,7 +560,7 @@ static void init_sdlgui(void)
 	glcFont(font);
 // 	glcFontFace(font, "Italic");
 
-	printf("Fonts built. Ready to rock!\n");
+// 	printf("Fonts built. Ready to rock!\n");
 
 	
 }
@@ -572,6 +571,7 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 	printf("Begin SDL init\n");
 	struct gui_priv *this_;
 	sdl_gui_navit=nav;
+	/*
 	if(sdl_gui_navit){	
 		printf("*** VALID navit instance in gui\n");
 	} else {
@@ -582,6 +582,7 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 	} else {
 		printf("*** Invalid source navit instance in gui\n");
 	}
+	*/
 	*meth=gui_sdl_methods;
 
 	this_=g_new0(struct gui_priv, 1);

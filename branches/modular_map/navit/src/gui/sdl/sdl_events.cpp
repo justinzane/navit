@@ -316,7 +316,6 @@ void route_to(int x,int y){
 
 bool DestinationEntryChange(const CEGUI::EventArgs& event)
 {
-	printf("got a destination event\n");
 	handleMouseEnters(event);
 	handle_destination_change();
 
