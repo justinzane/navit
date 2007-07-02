@@ -29,6 +29,9 @@ static struct search_param {
 	struct attr attr;
 } search_param;
 
+// extern "C" struct navit *global_navit;
+
+
 /*
 bool handleItemSelect(int r)
 {
@@ -397,16 +400,17 @@ bool ButtonGo(const CEGUI::EventArgs& event)
 	Window* Dest_x = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Dest_x"));
 	Window* Dest_y = static_cast<Window*>(myRoot->getChild("DestinationWindow")->getChild("DestinationWindow/Dest_y"));
 	
+// 	navit_set_destination(struct navit *, struct coord *, char *description);
 // 	route_to(atoi(Dest_x->getText().c_str()),atoi(Dest_y->getText().c_str()));
 
 	return true;
 }
 
-extern "C" struct navit *global_navit;
 
 bool ZoomIn(const CEGUI::EventArgs& event)
 {
-	navit_zoom_in(global_navit, 2);
+	extern struct navit *sdl_gui_navit;
+	navit_zoom_in(sdl_gui_navit, 2);
 	/*
 	extern struct container *co;
 	struct transformation *t=co->trans;
@@ -419,7 +423,8 @@ bool ZoomIn(const CEGUI::EventArgs& event)
 
 bool ZoomOut(const CEGUI::EventArgs& event)
 {
-	navit_zoom_out(global_navit, 2);
+	extern struct navit *sdl_gui_navit;
+	navit_zoom_out(sdl_gui_navit, 2);
 	/*
 	extern struct container *co;
 	struct transformation *t=co->trans;
