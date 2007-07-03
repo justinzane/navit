@@ -222,9 +222,9 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 
 	for (i = 0 ; i < count-1 ; i++) {
 
-	//   	glEnable( GL_POLYGON_SMOOTH );
-	//  	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-	// 	glEnable( GL_BLEND );
+// 	  	glEnable( GL_POLYGON_SMOOTH );
+// 	 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+// 		glEnable( GL_BLEND );
 
 		float dx=p[i+1].x-p[i].x;
 		float dy=p[i+1].y-p[i].y;
@@ -285,28 +285,7 @@ draw_lines(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point *
 		}
 	}
 */
-#if 0
-	if(gr->mode == draw_mode_cursor){
-		printf("Pushing a cursor\n");
-		glNewList(gr->DLid,GL_COMPILE);
-                int x=400;
-                int y=480;
-                float cursor_size=15.0f;
-                glColor4f(0.0f,1.0f,0.0f,0.75f);
-                glEnable(GL_BLEND);
-                glBegin(GL_TRIANGLES);
-                        glVertex3f( x, y-cursor_size, 0.0f);
-                        glVertex3f(x-cursor_size,y+cursor_size, 0.0f);
-                        glVertex3f( x+cursor_size,y+cursor_size, 0.0f);
-                glEnd();
-                glDisable(GL_BLEND);
-		glEndList();
-	}		
-#endif
-	
 
-//		printf("Calling the DL\n");
-//		glCallList(gr->DLid);
 }
 
 static void
@@ -511,9 +490,28 @@ display_text_free(struct text_render *text)
 	g_free(text);
 }
 
+void SDL_print(char * label,int x, int y, int angle){
+	glPushMatrix();
+//  	glLoadIdentity();
+	glcRenderStyle(GLC_TRIANGLE);
+	glColor3f(0., 0., 0.);
+	glTranslatef(x, y, -10);
+  	glRotatef(180,1,0,0);
+  	glRotatef(angle,0,0,1);
+	glScalef(14, 14, 0.);
+	glcRenderString(label);
+	glPopMatrix();
+
+//   glFlush();
+
+}
+
 static void
 draw_text(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct graphics_gc_priv *bg, struct graphics_font_priv *font, char *text, struct point *p, int dx, int dy)
 {
+	printf("******************************************* %s\n",text);
+	SDL_print(text,p->x,p->y,0);
+
 #if 0
 	struct text_render *t;
 
