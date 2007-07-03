@@ -507,6 +507,16 @@ graphics_ready(struct graphics *this_)
 	return this_->ready;
 }
 
+void
+graphics_displaylist_draw(struct graphics *gra, struct displaylist *displaylist, struct transformation *trans, GList *layouts, struct route *route)
+{
+	int order=transform_get_order(trans);
+	gra->meth.draw_mode(gra->priv, draw_mode_begin);
+	if (route)
+		route_draw(route, trans, displaylist);
+	xdisplay_draw(displaylist->dl, gra, layouts, order);
+}
+
 
 void
 graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *mapsets, struct transformation *trans, GList *layouts, struct route *route)
@@ -523,7 +533,6 @@ graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *maps
 	dbg(0,"order=%d\n", order);
 
 
-	gra->meth.draw_mode(gra->priv, draw_mode_begin);
 #if 0
 	for (i = 0 ; i < data_window_type_end; i++) {
 		data_window_begin(co->data_window[i]);	
@@ -532,10 +541,7 @@ graphics_draw(struct graphics *gra, struct displaylist *displaylist, GList *maps
 	profile(0,NULL);
 	do_draw(displaylist, trans, mapsets, order, route);
 	profile(1,"do_draw");
-	if (route)
-		route_draw(route, trans, displaylist);
-	profile(1,"route_draw");
-	xdisplay_draw(displaylist->dl, gra, layouts, order);
+	graphics_displaylist_draw(gra, displaylist, trans, layouts, route);
 	profile(1,"xdisplay_draw");
 	profile(0,"end");
   

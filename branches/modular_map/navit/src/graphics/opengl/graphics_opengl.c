@@ -635,10 +635,12 @@ background_gc(struct graphics_priv *gr, struct graphics_gc_priv *gc)
 static void
 draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
 {
+#if 0
 	if (mode == draw_mode_begin)
 		glNewList(gr->DLid,GL_COMPILE);
 	if (mode == draw_mode_end)
 		glEndList();
+#endif
 
 #if 0
 	struct graphics_priv *overlay;

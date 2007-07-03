@@ -20,6 +20,7 @@ void navit_add_mapset(struct navit *this_, struct mapset *ms);
 struct mapset *navit_get_mapset(struct navit *this_);
 void navit_add_layout(struct navit *this_, struct layout *lay);
 void navit_draw(struct navit *this_);
+void navit_draw_displaylist(struct navit *this_);
 void navit_zoom_in(struct navit *this_, int factor);
 void navit_zoom_out(struct navit *this_, int factor);
 struct navit *navit_new(const char *ui, const char *graphics, struct coord *center, enum projection pro, int zoom);

@@ -223,7 +223,10 @@ static int gui_run_main_loop(struct gui_priv *this_)
 
 	//	graphics_get_data(this_->gra,DLid);
 		
+#if 0
 		glCallList(*DLid);
+#endif
+		navit_draw_displaylist(sdl_gui_navit);
 
 		// glCallList(cursorDL);
 		inject_input(must_quit);

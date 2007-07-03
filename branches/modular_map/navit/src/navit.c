@@ -79,6 +79,14 @@ navit_draw(struct navit *this_)
 	this_->ready=1;
 }
 
+void
+navit_draw_displaylist(struct navit *this_)
+{
+	if (this_->ready) {
+		graphics_displaylist_draw(this_->gra, this_->displaylist, this_->trans, this_->layouts, this_->route);
+	}
+}
+
 static void
 navit_resize(void *data, int w, int h)
 {
