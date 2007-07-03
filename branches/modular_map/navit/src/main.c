@@ -67,7 +67,6 @@ int main(int argc, char **argv)
 #ifdef HAVE_PYTHON
 	python_init();
 #endif
-	plugin_init();
 	if (argc > 1) 
 		config_file=argv[1];
 	else {

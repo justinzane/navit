@@ -9,6 +9,7 @@
 #include "layout.h"
 #include "projection.h"
 #include "coord.h"
+#include "plugin.h"
 
 
 struct xmlstate {
@@ -93,6 +94,31 @@ static int
 convert_number(const char *val)
 {
 	return g_ascii_strtoull(val,NULL,0);
+}
+
+static int
+xmlconfig_plugins(struct xmlstate *state)
+{
+	state->element_object = plugins_new();
+	if (! state->element_object)
+		return 0;
+	return 1;
+}
+
+static int
+xmlconfig_plugin(struct xmlstate *state)
+{
+	const char *path;
+	int active,lazy;
+
+	state->element_object=state->parent->element_object;
+	path=find_attribute(state, "path", 1);
+	if (! path)
+		return 0;
+	active=find_boolean(state, "active", 1, 0);
+	lazy=find_boolean(state, "lazy", 1, 0);
+	plugins_add_path(state->parent->element_object, path, active, lazy);
+	return 1;
 }
 
 static int
@@ -341,6 +367,8 @@ struct element_func {
 	char *parent;
 	int (*func)(struct xmlstate *state);
 } elements[] = {
+	{ "plugins", NULL, xmlconfig_plugins},
+	{ "plugin", "plugins", xmlconfig_plugin},
 	{ "navit", NULL, xmlconfig_navit},
 	{ "vehicle", "navit", xmlconfig_vehicle},
 	{ "mapset", "navit", xmlconfig_mapset},
@@ -436,6 +464,8 @@ end_element (GMarkupParseContext *context,
 	struct xmlstate *curr, **state = user_data;
 
 	curr=*state;
+	if(!g_ascii_strcasecmp("plugins", element_name) && curr->element_object) 
+		plugins_init(curr->element_object);
 	if(!g_ascii_strcasecmp("navit", element_name) && curr->element_object) 
 		navit_init(curr->element_object);
 	*state=curr->parent;

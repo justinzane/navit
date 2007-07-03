@@ -4,8 +4,7 @@
 extern "C" {
 #endif
 
-struct plugin {
-};
+struct plugin;
 
 enum plugin_type {
 	plugin_type_map,
@@ -14,10 +13,6 @@ enum plugin_type {
 	plugin_type_last,
 };
 #endif
-
-struct plugin *plugin_load(char *plugin);
-void * plugin_get_type(enum plugin_type type, const char *name);
-void plugin_init(void);
 
 struct container;
 struct popup;
@@ -105,6 +100,25 @@ void *plugin_get_##type##_type(const char *name);
 #endif
 
 #include "plugin_def.h"
+
+void plugin_init(void);
+/* prototypes */
+struct plugin *plugin_new(char *plugin);
+int plugin_load(struct plugin *pl);
+char *plugin_get_name(struct plugin *pl);
+int plugin_get_active(struct plugin *pl);
+void plugin_set_active(struct plugin *pl, int active);
+void plugin_set_lazy(struct plugin *pl, int lazy);
+void plugin_call_init(struct plugin *pl);
+void plugin_unload(struct plugin *pl);
+void plugin_destroy(struct plugin *pl);
+struct plugins *plugins_new(void);
+void plugins_add_path(struct plugins *pls, char *path, int active, int lazy);
+void plugins_init(struct plugins *pls);
+void plugins_destroy(struct plugins *pls);
+void *plugin_get_type(enum plugin_type type, const char *name);
+/* end of prototypes */
+
 #ifdef __cplusplus
 }
 #endif
