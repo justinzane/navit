@@ -15,6 +15,7 @@
 #include "graphics.h"
 #include "gui_sdl.h"
 
+#include "navigation.h"
 
 #include "CEGUI.h"
 
@@ -82,6 +83,64 @@ void drawCursor() {
 
  }
 
+
+static void
+sdl_update_roadbook(struct navigation *nav, void *data)
+{
+	using namespace CEGUI;
+	extern Window* myRoot;
+
+	if(! WindowManager::getSingleton().getWindow("OSD/RoadbookButton")->isVisible()){
+		WindowManager::getSingleton().getWindow("OSD/RoadbookButton")->show();
+	}
+
+	MultiColumnList* mcl = static_cast<MultiColumnList*>(myRoot->getChild("Navit/RoadBook")->getChild("Roadbook"));
+	mcl->resetList();
+
+
+	struct navigation_list *list;
+	char *str;
+	
+	list=navigation_list_new(nav);
+	while ((str=navigation_list_get(list, navigation_mode_short))) {
+	
+// 		printf("SDL : %s\n", str);
+
+		
+		mcl->addRow();
+		/*
+		char from [256];
+		char to [256];
+	
+		sprintf(from,"%s %s",param[0].value,param[1].value);
+		ListboxTextItem* itemListbox = new ListboxTextItem(from);
+		sprintf(to,"%s %s",param[2].value,param[3].value);
+
+		itemListbox = new ListboxTextItem(to);
+		itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
+		mcl->setItem(itemListbox, 1, mcl->getRowCount()-1);
+	
+		itemListbox = new ListboxTextItem(param[9].value);
+		itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
+		mcl->setItem(itemListbox, 2, mcl->getRowCount()-1);
+	
+		itemListbox = new ListboxTextItem(param[11].value);
+		itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
+		mcl->setItem(itemListbox, 3, mcl->getRowCount()-1);
+	
+		itemListbox = new ListboxTextItem(param[10].value);
+		itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
+		mcl->setItem(itemListbox, 4, mcl->getRowCount()-1);
+
+		*/
+		ListboxTextItem* itemListbox = new ListboxTextItem(str);
+		itemListbox->setSelectionBrushImage("TaharezLook", "MultiListSelectionBrush");
+		mcl->setItem(itemListbox, 0, mcl->getRowCount()-1);
+
+	}
+	navigation_list_destroy(list);
+}
+
 static int gui_run_main_loop(struct gui_priv *this_)
 {
 	printf("Entering main loop\n");
@@ -122,6 +181,16 @@ static int gui_run_main_loop(struct gui_priv *this_)
 	glEndList();
 
 	bool enable_timer=0;
+
+	struct navigation *navig;
+	navig=navit_get_navigation(sdl_gui_navit);
+	if(navig){
+		printf("navig valid, registering callback\n");
+		navigation_register_callback(navig, navigation_mode_long, sdl_update_roadbook, sdl_gui_navit);
+	} else {
+		printf("navig unvalid\n");
+	}
+
 
 	while (!must_quit)
 	{
@@ -571,7 +640,7 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 	printf("Begin SDL init\n");
 	struct gui_priv *this_;
 	sdl_gui_navit=nav;
-	/*
+	
 	if(sdl_gui_navit){	
 		printf("*** VALID navit instance in gui\n");
 	} else {
@@ -582,7 +651,7 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 	} else {
 		printf("*** Invalid source navit instance in gui\n");
 	}
-	*/
+	
 	*meth=gui_sdl_methods;
 
 	this_=g_new0(struct gui_priv, 1);
@@ -599,6 +668,7 @@ gui_sdl_new(struct navit *nav, struct gui_methods *meth, int w, int h)
 	gtk_widget_show_all(this_->win);
 	*/
 	this_->nav=nav;
+	
 
 	return this_;
 }
