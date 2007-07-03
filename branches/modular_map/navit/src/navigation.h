@@ -1,7 +1,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 enum navigation_mode {
 	navigation_mode_long,
 	navigation_mode_short,
