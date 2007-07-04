@@ -5,8 +5,8 @@
 	<plugin path="graphics/null/.libs/libgraphics_null.so" active="no" />
 </plugins>
 <navit gui="gtk" graphics="gtk_drawing_area" center="5031.51 N 735.83 E" zoom="8192" >
-	<vehicle name="Meins" source="gpsd://192.168.1.14" color="#0000ff"/>
-	<vehicle name="Deins" source="gpsd://somehost" color="#0000aa"/> 
+	<vehicle name="Meins" enabled="no" source="gpsd://192.168.1.14" color="#0000ff"/>
+	<vehicle name="Deins" enabled="no" source="gpsd://somehost" color="#0000aa"/> 
 	<mapset>
 		<map type="mg" enabled="yes" data="/opt/reiseplaner/travel/DE.map" />
 		<map type="mg" enabled="yes" data="/opt/reiseplaner/travel/DE.map/smp2.smp" />

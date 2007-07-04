@@ -151,7 +151,8 @@ plugins_init(struct plugins *pls)
 	while (l) {
 		pl=l->data;
 		if (plugin_get_active(pl)) 
-			plugin_load(pl);
+			if (!plugin_load(pl)) 
+				plugin_set_active(pl, 0);
 		l=g_list_next(l);
 	}
 	l=pls->list;

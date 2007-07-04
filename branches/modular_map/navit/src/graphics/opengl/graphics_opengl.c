@@ -1,13 +1,10 @@
-#define GDK_ENABLE_BROKEN
 #include <math.h>
+#include <glib.h>
 #include "config.h"
-#include <gtk/gtk.h>
+#if 0
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#ifdef HAVE_IMLIB2
-#include <Imlib2.h>
 #endif
-#include <gdk/gdkx.h>
 #include <GL/glc.h>
 #include "point.h"
 #include "graphics.h"
@@ -15,13 +12,17 @@
 #include "plugin.h"
 
 struct graphics_priv {
+#if 0
 	GdkEventButton button_event;
+#endif
 	int button_timeout;
+#if 0
 	GtkWidget *widget;
 	GdkDrawable *drawable;
 	GdkDrawable *background;
 	GdkColormap *colormap;
 	FT_Library library;
+#endif
 	struct point p;
 	int width;
 	int height;
@@ -42,7 +43,9 @@ struct graphics_priv {
 };
 
 struct graphics_font_priv {
+#if 0
         FT_Face face;
+#endif
 };
 
 struct graphics_gc_priv {
@@ -53,7 +56,9 @@ struct graphics_gc_priv {
 };
 
 struct graphics_image_priv {
+#if 0
 	GdkPixbuf *pixbuf;
+#endif
 	int w;
 	int h;
 };
@@ -97,6 +102,7 @@ static struct graphics_font_methods font_methods = {
 
 static struct graphics_font_priv *font_new(struct graphics_priv *gr, struct graphics_font_methods *meth, int size)
 {
+#if 0
 	char **filename=fontlist;
 	struct graphics_font_priv *font=g_new(struct graphics_font_priv, 1);
 
@@ -120,6 +126,8 @@ static struct graphics_font_priv *font_new(struct graphics_priv *gr, struct grap
         FT_Set_Char_Size(font->face, 0, size, 300, 300);
 	FT_Select_Charmap(font->face, FT_ENCODING_UNICODE);
 	return font;
+#endif
+	return NULL;
 }
 
 static void
@@ -183,6 +191,7 @@ static struct graphics_gc_priv *gc_new(struct graphics_priv *gr, struct graphics
 static struct graphics_image_priv *
 image_new(struct graphics_priv *gr, struct graphics_image_methods *meth, char *name, int *w, int *h)
 {
+#if 0
 	GdkPixbuf *pixbuf;
 	struct graphics_image_priv *ret;
 
@@ -196,6 +205,8 @@ image_new(struct graphics_priv *gr, struct graphics_image_methods *meth, char *n
 	*w=ret->w;
 	*h=ret->h;
 	return ret;
+#endif
+	return NULL;
 }
 
 static void
@@ -328,6 +339,7 @@ draw_circle(struct graphics_priv *gr, struct graphics_gc_priv *gc, struct point 
 }
 
 
+#if 0
 struct text_glyph {
 	int x,y,w,h;
 	GdkImage *shadow;
@@ -390,6 +402,7 @@ display_text_render_shadow(struct text_glyph *g)
 static struct text_render *
 display_text_render(char *text, struct graphics_font_priv *font, int dx, int dy, int x, int y)
 {
+
        	FT_GlyphSlot  slot = font->face->glyph;  // a small shortcut
 	FT_Matrix matrix;
 	FT_Vector pen;
@@ -490,6 +503,8 @@ display_text_free(struct text_render *text)
 	g_free(text);
 }
 
+#endif
+
 void SDL_print(char * label,int x, int y, int angle){
 	glPushMatrix();
 //  	glLoadIdentity();
@@ -545,6 +560,7 @@ draw_image(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct point *
 static void
 draw_image_warp(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct point *p, int count, char *data)
 {
+#if 0
 	void *image;
 	int w,h;
 	printf("draw_image_warp data=%s\n", data);
@@ -562,12 +578,14 @@ draw_image_warp(struct graphics_priv *gr, struct graphics_gc_priv *fg, struct po
 	if (count == 2) {
 		imlib_render_image_on_drawable_skewed(0, 0, w, h, p[0].x, p[0].y, p[1].x-p[0].x, 0, 0, p[1].y-p[0].y);
 	}
+#endif
 }
 #endif
 
 static void
 overlay_draw(struct graphics_priv *parent, struct graphics_priv *overlay, int window)
 {
+#if 0
 	GdkPixbuf *pixbuf,*pixbuf2;
 	GtkWidget *widget=parent->widget;
 	guchar *pixels1, *pixels2, *p1, *p2;
@@ -610,6 +628,7 @@ overlay_draw(struct graphics_priv *parent, struct graphics_priv *overlay, int wi
                         gr->gra->widget->style->fg_gc[GTK_WIDGET_STATE(gr->gra->widget)],
                         img->gra->drawable,
                         0, 0, p->x, p->y, img->gra->width, img->gra->height);
+#endif
 #endif
 }
 
@@ -669,6 +688,7 @@ draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
 #endif
 }
 
+#if 0
 /* Events */
 
 static gint
@@ -789,6 +809,8 @@ motion_notify(GtkWidget * widget, GdkEventMotion * event, gpointer user_data)
 		(*this->motion_callback)(this->motion_callback_data, &p);
 	return FALSE;
 }
+
+#endif
 
 
 static struct graphics_priv *
