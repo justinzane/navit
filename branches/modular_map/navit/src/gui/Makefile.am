@@ -1,1 +1,2 @@
-SUBDIRS=gtk
+SUBDIRS = gtk $(GUI_OPTIONAL_DIRS)
+

@@ -43,6 +43,22 @@ AC_SUBST(PACKAGE_LIBS)
 AC_SUBST(IMLIB2_CFLAGS)
 AC_SUBST(IMLIB2_LIBS)
 AC_CHECK_HEADER(libspeechd.h, AC_DEFINE([HAVE_LIBSPEECHD],[],Define to 1 if you have the <libspeechd.h> header file.) LIBS="$LIBS -lspeechd",  AC_MSG_WARN([*** no libspeechd.h -- Speech output disabled]))
+AC_CHECK_HEADER(
+	SDL/SDL.h,
+	AC_DEFINE(
+		[HAVE_LIBSDL],
+		[],
+		Define to 1 if you have the <sdl.h> header file.
+		)
+		LIBS="$LIBS -lSDL -lpthread  -lSDL_image -lSDL_gfx -lSDL_ttf -lGL -lGLU -lfreetype -lz"
+		GUI_OPTIONAL_DIRS=sdl
+		GRAPHICS_OPTIONAL_DIRS=opengl,
+	AC_MSG_WARN([*** no sdl.h -- SDL support disabled])
+)
+AC_SUBST([GUI_OPTIONAL_DIRS])
+AC_SUBST([GRAPHICS_OPTIONAL_DIRS])
+
+
 if test x"${USE_LIBGPS}" = xyes
 then
 	AC_CHECK_HEADER(gps.h, AC_DEFINE([HAVE_LIBGPS],[],Define to 1 if you have the <gps.h> header file.) LIBS="$LIBS -lgps",  AC_MSG_WARN([*** no gps.h -- gpsd support disabled]))
@@ -85,6 +101,7 @@ AC_CONFIG_SUBDIRS(src/fib-1.0)
 
 LIBS="$LIBS -rdynamic"
 
+
 AC_OUTPUT([
 Makefile
 src/Makefile
@@ -94,7 +111,6 @@ src/data/textfile/Makefile
 src/data/garmin_img/Makefile
 src/gui/Makefile
 src/gui/gtk/Makefile
-src/gui/sdl/Makefile
 src/graphics/Makefile
 src/graphics/gtk_drawing_area/Makefile
 src/graphics/opengl/Makefile
