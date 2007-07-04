@@ -111,6 +111,7 @@ src/data/textfile/Makefile
 src/data/garmin_img/Makefile
 src/gui/Makefile
 src/gui/gtk/Makefile
+src/gui/sdl/Makefile
 src/graphics/Makefile
 src/graphics/gtk_drawing_area/Makefile
 src/graphics/opengl/Makefile
