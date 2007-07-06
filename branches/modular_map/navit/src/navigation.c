@@ -14,6 +14,8 @@
 #include "navit.h"
 #include "callback.h"
 
+#define _(STRING)    gettext(STRING)
+
 
 struct navigation {
 	struct mapset *ms;
@@ -236,27 +238,27 @@ make_maneuvers(struct navigation *this_)
 static char *
 show_maneuver(struct navigation_itm *itm, struct navigation_command *cmd, int mode)
 {
-	char *dir="rechts",*strength="";
+	char *dir=_("right"),*strength="";
 	int distance=itm->dest_length-cmd->itm->dest_length;
 	int delta=cmd->delta;
 	if (delta < 0) {
-		dir="links";
+		dir=_("left");
 		delta=-delta;
 	}
 	if (delta < 45) {
-		strength="leicht ";
+		strength=_("easily ");
 	} else if (delta < 105) {
 		strength="";
 	} else if (delta < 165) {
-		strength="scharf ";
+		strength=_("strongly ");
 	} else {
 		dbg(0,"delta=%d\n", delta);
-		strength="unbekannt ";
+		strength=_("unknown");
 	}
 	if (cmd->itm->next)
-		return g_strdup_printf("In %d m %s%s abbiegen", distance, strength, dir);
+		return g_strdup_printf(_("In %d m, turn %s%s"), distance, strength, dir);
 	else
-		return g_strdup_printf("In %d m haben Sie ihr Ziel erreicht", distance);
+		return g_strdup_printf(_("In %d m, you have reach your destination"), distance);
 }
 
 struct navigation_list *
