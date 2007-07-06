@@ -14,6 +14,8 @@
 #include "plugin.h"
 #include "xmlconfig.h"
 
+#define _(STRING)    gettext(STRING)
+
 struct map_data *map_data_default;
 
 static void sigchld(int sig)
@@ -38,7 +40,7 @@ static gchar *get_home_directory(void)
 	}
 	if (!homedir)
 	{
-		g_warning("Could not find home directory. Using current directory as home directory.");
+		g_warning(_("Could not find home directory. Using current directory as home directory."));
 		homedir = ".";
 	}
 	return homedir;
@@ -64,6 +66,9 @@ int main(int argc, char **argv)
 	gtk_init(&argc, &argv);
 	gdk_rgb_init();
 
+	bindtextdomain( "navit", "./locale" );
+	textdomain( "navit" );
+
 #ifdef HAVE_PYTHON
 	python_init();
 #endif
@@ -79,9 +84,9 @@ int main(int argc, char **argv)
 		}
 	}
 	if (!config_load(config_file, &error)) {
-		g_error("Error parsing '%s': %s\n", config_file, error->message);
+		g_error(_("Error parsing '%s': %s\n"), config_file, error->message);
 	} else {
-		printf("Using '%s'\n", config_file);
+		printf(_("Using '%s'\n"), config_file);
 	}
 	if (main_loop_gui) {
 		gui_run_main_loop(main_loop_gui);
