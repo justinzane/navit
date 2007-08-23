@@ -1,0 +1,4 @@
+SUBDIRS=
+if BINDING_PYTHON
+  SUBDIRS+=python
+endif
