@@ -1,3 +1,4 @@
+#include <windows.h>
 #include <glib.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -471,10 +472,6 @@ binmap_search_new(struct map_priv *map, struct item *item, struct attr *search, 
 		case attr_town_postal:
 			break;
 		case attr_street_name:
-			if (! item->map)
-				break;
-			if (!map_priv_is(item->map, map))
-				break;
 			ms = g_new(struct map_selection, 1);
 			ms->next = NULL;
 			for (i = 0; i < layer_end; i++)
@@ -492,10 +489,10 @@ binmap_search_new(struct map_priv *map, struct item *item, struct attr *search, 
 						size = 10000;
 						break;
 					case type_town_label_2e4:
-						size = 5000;
+						size = 2500;
 						break;
 					case type_town_label_2e3:
-						size = 2500;
+						size = 1000;
 						break;
 					case type_town_label_2e2:
 						size = 1000;
@@ -551,11 +548,9 @@ binmap_search_get_item(struct map_search_priv *map_search)
 		} else if (map_search->search->type == attr_street_name) {
 			if ((it->type == type_street_3_city) || (it->type == type_street_2_city) || (it->type == type_street_1_city)) {
 				struct attr at;
-				if (map_selection_contains_item_rect(map_search->mr->sel, it) && binfile_attr_get(it->priv_data, attr_label, &at)) {
+				if (binfile_attr_get(it->priv_data, attr_label, &at)) {
 					if (!ascii_cmp(at.u.str, map_search->search->u.str, map_search->partial)) {
 						if (!g_hash_table_lookup(map_search->search_results, at.u.str)) {
-							item_coord_rewind(it);
-							item_attr_rewind(it);
 							g_hash_table_insert(map_search->search_results, g_strdup(at.u.str), "");
 							return it;
 						}
@@ -623,19 +618,19 @@ map_new_binfile(struct map_methods *meth, struct attr **attrs)
 		cde_index_size=sizeof(struct zip_cd)+sizeof("index")-1;
 		m->eoc=(struct zip_eoc *)file_data_read(m->fi,m->fi->size-sizeof(struct zip_eoc), sizeof(struct zip_eoc));
 		eoc_to_cpu(m->eoc);
-		printf("magic 0x%x\n", m->eoc->zipesig);
+		dbg(1, "magic 0x%x\n", m->eoc->zipesig);
 		m->index_cd=(struct zip_cd *)file_data_read(m->fi,m->fi->size-sizeof(struct zip_eoc)-cde_index_size, cde_index_size);
 		cd_to_cpu(m->index_cd);
 		first_cd=(struct zip_cd *)file_data_read(m->fi,m->eoc->zipeofst, sizeof(struct zip_cd));
 		cd_to_cpu(first_cd);
 		m->cde_size=sizeof(struct zip_cd)+first_cd->zipcfnl;
 		m->zip_members=(m->eoc->zipecsz-cde_index_size)/m->cde_size+1;
-		printf("cde_size %d\n", m->cde_size);
-		printf("members %d\n",m->zip_members);
-		printf("0x%x\n", m->eoc->zipesig);
-		printf("0x%x\n", m->index_cd->zipcensig);
+		dbg(1, "cde_size %d\n", m->cde_size);
+		dbg(1, "members %d\n",m->zip_members);
+		dbg(1, "0x%x\n", m->eoc->zipesig);
+		dbg(1, "0x%x\n", m->index_cd->zipcensig);
 		file_data_free(m->fi, (unsigned char *)first_cd);
-	} else 
+	} else
 		file_mmap(m->fi);
 	file_data_free(m->fi, (unsigned char *)magic);
 	return m;

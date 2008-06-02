@@ -102,9 +102,9 @@
 			<Add directory="%GTK_DIR%\include\cairo" />
 			<Add directory="%GTK_DIR%\include\pango-1.0" />
 			<Add directory="%GTK_DIR%\include\atk-1.0" />
-			<Add directory="..\..\src" />
+			<Add directory="..\..\navit" />
 			<Add directory="Win32Extra" />
-			<Add directory="..\..\src\fib-1.1" />
+			<Add directory="..\..\navit\fib-1.1" />
 			<Add directory="%GTK_DIR%\include\freetype2" />
 		</Compiler>
 		<Linker>
@@ -130,167 +130,167 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Win32Extra\wordexp.h" />
-		<Unit filename="..\..\src\Makefile" />
-		<Unit filename="..\..\src\Makefile.am" />
-		<Unit filename="..\..\src\Makefile.in" />
-		<Unit filename="..\..\src\attr.c">
+		<Unit filename="..\..\navit\Makefile" />
+		<Unit filename="..\..\navit\Makefile.am" />
+		<Unit filename="..\..\navit\Makefile.in" />
+		<Unit filename="..\..\navit\attr.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\attr.h" />
-		<Unit filename="..\..\src\attr_def.h" />
-		<Unit filename="..\..\src\callback.c">
+		<Unit filename="..\..\navit\attr.h" />
+		<Unit filename="..\..\navit\attr_def.h" />
+		<Unit filename="..\..\navit\callback.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\callback.h" />
-		<Unit filename="..\..\src\color.h" />
-		<Unit filename="..\..\src\compass.c">
+		<Unit filename="..\..\navit\callback.h" />
+		<Unit filename="..\..\navit\color.h" />
+		<Unit filename="..\..\navit\compass.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\compass.h" />
-		<Unit filename="..\..\src\coord.c">
+		<Unit filename="..\..\navit\compass.h" />
+		<Unit filename="..\..\navit\coord.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\coord.h" />
-		<Unit filename="..\..\src\country.c">
+		<Unit filename="..\..\navit\coord.h" />
+		<Unit filename="..\..\navit\country.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\country.h" />
-		<Unit filename="..\..\src\cursor.c">
+		<Unit filename="..\..\navit\country.h" />
+		<Unit filename="..\..\navit\cursor.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\cursor.h" />
-		<Unit filename="..\..\src\data.h" />
-		<Unit filename="..\..\src\data_window.c">
+		<Unit filename="..\..\navit\cursor.h" />
+		<Unit filename="..\..\navit\data.h" />
+		<Unit filename="..\..\navit\data_window.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\data_window.h" />
-		<Unit filename="..\..\src\data_window_int.h" />
-		<Unit filename="..\..\src\debug.c">
+		<Unit filename="..\..\navit\data_window.h" />
+		<Unit filename="..\..\navit\data_window_int.h" />
+		<Unit filename="..\..\navit\debug.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\debug.h" />
-		<Unit filename="..\..\src\destination.h" />
-		<Unit filename="..\..\src\draw_info.h" />
-		<Unit filename="..\..\src\file.c">
+		<Unit filename="..\..\navit\debug.h" />
+		<Unit filename="..\..\navit\destination.h" />
+		<Unit filename="..\..\navit\draw_info.h" />
+		<Unit filename="..\..\navit\file.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\file.h" />
-		<Unit filename="..\..\src\graphics.c">
+		<Unit filename="..\..\navit\file.h" />
+		<Unit filename="..\..\navit\graphics.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\graphics.h" />
-		<Unit filename="..\..\src\gtkext.h" />
-		<Unit filename="..\..\src\gui.c">
+		<Unit filename="..\..\navit\graphics.h" />
+		<Unit filename="..\..\navit\gtkext.h" />
+		<Unit filename="..\..\navit\gui.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\gui.h" />
-		<Unit filename="..\..\src\gui\gtk\gui_gtk.h" />
-		<Unit filename="..\..\src\item.c">
+		<Unit filename="..\..\navit\gui.h" />
+		<Unit filename="..\..\navit\gui\gtk\gui_gtk.h" />
+		<Unit filename="..\..\navit\item.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\item.h" />
-		<Unit filename="..\..\src\item_def.h" />
-		<Unit filename="..\..\src\layer.h" />
-		<Unit filename="..\..\src\layout.c">
+		<Unit filename="..\..\navit\item.h" />
+		<Unit filename="..\..\navit\item_def.h" />
+		<Unit filename="..\..\navit\layer.h" />
+		<Unit filename="..\..\navit\layout.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\layout.h" />
-		<Unit filename="..\..\src\log.c">
+		<Unit filename="..\..\navit\layout.h" />
+		<Unit filename="..\..\navit\log.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\log.h" />
-		<Unit filename="..\..\src\main.c">
+		<Unit filename="..\..\navit\log.h" />
+		<Unit filename="..\..\navit\main.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\main.h" />
-		<Unit filename="..\..\src\map-share.h" />
-		<Unit filename="..\..\src\map.c">
+		<Unit filename="..\..\navit\main.h" />
+		<Unit filename="..\..\navit\map-share.h" />
+		<Unit filename="..\..\navit\map.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\map.h" />
-		<Unit filename="..\..\src\map_data.h" />
-		<Unit filename="..\..\src\mapset.c">
+		<Unit filename="..\..\navit\map.h" />
+		<Unit filename="..\..\navit\map_data.h" />
+		<Unit filename="..\..\navit\mapset.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\mapset.h" />
-		<Unit filename="..\..\src\maptype.c">
+		<Unit filename="..\..\navit\mapset.h" />
+		<Unit filename="..\..\navit\maptype.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\maptype.h" />
-		<Unit filename="..\..\src\menu.c">
+		<Unit filename="..\..\navit\maptype.h" />
+		<Unit filename="..\..\navit\menu.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\menu.h" />
-		<Unit filename="..\..\src\navigation.c">
+		<Unit filename="..\..\navit\menu.h" />
+		<Unit filename="..\..\navit\navigation.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\navigation.h" />
-		<Unit filename="..\..\src\navit.c">
+		<Unit filename="..\..\navit\navigation.h" />
+		<Unit filename="..\..\navit\navit.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\navit.h" />
-		<Unit filename="..\..\src\navit.xml" />
-		<Unit filename="..\..\src\osd.c">
+		<Unit filename="..\..\navit\navit.h" />
+		<Unit filename="..\..\navit\navit.xml" />
+		<Unit filename="..\..\navit\osd.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\osd.h" />
-		<Unit filename="..\..\src\param.c">
+		<Unit filename="..\..\navit\osd.h" />
+		<Unit filename="..\..\navit\param.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\param.h" />
-		<Unit filename="..\..\src\phrase.c">
+		<Unit filename="..\..\navit\param.h" />
+		<Unit filename="..\..\navit\phrase.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\phrase.h" />
-		<Unit filename="..\..\src\plugin.c">
+		<Unit filename="..\..\navit\phrase.h" />
+		<Unit filename="..\..\navit\plugin.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\plugin.h" />
-		<Unit filename="..\..\src\plugin_def.h" />
-		<Unit filename="..\..\src\point.h" />
-		<Unit filename="..\..\src\popup.c">
+		<Unit filename="..\..\navit\plugin.h" />
+		<Unit filename="..\..\navit\plugin_def.h" />
+		<Unit filename="..\..\navit\point.h" />
+		<Unit filename="..\..\navit\popup.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\popup.h" />
-		<Unit filename="..\..\src\profile.c">
+		<Unit filename="..\..\navit\popup.h" />
+		<Unit filename="..\..\navit\profile.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\profile.h" />
-		<Unit filename="..\..\src\projection.h" />
-		<Unit filename="..\..\src\route.c">
+		<Unit filename="..\..\navit\profile.h" />
+		<Unit filename="..\..\navit\projection.h" />
+		<Unit filename="..\..\navit\route.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\route.h" />
-		<Unit filename="..\..\src\search.c">
+		<Unit filename="..\..\navit\route.h" />
+		<Unit filename="..\..\navit\search.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\search.h" />
-		<Unit filename="..\..\src\speech.c">
+		<Unit filename="..\..\navit\search.h" />
+		<Unit filename="..\..\navit\speech.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\speech.h" />
-		<Unit filename="..\..\src\statusbar.h" />
-		<Unit filename="..\..\src\track.c">
+		<Unit filename="..\..\navit\speech.h" />
+		<Unit filename="..\..\navit\statusbar.h" />
+		<Unit filename="..\..\navit\track.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\track.h" />
-		<Unit filename="..\..\src\transform.c">
+		<Unit filename="..\..\navit\track.h" />
+		<Unit filename="..\..\navit\transform.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\transform.h" />
-		<Unit filename="..\..\src\util.c">
+		<Unit filename="..\..\navit\transform.h" />
+		<Unit filename="..\..\navit\util.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\util.h" />
-		<Unit filename="..\..\src\vehicle.c">
+		<Unit filename="..\..\navit\util.h" />
+		<Unit filename="..\..\navit\vehicle.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\vehicle.h" />
-		<Unit filename="..\..\src\xmlconfig.c">
+		<Unit filename="..\..\navit\vehicle.h" />
+		<Unit filename="..\..\navit\xmlconfig.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\xmlconfig.h" />
-		<Unit filename="..\..\src\zipfile.h" />
+		<Unit filename="..\..\navit\xmlconfig.h" />
+		<Unit filename="..\..\navit\zipfile.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

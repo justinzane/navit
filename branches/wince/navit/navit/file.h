@@ -1,6 +1,7 @@
 #ifndef NAVIT_FILE_H
 #define NAVIT_FILE_H
 
+#include <windows.h>
 #include "param.h"
 
 struct file {
@@ -9,7 +10,7 @@ struct file {
 	long long size;
 	char *name;
 	int fd;
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CEGCC__)
     long map_handle;
     long map_file;
 #endif

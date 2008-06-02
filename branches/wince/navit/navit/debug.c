@@ -1,3 +1,4 @@
+#include <windows.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -12,16 +13,18 @@
 int debug_level=0,segv_level=0;
 static GHashTable *debug_hash;
 static char *gdb_program;
-
+static FILE *fLog;
 static void sigsegv(int sig)
 {
-	char buffer[256];
-	if (segv_level > 1)
-		sprintf(buffer, "gdb -ex bt %s %d", gdb_program, getpid());
-	else
-		sprintf(buffer, "gdb -ex bt -ex detach -ex quit %s %d", gdb_program, getpid());
-	system(buffer);
-	exit(1);
+//#if !defined(__CEGCC__)
+//	char buffer[256];
+//	if (segv_level > 1)
+//		sprintf(buffer, "gdb -ex bt %s %d", gdb_program, getpid());
+//	else
+//		sprintf(buffer, "gdb -ex bt -ex detach -ex quit %s %d", gdb_program, getpid());
+//	system(buffer);
+//#endif
+//	exit(1);
 }
 
 void
@@ -29,6 +32,7 @@ debug_init(const char *program_name)
 {
 	gdb_program=program_name;
 	signal(SIGSEGV, sigsegv);
+	fLog = fopen("/Storage Card/navit.txt","a");
 	debug_hash=g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 }
 
@@ -46,7 +50,7 @@ debug_level_set(const char *name, int level)
 	debug_level=0;
 	if (strcmp(name,"segv")) {
 		g_hash_table_insert(debug_hash, g_strdup(name), (gpointer) level);
-		g_hash_table_foreach(debug_hash, debug_update_level, NULL);	
+		g_hash_table_foreach(debug_hash, debug_update_level, NULL);
 	} else {
 		segv_level=level;
 		if (segv_level)
@@ -69,9 +73,18 @@ debug_vprintf(int level, const char *module, const int mlen, const char *functio
 
 	sprintf(buffer, "%s:%s", module, function);
 	if (debug_level_get(module) >= level || debug_level_get(buffer) >= level) {
-		if (prefix)
-			fprintf(stderr,"%s:",buffer);
-		vfprintf(stderr,fmt, ap);
+	    if (fLog)
+	    {
+            if (prefix)
+                fprintf(fLog,"%s:",buffer);
+            vfprintf(fLog, fmt, ap);
+	    }
+	    else
+	    {
+            if (prefix)
+                fprintf(stderr,"%s:",buffer);
+            vfprintf(stderr, fmt, ap);
+	    }
 	}
 }
 

@@ -115,7 +115,7 @@ static int vehicle_win32_serial_track(struct vehicle_priv *priv)
 static int
 vehicle_file_open(struct vehicle_priv *priv)
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CEGCC__)
     dbg(1, "enter vehicle_file_open, priv->source='%s'\n", priv->source);
 
     if ( priv->source )

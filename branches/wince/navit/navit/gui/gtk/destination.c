@@ -165,7 +165,7 @@ static void tree_view_button_release(GtkWidget *widget, GdkEventButton *event, s
 	GtkTreeViewColumn *column;
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(search->treeview), &path, &column);
 	gtk_tree_view_row_activated(GTK_TREE_VIEW(search->treeview), path, column);
-	
+
 }
 static void
 next_focus(struct search_param *search, GtkWidget *widget)
@@ -176,7 +176,7 @@ next_focus(struct search_param *search, GtkWidget *widget)
 		gtk_widget_grab_focus(search->entry_street);
 	if (widget == search->entry_street)
 		gtk_widget_grab_focus(search->entry_number);
-		
+
 }
 
 static void changed(GtkWidget *widget, struct search_param *search)

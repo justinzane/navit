@@ -46,10 +46,10 @@
 			<Add directory="%GTK_DIR%\include\glib-2.0" />
 			<Add directory="%GTK_DIR%\lib\glib-2.0\include" />
 			<Add directory="Win32Extra" />
-			<Add directory="..\..\src" />
+			<Add directory="..\..\navit" />
 			<Add directory="." />
 			<Add directory="Win32Extra\libgarmin" />
-			<Add directory="C:\Program Files\Microsoft Speech SDK 5.1\Include" />
+			<Add directory="k:\Sourcecode\libs\Microsoft Speech SDK 5.1\Include" />
 		</Compiler>
 		<Linker>
 			<Add library="NavitCommonLib" />
@@ -62,7 +62,7 @@
 		<Unit filename="Win32Extra\speech_dispatcher_win32.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\data\garmin\garmin.h" />
+		<Unit filename="..\..\navit\data\garmin\garmin.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

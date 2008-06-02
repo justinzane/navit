@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <windows.h>
 #include <wingdi.h>
@@ -357,7 +358,7 @@ static int parse_color_values( const char* line, PXPM2BMP pXpm2bmp )
 			pXpm2bmp->color_entires[ pXpm2bmp->color_entires_size].g = string2hex16( &chash[len / 3] );
 			pXpm2bmp->color_entires[ pXpm2bmp->color_entires_size].b = string2hex16( &chash[len * 2 / 3] );
 #ifdef _DBG
-printf( "adding color %s => %d RGB %x %x %x to index %d\n",
+printf( "adding color %s => %d RGB %lx %lx %lx to index %d\n",
 			line,
 			pXpm2bmp->color_entires_size,
 			pXpm2bmp->color_entires[ pXpm2bmp->color_entires_size].r,
@@ -391,7 +392,7 @@ printf( "adding color %s => %d RGB %x %x %x to index %d\n",
 				end++;
 			}
 
-			start = _strupr( start );
+			start = strupr( start );
 
 			for ( q=0; q < sizeof( theRGBRecords ) / sizeof( theRGBRecords[0] ); q++ )
 			{

@@ -58,14 +58,14 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Win32Extra\wordexp.h" />
-		<Unit filename="..\..\src\callback.h" />
-		<Unit filename="..\..\src\debug.h" />
-		<Unit filename="..\..\src\file.h" />
-		<Unit filename="..\..\src\item.h" />
-		<Unit filename="..\..\src\map.h" />
-		<Unit filename="..\..\src\param.h" />
-		<Unit filename="..\..\src\search.h" />
-		<Unit filename="..\..\src\transform.h" />
+		<Unit filename="..\..\navit\callback.h" />
+		<Unit filename="..\..\navit\debug.h" />
+		<Unit filename="..\..\navit\file.h" />
+		<Unit filename="..\..\navit\item.h" />
+		<Unit filename="..\..\navit\map.h" />
+		<Unit filename="..\..\navit\param.h" />
+		<Unit filename="..\..\navit\search.h" />
+		<Unit filename="..\..\navit\transform.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

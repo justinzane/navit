@@ -1,10 +1,13 @@
 #include <windows.h>
+#include <wchar.h>
 #include <wingdi.h>
 #include <glib.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#if defined(__CEGCC__)
+#include <libintl.h>
+#endif
 #include "config.h"
 #include "debug.h"
 #include "point.h"
@@ -13,6 +16,7 @@
 #include "plugin.h"
 #include "win32_gui.h"
 #include "xpm2bmp.h"
+#include "util.h"
 
 #ifndef GET_WHEEL_DELTA_WPARAM
 	#define GET_WHEEL_DELTA_WPARAM(wParam)  ((short)HIWORD(wParam))
@@ -41,11 +45,14 @@ HFONT EzCreateFont (HDC hdc, TCHAR * szFaceName, int iDeciPtHeight,
 
      SaveDC (hdc) ;
 
+#if !defined(__CEGCC__)
      SetGraphicsMode (hdc, GM_ADVANCED) ;
      ModifyWorldTransform (hdc, NULL, MWT_IDENTITY) ;
+#endif
      SetViewportOrgEx (hdc, 0, 0, NULL) ;
+#if !defined(__CEGCC__)
      SetWindowOrgEx   (hdc, 0, 0, NULL) ;
-
+#endif
      if (fLogRes)
      {
           cxDpi = (FLOAT) GetDeviceCaps (hdc, LOGPIXELSX) ;
@@ -63,7 +70,9 @@ HFONT EzCreateFont (HDC hdc, TCHAR * szFaceName, int iDeciPtHeight,
      pt.x = (int) (iDeciPtWidth  * cxDpi / 72) ;
      pt.y = (int) (iDeciPtHeight * cyDpi / 72) ;
 
+#if !defined(__CEGCC__)
      DPtoLP (hdc, &pt, 1) ;
+#endif
      lf.lfHeight         = - (int) (fabs (pt.y) / 10.0 + 0.5) ;
      lf.lfWidth          = 0 ;
      lf.lfEscapement     = 0 ;
@@ -125,9 +134,9 @@ void ErrorExit(LPTSTR lpszFunction)
 
     lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT,
         (lstrlen((LPCTSTR)lpMsgBuf)+lstrlen((LPCTSTR)lpszFunction)+40)*sizeof(TCHAR));
-    sprintf((LPTSTR)lpDisplayBuf, TEXT("%s failed with error %d: %s"), lpszFunction, dw, lpMsgBuf);
+    stprintf ((LPTSTR)lpDisplayBuf, TEXT("%s failed with error %d: %s"), lpszFunction, (int)dw, (char *)lpMsgBuf);
 
-    printf( "%s\n", lpDisplayBuf );
+    dbg( 0, "%s\n", (char *)lpDisplayBuf );
     MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
 
     LocalFree(lpMsgBuf);
@@ -175,7 +184,7 @@ static void MakeMemoryDC(HANDLE hWnd, HDC hdc )
 
 		int Width = rectRgn.right - rectRgn.left;
 		int Height = rectRgn.bottom - rectRgn.top;
-		printf( "resize memDC to: %d %d \n", Width, Height );
+		dbg( 1, "resize memDC to: %d %d \n", Width, Height );
 
 		hBitmap = CreateCompatibleBitmap(hdc, Width, Height );
 
@@ -239,7 +248,6 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 				hdc = GetDC( hwnd );
 				MakeMemoryDC(hwnd, hdc );
 				ReleaseDC( hwnd, hdc );
-				(*gra_priv->resize_callback)(gra_priv->resize_callback_data, gra_priv->width, gra_priv->height);
 			}
 		break;
 
@@ -265,7 +273,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 			{
 				gra_priv->width = LOWORD( lParam );
 				gra_priv->height  = HIWORD( lParam );
-				printf( "resize gfx to: %d %d \n", gra_priv->width, gra_priv->height );
+				(*gra_priv->resize_callback)(gra_priv->resize_callback_data, gra_priv->width, gra_priv->height);
+				dbg( 1, "resize gfx to: %d %d \n", gra_priv->width, gra_priv->height );
 			}
 		break;
 		case WM_DESTROY:
@@ -289,7 +298,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 			int yPos = HIWORD(lParam);
 			struct point pt = {xPos, yPos};
 
-			// printf( "WM_MOUSEMOVE: %d %d \n", xPos, yPos );
+			dbg( 2, "WM_MOUSEMOVE: %d %d \n", xPos, yPos );
 			(*gra_priv->motion_callback)(gra_priv->motion_callback_data, &pt);
 		}
 
@@ -315,15 +324,15 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 }
 
 
-static const char g_szClassName[] = "NAVGRA";
+static const TCHAR g_szClassName[] = TEXT("NAVGRA");
 
 HANDLE CreateGraphicsWindows( struct graphics_priv* gr )
 {
-	WNDCLASSEX wc;
+	WNDCLASS wc;
 	HWND hwnd;
     RECT rcParent;
 
-	wc.cbSize		 = sizeof(WNDCLASSEX);
+//	wc.cbSize		 = sizeof(WNDCLASSEX);
 	wc.style		 = 0;
 	wc.lpfnWndProc	 = WndProc;
 	wc.cbClsExtra	 = 0;
@@ -334,23 +343,24 @@ HANDLE CreateGraphicsWindows( struct graphics_priv* gr )
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
 	wc.lpszMenuName  = NULL;
 	wc.lpszClassName = g_szClassName;
-	wc.hIconSm		 = NULL;
+//	wc.hIconSm		 = NULL;
 
 
-	HANDLE hdl = gr->wnd_parent_handle;
 	GetClientRect( gr->wnd_parent_handle,&rcParent);
 
-	if(!RegisterClassEx(&wc))
+	if(!RegisterClass(&wc))
 	{
-		ErrorExit( "Window Registration Failed!" );
+		ErrorExit( TEXT("Window Registration Failed!") );
 		return NULL;
 	}
 
 	gr->width = rcParent.right - rcParent.left;
 	gr->height  = rcParent.bottom - rcParent.top;
-
+#if defined(__CEGCC__)
+    (*gr->resize_callback)(gr->resize_callback_data, gr->width, gr->height);
+#endif
 	hwnd = CreateWindow( 	g_szClassName,
-							"",
+							TEXT(""),
 							WS_CHILD  ,
 							0,
 							0,
@@ -363,11 +373,11 @@ HANDLE CreateGraphicsWindows( struct graphics_priv* gr )
 
 	if(hwnd == NULL)
 	{
-		ErrorExit( "Window Creation Failed!" );
+		ErrorExit( TEXT("Window Creation Failed!") );
 		return NULL;
 	}
 
-	SetWindowLongPtr( hwnd , DWLP_USER, gr );
+	SetWindowLongPtr( hwnd , DWLP_USER, (LONG_PTR)gr );
 
 	ShowWindow( hwnd, TRUE );
 	UpdateWindow( hwnd );
@@ -397,7 +407,7 @@ static void gc_set_linewidth(struct graphics_gc_priv *gc, int w)
 	gc->line_width = w;
 }
 
-static void gc_set_dashes(struct graphics_gc_priv *gc, unsigned char *dash_list, int n)
+static 	void gc_set_dashes(struct graphics_gc_priv *gc, int width, int offset, unsigned char dash_list[], int n)
 {
 //	gdk_gc_set_dashes(gc->gc, 0, (gint8 *)dash_list, n);
 //	gdk_gc_set_line_attributes(gc->gc, 1, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
@@ -405,11 +415,11 @@ static void gc_set_dashes(struct graphics_gc_priv *gc, unsigned char *dash_list,
 
 
 
-static void gc_set_color(struct graphics_gc_priv *gc, struct color *c, int fg)
-{
-
-	gc->fg_color = RGB( c->r, c->g, c->b );
-}
+//static void gc_set_color(struct graphics_gc_priv *gc, struct color *c, int fg)
+//{
+//
+//	gc->fg_color = RGB( c->r, c->g, c->b );
+//}
 
 static void gc_set_foreground(struct graphics_gc_priv *gc, struct color *c)
 {
@@ -536,7 +546,7 @@ static void draw_restore(struct graphics_priv *gr, struct point *p, int w, int h
 
 static void draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
 {
-	// printf( "set draw_mode to %d\n", (int)mode );
+	dbg( 1, "set draw_mode to %d\n", (int)mode );
 
 	if ( mode == draw_mode_begin )
 	{
@@ -645,7 +655,11 @@ static void draw_text(struct graphics_priv *gr, struct graphics_gc_priv *fg, str
 	glong utf16_len = 0;
 
 	utf16 = g_utf8_to_utf16( text, -1, NULL, &utf16_len, NULL );
+#if defined(__CEGCC__)
+    ExtTextOut(hMemDC, 0,0, ETO_OPAQUE, 0, utf16, (size_t)utf16_len,0 );
+#else
 	TextOutW(hMemDC, 0,0, utf16, (size_t)utf16_len );
+#endif
 	g_free( utf16 );
 
 
@@ -673,7 +687,7 @@ static struct graphics_font_methods font_methods = {
 	font_destroy
 };
 
-static struct graphics_font_priv *font_new(struct graphics_priv *gr, struct graphics_font_methods *meth, int size)
+static struct graphics_font_priv *font_new(struct graphics_priv *gr, struct graphics_font_methods *meth, int size, int flags)
 {
 	struct graphics_font_priv *font=g_new(struct graphics_font_priv, 1);
 	*meth = font_methods;
@@ -719,7 +733,7 @@ static struct graphics_image_priv *image_new(struct graphics_priv *gr, struct gr
 	if ( NULL == ( ret = image_cache_hash_lookup( name ) ) )
 	{
 		ret = g_new( struct graphics_image_priv, 1 );
-		printf( "loading image '%s'\n", name );
+		dbg( 1, "loading image '%s'\n", name );
 		ret->pxpm = Xpm2bmp_new();
 		Xpm2bmp_load( ret->pxpm, name );
 		image_cache_hash_add( name, ret );

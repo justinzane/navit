@@ -1,5 +1,7 @@
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
@@ -359,7 +361,6 @@ navit_new(struct attr *parent, struct attr **attrs)
 	struct coord_geo g;
 	enum projection pro=projection_mg;
 	int zoom = 256;
-	FILE *f;
 	g.lat=53.13;
 	g.lng=11.70;
 
@@ -368,13 +369,15 @@ navit_new(struct attr *parent, struct attr **attrs)
 	this_->self.u.navit=this_;
 	this_->attr_cbl=callback_list_new();
 
+#if !defined(__CEGCC__) && !defined(_WIN32)
+	FILE *f;
 	f=popen("pidof /usr/bin/ipaq-sleep","r");
 	if (f) {
 		fscanf(f,"%d",&this_->pid);
 		dbg(1,"ipaq_sleep pid=%d\n", this_->pid);
 		pclose(f);
 	}
-
+#endif
 	this_->bookmarks_hash=g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
 	this_->cursor_flag=1;
@@ -488,7 +491,7 @@ navit_add_menu_destinations(struct navit *this_, char *name, struct menu *rmen, 
 }
 
 static void
-navit_append_coord(struct navit *this_, char *file, struct pcoord *c, char *type, char *description, struct menu *rmen, GHashTable *h, void (*cb_func)(void))
+navit_append_coord(struct navit *this_, char *file, struct pcoord *c, char *type, const char *description, struct menu *rmen, GHashTable *h, void (*cb_func)(void))
 {
 	FILE *f;
 	int offset=0;
@@ -611,7 +614,7 @@ navit_set_center_from_file(struct navit *this_, char *file)
 	}
 	return;
 }
- 
+
 static void
 navit_write_center_to_file(struct navit *this_, char *file)
 {
@@ -619,13 +622,16 @@ navit_write_center_to_file(struct navit *this_, char *file)
 	enum projection pro;
 	struct coord *center;
 	char *directory;
- 
+
 	directory = g_strjoin(NULL, get_home_directory(), "/.navit/", NULL);
 	if (!file_exists(directory)) {
-		if (mkdir(directory,
-			  S_IRUSR|S_IWUSR|S_IXUSR|
-			  S_IRGRP|S_IXGRP|
-			  S_IROTH|S_IXOTH) == -1) {
+		if (mkdir(directory
+#if !defined(_WIN32) || defined(__CEGCC__)
+              ,S_IRUSR|S_IWUSR|S_IXUSR
+			  |S_IRGRP|S_IXGRP|
+			  S_IROTH|S_IXOTH
+#endif
+			  ) == -1) {
 			perror(directory);
 			g_free(directory);
 			return;
@@ -731,15 +737,15 @@ navit_add_menu_former_destinations(struct navit *this_, struct menu *men, struct
 	navit_add_menu_destinations_from_file(this_, "destination.txt", this_->destinations, NULL, route, callback_cast(navit_set_destination_from_destination));
 }
 
-static void
-navit_add_menu_bookmarks(struct navit *this_, struct menu *men)
-{
-	if (men)
-		this_->bookmarks=menu_add(men, _("Bookmarks"), menu_type_submenu, NULL);
-	else
-		this_->bookmarks=NULL;
-	navit_add_menu_destinations_from_file(this_, "bookmark.txt", this_->bookmarks, this_->bookmarks_hash, NULL, callback_cast(navit_set_destination_from_bookmark));
-}
+//static void
+//navit_add_menu_bookmarks(struct navit *this_, struct menu *men)
+//{
+//	if (men)
+//		this_->bookmarks=menu_add(men, _("Bookmarks"), menu_type_submenu, NULL);
+//	else
+//		this_->bookmarks=NULL;
+//	navit_add_menu_destinations_from_file(this_, "bookmark.txt", this_->bookmarks, this_->bookmarks_hash, NULL, callback_cast(navit_set_destination_from_bookmark));
+//}
 
 static void
 navit_add_bookmarks_from_file(struct navit *this_)
@@ -1056,20 +1062,20 @@ navit_add_window_items(struct navit *this_, struct navit_window_items *nwi)
 	this_->windows_items=g_list_append(this_->windows_items, nwi);
 }
 
-static void
-navit_add_menu_windows_items(struct navit *this_, struct menu *men)
-{
-	struct navit_window_items *nwi;
-	struct callback *cb;
-	GList *l;
-	l=this_->windows_items;
-	while (l) {
-		nwi=l->data;
-		cb=callback_new_2(callback_cast(navit_window_items_open), this_, nwi);
-		menu_add(men, nwi->name, menu_type_menu, cb);
-		l=g_list_next(l);
-	}
-}
+//static void
+//navit_add_menu_windows_items(struct navit *this_, struct menu *men)
+//{
+//	struct navit_window_items *nwi;
+//	struct callback *cb;
+//	GList *l;
+//	l=this_->windows_items;
+//	while (l) {
+//		nwi=l->data;
+//		cb=callback_new_2(callback_cast(navit_window_items_open), this_, nwi);
+//		menu_add(men, nwi->name, menu_type_menu, cb);
+//		l=g_list_next(l);
+//	}
+//}
 
 void
 navit_init(struct navit *this_)
@@ -1301,7 +1307,7 @@ navit_get_attr(struct navit *this_, enum attr_type type, struct attr *attr, stru
 		if (iter) {
 			if (iter->u.list) {
 				iter->u.list=g_list_next(iter->u.list);
-			} else { 
+			} else {
 				iter->u.list=this_->layouts;
 			}
 			if (!iter->u.list)
@@ -1342,7 +1348,7 @@ navit_get_attr(struct navit *this_, enum attr_type type, struct attr *attr, stru
 		if(iter) {
 			if(iter->u.list) {
 				iter->u.list=g_list_next(iter->u.list);
-			} else { 
+			} else {
 				iter->u.list=this_->vehicles;
 			}
 			if(!iter->u.list)

@@ -46,7 +46,7 @@
 			<Add directory="%GTK_DIR%\include\glib-2.0" />
 			<Add directory="%GTK_DIR%\lib\glib-2.0\include" />
 			<Add directory="Win32Extra" />
-			<Add directory="..\..\src" />
+			<Add directory="..\..\navit" />
 		</Compiler>
 		<Linker>
 			<Add library="NavitCommonLib" />
@@ -56,7 +56,7 @@
 			<Add library="iconv" />
 			<Add directory="%GTK_DIR%\lib" />
 		</Linker>
-		<Unit filename="..\..\src\data\garmin_img\garmin_img.c">
+		<Unit filename="..\..\navit\data\garmin_img\garmin_img.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <windows.h>
 #include "serial_io.h"
+#include "util.h"
 
 int serial_io_init( const char* port, const char* strsettings )
 {
     HANDLE hCom = NULL;
 
-	char strport[16];
-	snprintf( strport, sizeof( strport ), "\\\\.\\%s", port );
+	TCHAR strport[16];
+	_sntprintf( strport, sizeof( strport ), "\\\\.\\%s", port );
 
 	hCom = CreateFile(
 			strport,
@@ -48,8 +49,11 @@ int serial_io_init( const char* port, const char* strsettings )
 
 //    char strsettings[255];
 //    snprintf( strsettings, sizeof( strsettings ), "baud=%d parity=N data=8 stop=1", baudrate );
+#if !defined(__CEGCC__)
 	BuildCommDCB( strsettings, &dcb);
-
+#else
+// TODO
+#endif
 	SetupComm(hCom, 4096, 4096);
 
 	SetCommState(hCom, &dcb);

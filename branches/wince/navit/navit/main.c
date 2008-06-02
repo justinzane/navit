@@ -1,3 +1,4 @@
+#include <windows.h>
 #include <locale.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,15 +30,21 @@
 
 #define _(STRING)    gettext(STRING)
 
+#if !defined(PREFIX)
+#define PREFIX "/usr/bin"
+#endif
+#if !defined(PATH_MAX)
+#define PATH_MAX 259
+#endif
 struct map_data *map_data_default;
 
+#ifndef _WIN32
 static void sigchld(int sig)
 {
-#ifndef _WIN32
 	int status;
 	while (waitpid(-1, &status, WNOHANG) > 0);
-#endif
 }
+#endif
 
 
 gchar *get_home_directory(void)
@@ -91,7 +98,7 @@ main_get_navit(struct iter *iter)
 			iter->list=g_list_next(iter->list);
 	}
 	return ret;
-	
+
 }
 void
 main_add_navit(struct navit *nav)
@@ -103,7 +110,7 @@ void
 main_remove_navit(struct navit *nav)
 {
 	navit=g_list_remove(navit, nav);
-	if (! navit) 
+	if (! navit)
 		event_main_loop_quit();
 }
 
@@ -175,7 +182,7 @@ int main(int argc, char **argv)
 	textdomain(PACKAGE);
 
 	debug_init(argv[0]);
-	if (getenv("LC_ALL")) 
+	if (getenv("LC_ALL"))
 		dbg(0,"Warning: LC_ALL is set, this might lead to problems\n");
 #ifndef USE_PLUGINS
 	extern void builtin_init(void);
@@ -204,7 +211,7 @@ int main(int argc, char **argv)
 				exit(0);
 				break;
 			case 'v':
-				printf("%s %s\n", "navit", "0.0.4+svn"); 
+				printf("%s %s\n", "navit", "0.0.4+svn");
 				exit(0);
 				break;
 			case 'c':
@@ -234,6 +241,7 @@ int main(int argc, char **argv)
 	if (config_file) list = g_list_append(list,g_strdup(config_file));
     else {
 		list = g_list_append(list,g_strjoin(NULL,get_home_directory(), "/.navit/navit.xml" , NULL));
+		list = g_list_append(list,g_strjoin(NULL,get_home_directory(), "/navit.xml" , NULL));
 		list = g_list_append(list,g_strdup("navit.xml.local"));
 		list = g_list_append(list,g_strdup("navit.xml"));
 		list = g_list_append(list,g_strjoin(NULL,getenv("NAVIT_SHAREDIR"), "/navit.xml.local" , NULL));
@@ -248,24 +256,25 @@ int main(int argc, char **argv)
 		}
         // Try the next config file possibility from the list
 		config_file = li->data;
-		if (!file_exists(config_file)) g_free(config_file);
 		li = g_list_next(li);
 	} while (!file_exists(config_file));
-	g_list_free(list);
 
 	if (!config_load(config_file, &error)) {
 		printf(_("Error parsing '%s': %s\n"), config_file, error->message);
-		exit(1);
 	} else {
 		printf(_("Using '%s'\n"), config_file);
 	}
+
+    g_list_foreach(list, g_free, NULL);
+	g_list_free(list);
+
 	if (! navit) {
 		printf(_("No instance has been created, exiting\n"));
 		exit(1);
 	}
 	if (main_loop_gui) {
 		gui_run_main_loop(main_loop_gui);
-	} else 
+	} else
 		event_main_loop_run();
 
 	return 0;

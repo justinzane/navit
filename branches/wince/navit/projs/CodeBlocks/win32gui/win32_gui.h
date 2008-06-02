@@ -18,6 +18,7 @@
 #define ID_DISPLAY_REFRESH		202
 #define ID_DISPLAY_CURSOR		203
 #define ID_DISPLAY_ORIENT		204
+#define ID_DISPLAY_DESTINATION	205
 
 #define ID_FILE_EXIT 		9001
 #define ID_STUFF_GO 		9002
@@ -65,12 +66,10 @@ struct graphics_priv {
 	enum draw_mode_num mode;
 };
 
-struct menu_priv *gui_gtk_menubar_new(struct gui_priv *gui, struct menu_methods *meth);
-struct menu_priv *gui_gtk_toolbar_new(struct gui_priv *gui, struct menu_methods *meth);
-struct statusbar_priv *gui_gtk_statusbar_new(struct gui_priv *gui, struct statusbar_methods *meth);
-struct menu_priv *gui_gtk_popup_new(struct gui_priv *gui, struct menu_methods *meth);
-struct datawindow_priv *gui_gtk_datawindow_new(struct gui_priv *gui, char *name, struct callback *click, struct callback *close, struct datawindow_methods *meth);
 
 struct graphics_priv* win32_graphics_new( struct graphics_methods *meth, struct attr **attrs);
+HANDLE create_destination_window( struct navit *nav );
+BOOL register_destination_window();
+
 
 #endif

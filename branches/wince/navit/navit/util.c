@@ -34,3 +34,22 @@ g_hash_to_list(GHashTable *h)
 
 	return ret;
 }
+
+
+#if defined(_UNICODE)
+wchar_t* newSysString(const char *toconvert)
+{
+    int newstrlen = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, toconvert, -1, 0, 0);
+    wchar_t *newstring = g_new(wchar_t,newstrlen);
+    MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, toconvert, -1, newstring, newstrlen) ;
+    return newstring;
+}
+#else
+char * newSysString(const char *toconvert)
+{
+    char *newstring = g_new(byte,strlen(toconvert)+1);
+    strcpy(newstring, toconvert);
+    return newstring;
+}
+#endif
+

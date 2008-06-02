@@ -37,6 +37,27 @@
 					<Add directory="bin\Release" />
 				</Linker>
 			</Target>
+			<Target title="DebugCeGcc">
+				<Option output=".\bin\DebugCeGcc\libdata_textfile.la" prefix_auto="1" extension_auto="0" />
+				<Option working_dir="" />
+				<Option object_output=".\obj\DebugCeGcc\" />
+				<Option type="2" />
+				<Option compiler="cegcc_compiler" />
+				<Option createDefFile="1" />
+				<Option projectIncludeDirsRelation="1" />
+				<Compiler>
+					<Add option="-g" />
+					<Add directory="..\..\..\libs\gtk+-2.12.9-bundle-20080402\include\glib-2.0" />
+					<Add directory="..\..\..\libs\gtk+-2.12.9-bundle-20080402\include" />
+					<Add directory="..\..\..\libs\gtk+-2.12.9-bundle-20080402\lib\glib-2.0\include" />
+					<Add directory="Win32Extra" />
+					<Add directory="..\..\navit" />
+				</Compiler>
+				<Linker>
+					<Add directory="%GTK_DIR%\lib" />
+					<Add directory="bin\Debug" />
+				</Linker>
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
@@ -49,8 +70,8 @@
 			<Add directory="..\" />
 			<Add directory="D:\CB_Projects\Navit\src\" />
 			<Add directory="Win32Extra" />
-			<Add directory="..\..\src" />
-			<Add directory="..\..\src\data\poi_geodownload\libmdb\include" />
+			<Add directory="..\..\navit" />
+			<Add directory="..\..\navit\data\poi_geodownload\libmdb\include" />
 		</Compiler>
 		<Linker>
 			<Add library="glib-2.0" />
@@ -59,10 +80,10 @@
 			<Add library="iconv" />
 			<Add directory="%GTK_DIR%\lib" />
 		</Linker>
-		<Unit filename="..\..\src\data\textfile\textfile.c">
+		<Unit filename="..\..\navit\data\textfile\textfile.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\data\textfile\textfile.h" />
+		<Unit filename="..\..\navit\data\textfile\textfile.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

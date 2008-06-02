@@ -51,25 +51,25 @@
 			<Add directory="%GTK_DIR%\include\cairo" />
 			<Add directory="%GTK_DIR%\include\pango-1.0" />
 			<Add directory="%GTK_DIR%\include\atk-1.0" />
-			<Add directory="..\..\src" />
+			<Add directory="..\..\navit" />
 			<Add directory="Win32Extra" />
 			<Add directory="D:\msys\local\include" />
 		</Compiler>
 		<Linker>
 			<Add directory="%GTK_DIR%\lib" />
 		</Linker>
-		<Unit filename="..\..\src\gui\sdl\Makefile.am" />
-		<Unit filename="..\..\src\gui\sdl\Makefile.in" />
-		<Unit filename="..\..\src\gui\sdl\cegui_keyboard.cpp" />
-		<Unit filename="..\..\src\gui\sdl\cegui_keyboard.h" />
-		<Unit filename="..\..\src\gui\sdl\gui_sdl.h" />
-		<Unit filename="..\..\src\gui\sdl\gui_sdl_window.cpp" />
-		<Unit filename="..\..\src\gui\sdl\sdl_events.cpp" />
-		<Unit filename="..\..\src\gui\sdl\sdl_events.h" />
-		<Unit filename="..\..\src\gui\sdl\wmcontrol.c">
+		<Unit filename="..\..\navit\gui\sdl\Makefile.am" />
+		<Unit filename="..\..\navit\gui\sdl\Makefile.in" />
+		<Unit filename="..\..\navit\gui\sdl\cegui_keyboard.cpp" />
+		<Unit filename="..\..\navit\gui\sdl\cegui_keyboard.h" />
+		<Unit filename="..\..\navit\gui\sdl\gui_sdl.h" />
+		<Unit filename="..\..\navit\gui\sdl\gui_sdl_window.cpp" />
+		<Unit filename="..\..\navit\gui\sdl\sdl_events.cpp" />
+		<Unit filename="..\..\navit\gui\sdl\sdl_events.h" />
+		<Unit filename="..\..\navit\gui\sdl\wmcontrol.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\gui\sdl\wmcontrol.h" />
+		<Unit filename="..\..\navit\gui\sdl\wmcontrol.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

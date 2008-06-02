@@ -47,7 +47,7 @@
 			<Add directory="%GTK_DIR%\include\cairo" />
 			<Add directory="%GTK_DIR%\include\pango-1.0" />
 			<Add directory="%GTK_DIR%\include\atk-1.0" />
-			<Add directory="..\..\src" />
+			<Add directory="..\..\navit" />
 			<Add directory="Win32Extra" />
 		</Compiler>
 		<Linker>
@@ -62,20 +62,20 @@
 		</Linker>
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
-		<Unit filename="..\..\src\gui\gtk\datawindow.c">
+		<Unit filename="..\..\navit\gui\gtk\datawindow.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\gui\gtk\destination.c">
+		<Unit filename="..\..\navit\gui\gtk\destination.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\gui\gtk\gui_gtk.h" />
-		<Unit filename="..\..\src\gui\gtk\gui_gtk_action.c">
+		<Unit filename="..\..\navit\gui\gtk\gui_gtk.h" />
+		<Unit filename="..\..\navit\gui\gtk\gui_gtk_action.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\gui\gtk\gui_gtk_statusbar.c">
+		<Unit filename="..\..\navit\gui\gtk\gui_gtk_statusbar.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\src\gui\gtk\gui_gtk_window.c">
+		<Unit filename="..\..\navit\gui\gtk\gui_gtk_window.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

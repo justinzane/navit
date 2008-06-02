@@ -8,12 +8,10 @@
 		<Build>
 			<Target title="Debug">
 				<Option output="bin\Debug\Osm2Navit" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="bin\Debug" />
 				<Option object_output="obj\osm2navit\Debug\" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option use_console_runner="0" />
-				<Option parameters="--input-file=d:\europe.osm --attr-debug-level=5  europa.bin" />
+				<Option parameters="--input-file=germany.osm --attr-debug-level=5  germany2.bin" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -44,6 +42,7 @@
 			<Add directory="%GTK_DIR%\lib\glib-2.0\include" />
 			<Add directory="%GTK_DIR%\include" />
 			<Add directory="Win32Extra" />
+			<Add directory="..\..\..\libs\zlib-1.2.3\include" />
 		</Compiler>
 		<Linker>
 			<Add library="user32" />
@@ -58,7 +57,55 @@
 			<Add library="intl" />
 			<Add library="zdll" />
 			<Add directory="%GTK_DIR%\lib" />
+			<Add directory="..\..\..\libs\zlib-1.2.3\lib" />
 		</Linker>
+		<Unit filename="..\..\navit\attr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\attr.h" />
+		<Unit filename="..\..\navit\attr_def.h" />
+		<Unit filename="..\..\navit\coord.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\coord.h" />
+		<Unit filename="..\..\navit\country.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\country.h" />
+		<Unit filename="..\..\navit\debug.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\debug.h" />
+		<Unit filename="..\..\navit\file.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\file.h" />
+		<Unit filename="..\..\navit\item.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\item.h" />
+		<Unit filename="..\..\navit\map.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\map.h" />
+		<Unit filename="..\..\navit\osm2navit.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\param.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\param.h" />
+		<Unit filename="..\..\navit\plugin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\plugin.h" />
+		<Unit filename="..\..\navit\projection.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\transform.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\transform.h" />
 		<Unit filename="Win32Extra\sys\mman.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -67,50 +114,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Win32Extra\wordexp.h" />
-		<Unit filename="..\..\src\attr.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\attr.h" />
-		<Unit filename="..\..\src\attr_def.h" />
-		<Unit filename="..\..\src\coord.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\coord.h" />
-		<Unit filename="..\..\src\country.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\country.h" />
-		<Unit filename="..\..\src\debug.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\debug.h" />
-		<Unit filename="..\..\src\file.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\file.h" />
-		<Unit filename="..\..\src\item.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\item.h" />
-		<Unit filename="..\..\src\map.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\map.h" />
-		<Unit filename="..\..\src\osm2navit.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\param.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\param.h" />
-		<Unit filename="..\..\src\plugin.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\plugin.h" />
-		<Unit filename="..\..\src\transform.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\transform.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

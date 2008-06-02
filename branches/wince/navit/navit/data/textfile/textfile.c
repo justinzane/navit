@@ -1,3 +1,4 @@
+#include <windows.h>
 #include <glib.h>
 #include <stdlib.h>
 #include <stdio.h>

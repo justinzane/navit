@@ -1,6 +1,7 @@
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE_SOURCE
 #define _LARGEFILE64_SOURCE
+#include <windows.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
@@ -66,7 +67,11 @@ int file_mkdir(char *name, int pflag)
 	if (!pflag) {
 		if (file_is_dir(name))
 			return 0;
+#if !defined(__CEGCC__) && defined(_WIN32)
+		return mkdir(name);
+#else
 		return mkdir(name, 0777);
+#endif
 	}
 	strcpy(buffer, name);
 	next=buffer;
@@ -78,15 +83,19 @@ int file_mkdir(char *name, int pflag)
 		*next++='/';
 	}
 	if (pflag == 1)
-		return mkdir(buffer, 0);
+#if !defined(__CEGCC__) && defined(_WIN32)
+		return mkdir(name);
+#else
+		return mkdir(name, 0777);
+#endif
 	return 0;
 }
 
 int
 file_mmap(struct file *file)
 {
-#ifdef _WIN32
-    file->begin = (char*)mmap_readonly_win32( file->name, &file->map_handle, &file->map_file );
+#if defined(_WIN32) || defined(__CEGCC__)
+    file->begin = (unsigned char*)mmap_readonly_win32( file->name, &file->map_handle, &file->map_file );
 #else
 	file->begin=mmap(NULL, file->size, PROT_READ|PROT_WRITE, MAP_PRIVATE, file->fd, 0);
 	g_assert(file->begin != NULL);
@@ -136,9 +145,9 @@ uncompress_int(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLe
 
 	err = inflate(&stream, Z_FINISH);
 	if (err != Z_STREAM_END) {
-	inflateEnd(&stream);
-	if (err == Z_NEED_DICT || (err == Z_BUF_ERROR && stream.avail_in == 0))
-		return Z_DATA_ERROR;
+        inflateEnd(&stream);
+        if (err == Z_NEED_DICT || (err == Z_BUF_ERROR && stream.avail_in == 0))
+            return Z_DATA_ERROR;
 		return err;
 	}
 	*destLen = stream.total_out;
@@ -189,7 +198,7 @@ file_exists(char *name)
 void
 file_remap_readonly(struct file *f)
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CEGCC__)
 #else
 	void *begin;
 	munmap(f->begin, f->size);
@@ -214,7 +223,7 @@ file_remap_readonly_all(void)
 void
 file_unmap(struct file *f)
 {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CEGCC__)
     mmap_unmap_win32( f->begin, f->map_handle , f->map_file );
 #else
 	munmap(f->begin, f->size);
@@ -310,7 +319,7 @@ file_destroy(struct file *f)
 }
 
 struct file_wordexp {
-	int err;
+    int err;
 	wordexp_t we;
 };
 

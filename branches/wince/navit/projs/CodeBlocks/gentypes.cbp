@@ -43,7 +43,7 @@
 			<Add directory="%GTK_DIR%\lib\glib-2.0\include" />
 			<Add directory="%GTK_DIR%\include" />
 			<Add directory="Win32Extra" />
-			<Add directory="..\..\src" />
+			<Add directory="..\..\navit" />
 		</Compiler>
 		<Linker>
 			<Add library="user32" />
@@ -58,28 +58,29 @@
 			<Add library="intl" />
 			<Add library="zdll" />
 			<Add directory="%GTK_DIR%\lib" />
+			<Add directory="..\..\..\libs\zlib-1.2.3\lib" />
 		</Linker>
 		<ExtraCommands>
-			<Add after="GenTypes.exe ..\..\src\data\garmin\garmintypes.txt ..\..\src\data\garmin\g2nbuiltin.h" />
+			<Add after="GenTypes.exe ..\..\navit\data\garmin\garmintypes.txt ..\..\navit\data\garmin\g2nbuiltin.h" />
 		</ExtraCommands>
+		<Unit filename="..\..\navit\attr.h" />
+		<Unit filename="..\..\navit\attr_def.h" />
+		<Unit filename="..\..\navit\coord.h" />
+		<Unit filename="..\..\navit\country.h" />
+		<Unit filename="..\..\navit\data\garmin\gentypes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\navit\debug.h" />
+		<Unit filename="..\..\navit\file.h" />
+		<Unit filename="..\..\navit\item.h" />
+		<Unit filename="..\..\navit\map.h" />
+		<Unit filename="..\..\navit\param.h" />
+		<Unit filename="..\..\navit\plugin.h" />
+		<Unit filename="..\..\navit\transform.h" />
 		<Unit filename="Win32Extra\wordexp.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Win32Extra\wordexp.h" />
-		<Unit filename="..\..\src\attr.h" />
-		<Unit filename="..\..\src\attr_def.h" />
-		<Unit filename="..\..\src\coord.h" />
-		<Unit filename="..\..\src\country.h" />
-		<Unit filename="..\..\src\data\garmin\gentypes.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\src\debug.h" />
-		<Unit filename="..\..\src\file.h" />
-		<Unit filename="..\..\src\item.h" />
-		<Unit filename="..\..\src\map.h" />
-		<Unit filename="..\..\src\param.h" />
-		<Unit filename="..\..\src\plugin.h" />
-		<Unit filename="..\..\src\transform.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

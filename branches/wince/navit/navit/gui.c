@@ -1,5 +1,9 @@
+#include <windows.h>
 #include <glib.h>
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include "menu.h"
 #include "debug.h"
 #include "gui.h"
 #include "menu.h"

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 
+#if !defined(__CEGCC__)
 int setenv(const char *name, const char *value, int overwrite)
 {
     char strPutEnv[512];
@@ -16,4 +17,5 @@ int setenv(const char *name, const char *value, int overwrite)
     }
     return 0;
 }
+#endif
 

@@ -1005,7 +1005,7 @@ end_node(FILE *out)
 		if (result && !conflict) {
 			if (!result->file) {
 				char *name=g_strdup_printf("country_%d.bin.unsorted", result->countryid);
-				result->file=fopen(name,"w");
+				result->file=fopen(name,"wb");
 				g_free(name);
 			}
 			if (result->file) {
@@ -1067,7 +1067,7 @@ sort_countries(void)
 			idx=malloc(co->count*sizeof(void *));
 			assert(idx != NULL);
 			name=g_strdup_printf("country_%d.bin.unsorted", co->countryid);
-			f=fopen(name,"r");
+			f=fopen(name,"rb");
 			assert(f != NULL);
 			fread(buffer, co->size, 1, f);
 			fclose(f);
