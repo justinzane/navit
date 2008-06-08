@@ -30,6 +30,7 @@
 			<Depends filename="binfile.cbp" />
 			<Depends filename="data_poi_geodownload.cbp" />
 			<Depends filename="data_mg.cbp" />
+			<Depends filename="data_garmin.cbp" />
 		</Project>
 		<Project filename="gtk_gui.cbp" />
 		<Project filename="gtk_graphics.cbp" />
@@ -47,6 +48,9 @@
 			<Depends filename="binfile.cbp" />
 			<Depends filename="data_poi_geodownload.cbp" />
 			<Depends filename="data_mg.cbp" />
+			<Depends filename="data_garmin.cbp" />
+			<Depends filename="gtk_gui.cbp" />
+			<Depends filename="gtk_graphics.cbp" />
 		</Project>
 	</Workspace>
 </CodeBlocks_workspace_file>

@@ -49,7 +49,7 @@
 			<Target title="Release">
 				<Option output="bin\Release\Navit_win32" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj\Release\" />
-				<Option external_deps="bin\Release\libnavit.a;bin\Release\libvehicle_file.la;bin\Release\libdata_binfile.la;bin\Release\libgtk_graphics.la;bin\Release\libgtk_gui.la;bin\Release\libwin32_gui.la" />
+				<Option external_deps="bin\Release\libnavit.a;bin\Release\libvehicle_file.la;bin\Release\libdata_binfile.la;bin\Release\libgtk_graphics.la;bin\Release\libgtk_gui.la;bin\Release\libwin32_gui.la;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -168,6 +168,10 @@
 		<Unit filename="win32gui\resources\resource.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
+		<Unit filename="win32gui\win32_gui_notify.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="win32gui\win32_gui_notify.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

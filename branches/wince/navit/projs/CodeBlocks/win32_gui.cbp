@@ -70,6 +70,10 @@
 		<Unit filename="win32gui\win32_gui_destination.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="win32gui\win32_gui_notify.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="win32gui\win32_gui_notify.h" />
 		<Unit filename="win32gui\xpm2bmp.c">
 			<Option compilerVar="CC" />
 		</Unit>
