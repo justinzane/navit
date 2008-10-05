@@ -6,10 +6,14 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#if 0
 #include <sys/mman.h>
+#endif
 #include <dirent.h>
 #include <stdio.h>
+#if 0
 #include <wordexp.h>
+#endif
 #include <glib.h>
 #include <zlib.h>
 #include "debug.h"
@@ -94,6 +98,7 @@ int file_mkdir(char *name, int pflag)
 int
 file_mmap(struct file *file)
 {
+#if 0
 #if defined(_WIN32) || defined(__CEGCC__)
     file->begin = (unsigned char*)mmap_readonly_win32( file->name, &file->map_handle, &file->map_file );
 #else
@@ -108,6 +113,8 @@ file_mmap(struct file *file)
 	file->end=file->begin+file->size;
 
 	return 1;
+#endif
+	return 0;
 }
 
 unsigned char *
@@ -223,10 +230,12 @@ file_remap_readonly_all(void)
 void
 file_unmap(struct file *f)
 {
+#if 0
 #if defined(_WIN32) || defined(__CEGCC__)
     mmap_unmap_win32( f->begin, f->map_handle , f->map_file );
 #else
 	munmap(f->begin, f->size);
+#endif
 #endif
 }
 
@@ -318,6 +327,100 @@ file_destroy(struct file *f)
 	g_free(f);
 }
 
+#ifndef _WORDEXP_H_
+#define	_WORDEXP_H_
+
+
+typedef struct {
+	size_t	we_wordc;		/* count of words matched */
+	char		**we_wordv;	/* pointer to list of words */
+	size_t	we_offs;		/* slots to reserve in we_wordv */
+					/* following are internals */
+	char		*we_strings;	/* storage for wordv strings */
+	size_t	we_nbytes;		/* size of we_strings */
+} wordexp_t;
+
+/*
+ * Flags for wordexp().
+ */
+#define	WRDE_APPEND	0x1		/* append to previously generated */
+#define	WRDE_DOOFFS	0x2		/* we_offs member is valid */
+#define	WRDE_NOCMD	0x4		/* disallow command substitution */
+#define	WRDE_REUSE	0x8		/* reuse wordexp_t */
+#define	WRDE_SHOWERR	0x10		/* don't redirect stderr to /dev/null */
+#define	WRDE_UNDEF	0x20		/* disallow undefined shell vars */
+
+/*
+ * Return values from wordexp().
+ */
+#define	WRDE_BADCHAR	1		/* unquoted special character */
+#define	WRDE_BADVAL	2		/* undefined variable */
+#define	WRDE_CMDSUB	3		/* command substitution not allowed */
+#define	WRDE_NOSPACE	4		/* no memory for result */
+#if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
+#define	WRDE_NOSYS	5		/* obsolete, reserved */
+#endif
+#define	WRDE_SYNTAX	6		/* shell syntax error */
+#define WRDE_ERRNO	7		/* other errors see errno */
+
+void	wordfree(wordexp_t *);
+int wordexp(const char * words, wordexp_t * we, int flags);
+
+
+#endif /* !_WORDEXP_H_ */
+
+#include <sys/types.h>
+#include <assert.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+int wordexp(const char * words, wordexp_t * we, int flags)
+{
+	int error=0;
+
+	assert(we != NULL);
+	assert(words != NULL);
+
+    we->we_wordc = 1;
+	we->we_wordv = NULL;
+	we->we_strings = NULL;
+	we->we_nbytes = 0;
+
+    we->we_wordv = malloc( we->we_wordc * sizeof( char* ) );
+
+    we->we_nbytes = strlen( words ) + 1;
+    we->we_strings = malloc( we->we_nbytes );
+
+    we->we_wordv[0] = &we->we_strings[0];
+
+    // copy string & terminate
+    memcpy( we->we_strings, words, we->we_nbytes -1 );
+    we->we_strings[ we->we_nbytes -1 ] = '\0';
+
+	return error;
+}
+
+void wordfree(wordexp_t *we)
+{
+	assert(we != NULL);
+
+	if ( we->we_wordv )
+	{
+        free(we->we_wordv);
+	}
+	if ( we->we_strings )
+	{
+        free(we->we_strings);
+	}
+
+	we->we_wordv = NULL;
+	we->we_strings = NULL;
+	we->we_nbytes = 0;
+	we->we_wordc = 0;
+}
 struct file_wordexp {
     int err;
 	wordexp_t we;
@@ -332,6 +435,7 @@ file_wordexp_new(const char *pattern)
 	if (ret->err)
 		dbg(0,"wordexp('%s') returned %d\n", pattern, ret->err);
 	return ret;
+	return NULL;
 }
 
 int

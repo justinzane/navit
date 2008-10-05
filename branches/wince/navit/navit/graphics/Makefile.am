@@ -8,3 +8,4 @@ endif
 if USE_GRAPHICS_QT_QPAINTER
   SUBDIRS+=qt_qpainter
 endif
+SUBDIRS+=win32

@@ -32,7 +32,7 @@ debug_init(const char *program_name)
 {
 	gdb_program=program_name;
 	signal(SIGSEGV, sigsegv);
-	fLog = fopen("/Storage Card/navit.txt","a");
+	fLog = NULL; /* fopen("/Storage Card/navit.txt","a"); */
 	debug_hash=g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 }
 
