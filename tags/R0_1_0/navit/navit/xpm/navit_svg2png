@@ -1,0 +1,28 @@
+#! /bin/bash
+png=$1
+if [[ "$png" = *_[1-9]*_[1-9]*.png ]]; 
+then
+        svg=${png%_*_*.png};
+	h=${png##*_}
+	w=${png%_$h}
+	h=${h%.png}
+	w=${w##*_}
+else
+	w=$(grep 'width=".*px"' gui_actions.svg | head -n 1 | sed -e 's/px".*//' -e 's/.*"//')
+	h=$(grep 'height=".*px"' gui_actions.svg | head -n 1 | sed -e 's/px".*//' -e 's/.*"//')
+	svg=${png%.png}
+fi
+if [ -f $png -a ! -f $svg.svg ]
+then
+	touch $png
+else
+	if [ -f $svg.svg ]
+	then
+		ksvgtopng $w $h $svg.svg $png
+	elif [ -f $svg.svgz ]
+	then
+		gzip -dc <$svg.svgz >$svg.svg
+		ksvgtopng $w $h $svg.svg $png
+		rm -f $svg.svg
+	fi
+fi
