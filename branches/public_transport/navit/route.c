@@ -69,6 +69,9 @@
 #include "vehicleprofile.h"
 #include "roadprofile.h"
 
+#include "exists.c"
+
+#define pedestrian 1
 
 struct map_priv {
 	struct route *route;
@@ -133,6 +136,7 @@ struct route_graph_segment {
 												 *  same point. Start of this list is in route_graph_point->end. */
 	struct route_graph_point *start;			/**< Pointer to the point this segment starts at. */
 	struct route_graph_point *end;				/**< Pointer to the point this segment ends at. */
+	char *name;
 	struct route_segment_data data;				/**< The segment data */
 };
 
@@ -189,7 +193,6 @@ struct route_path {
 #define RF_AVOIDHW	(1<<2)
 #define RF_AVOIDPAID	(1<<3)
 #define RF_LOCKONROAD	(1<<4)
-#define RF_SHOWGRAPH	(1<<5)
 
 /**
  * @brief A complete route
@@ -235,6 +238,8 @@ struct route_graph {
 	struct route_graph_point *hash[HASH_SIZE];	/**< A hashtable containing all route_graph_points in this graph */
 };
 
+
+
 #define HASHCOORD(c) ((((c)->x +(c)->y) * 2654435761UL) & (HASH_SIZE-1))
 
 /**
@@ -274,6 +279,8 @@ static enum projection route_projection(struct route *route)
 		return projection_none;
 	return map_projection(street->item.map);
 }
+
+
 
 /**
  * @brief Creates a new graph point iterator 
@@ -828,6 +835,11 @@ route_rect(int order, struct coord *c1, struct coord *c2, int rel, int abs)
  * retrieved to build a route graph. The selections are a rectangle with
  * c1 and c2 as two corners.
  *
+ * We don't route in whole map; we only take 10km around c1/c2, and then big roads
+ * in 40km area, and then really big roads between c1 and c2...
+ *
+ * FIXME: This is broken.
+ *
  * @param c1 Corner 1 of the rectangle
  * @param c2 Corder 2 of the rectangle
  */
@@ -835,7 +847,7 @@ static struct map_selection *
 route_calc_selection(struct coord *c1, struct coord *c2)
 {
 	struct map_selection *ret,*sel;
-	sel=route_rect(4, c1, c2, 25, 0);
+	sel=route_rect(4, c1, c2, 25, 100000);
 	ret=sel;
 	sel->next=route_rect(8, c1, c1, 0, 40000);
 	sel=sel->next;
@@ -1016,6 +1028,7 @@ route_segment_data_field_pos(struct route_segment_data *seg, enum attr_type type
  * @param flags The flags of the route_segment_data
  */
 
+/* returns time in tenths of second */
 static int
 route_segment_data_size(int flags)
 {
@@ -1050,6 +1063,7 @@ route_graph_add_segment(struct route_graph *this, struct route_graph_point *star
 {
 	struct route_graph_segment *s;
 	int size;
+	struct attr attr;
 	s=start->start;
 	while (s) {
 		if (item_is_equal(*item, s->data.item)) {
@@ -1076,6 +1090,12 @@ route_graph_add_segment(struct route_graph *this, struct route_graph_point *star
 	s->end_next=end->end;
 	end->end=s;
 	dbg_assert(len >= 0);
+	s->name=NULL;
+	if (item_attr_get(item, attr_street_name, &attr)) {
+		char *name;
+		name=map_convert_string(item->map,attr.u.str);
+		s->name = strdup(name);
+	}
 	s->data.len=len;
 	s->data.item=*item;
 	s->data.flags=flags;
@@ -1423,18 +1443,22 @@ route_time_seg(struct vehicleprofile *profile, struct route_segment_data *over)
  * @param from The point where we are starting
  * @param over The segment we are using
  * @param dir The direction of segment which we are driving
- * @return The "costs" needed to drive len on item
+ * @return The "costs" needed to drive len on item. In tenths of second.
  */  
 
 static int
 route_value_seg(struct vehicleprofile *profile, struct route_graph_point *from, struct route_segment_data *over, int dir)
 {
+	int res;
 #if 0
 	dbg(0,"flags 0x%x mask 0x%x flags 0x%x\n", over->flags, dir >= 0 ? profile->flags_forward_mask : profile->flags_reverse_mask, profile->flags);
 #endif
 	if ((over->flags & (dir >= 0 ? profile->flags_forward_mask : profile->flags_reverse_mask)) != profile->flags)
 		return INT_MAX;
-	return route_time_seg(profile, over);
+	res = route_time_seg(profile, over);
+	if (res < 0)
+		printf("cost is under 0\n");
+	return res;
 }
 
 /**
@@ -1534,6 +1558,102 @@ route_graph_get_segment(struct route_graph *graph, struct street_data *sd)
 	return NULL;
 }
 
+int expected_arrival = 15*60 + 45;
+struct tm date;
+int date_set;
+
+static int
+to_time_of_day(int val)
+{
+	return expected_arrival-(val/600);
+}
+
+static int
+from_time_of_day(int time_of_day)
+{
+	return (expected_arrival-time_of_day)*600;
+}
+
+#define dprintf(a...)
+static int handle_one_teleport(char *name, int min)
+{
+	int new = INT_MAX;
+	int h1,m1, h2,m2;
+	char *cond;
+
+	if (4 != sscanf(name, "%d:%d %d:%d", &h1, &m1, &h2, &m2)) {
+		printf("Teleport parse error :-(\n");
+		exit(1);
+	}
+
+	dprintf("  have teleport %d, time is %d (%d:%d), %s\n", h2*60+m2, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60, name);
+	if ((h2*60+m2) > to_time_of_day(min))  {
+		dprintf("  Too late for teleport\n");
+		return INT_MAX;
+	}
+	if (date_set) {
+		cond = strchr(name, '!');
+		if (cond) {
+			char *end = strchr(cond, '#');
+			if (end) {
+				*end = 0;
+			}
+			if (exists(cond+1, &date) != 'Y') {
+				dprintf("  Not today\n");
+				return INT_MAX;
+			}
+		}
+	}
+
+	dprintf("  Going through: %s %d\n", name, new);
+	new = from_time_of_day(h1*60+m1);
+	if (new<min) {
+		/* This can validly happen with connections that cross midnight */
+		dprintf("  attempted to travel back in time\n");
+		return INT_MAX;
+	}
+
+	return new;
+}
+
+static int handle_teleports(char *name, int min)
+{
+	int min2, min3;
+	char *next;
+
+	next = strchr(name, '@');
+	min2 = handle_one_teleport(name, min);
+	if (!next) {
+		dprintf("no next\n");
+		return min2;
+	}
+	dprintf("have more %s\n", next+1);
+	min3 = handle_teleports(next + 1, min);
+
+	if (min2 < min3)
+		return min2;
+	else
+		return min3;
+}
+
+
+static int handle_teleport(char *name, int min)
+{
+	int res;
+	if (!name || strncmp(name, "teleport", 8)) {
+		printf("handle_teleport called on non-teleport?\n");
+		exit(1);
+	}
+	*name = 'X';
+	printf("Handling teleport: %s\n", name );
+	res = handle_teleports(name + 9, min);
+	printf("best time is (%d:%d)\n", to_time_of_day(res)/60, to_time_of_day(res)%60);
+
+	if (res == INT_MAX)
+		return INT_MAX;
+	return res-min;
+}
+
 /**
  * @brief Calculates the routing costs for each point
  *
@@ -1550,7 +1670,7 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 {
 	struct route_graph_point *p_min;
 	struct route_graph_segment *s;
-	int min,new,old,val;
+	int min = -INT_MAX,new,old,val;
 	struct fibheap *heap; /* This heap will hold all points with "temporarily" calculated costs */
 
 	heap = fh_makekeyheap();   
@@ -1578,6 +1698,10 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 		p_min=fh_extractmin(heap); /* Starting Dijkstra by selecting the point with the minimum costs on the heap */
 		if (! p_min) /* There are no more points with temporarily calculated costs, Dijkstra has finished */
 			break;
+		if (p_min->value < min) {
+			printf("got smaller than minimum, something is wrong here\n");
+			exit(1);
+		}
 		min=p_min->value;
 		if (debug_route)
 			printf("extract p=%p free el=%p min=%d, 0x%x, 0x%x\n", p_min, p_min->el, min, p_min->c.x, p_min->c.y);
@@ -1585,8 +1709,18 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 		s=p_min->start;
 		while (s) { /* Iterating all the segments leading away from our point to update the points at their ends */
 			val=route_value_seg(profile, p_min, &s->data, -1);
+#if 0
+			/* Forward arrow; we are not interested in those */
+			if (s->name && !strncmp(s->name, "teleport", 8))
+				val = handle_teleport(s->name, min);
+#endif
 			if (val != INT_MAX) {
 				new=min+val;
+				if (new<min) {
+					printf("underflow?\n");
+					exit(1);
+				}
+
 				if (debug_route)
 					printf("begin %d len %d vs %d (0x%x,0x%x)\n",new,val,s->end->value, s->end->c.x, s->end->c.y);
 				if (new < s->end->value) { /* We've found a less costly way to reach the end of s, update it */
@@ -1613,8 +1747,19 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 		s=p_min->end;
 		while (s) { /* Doing the same as above with the segments leading towards our point */
 			val=route_value_seg(profile, p_min, &s->data, 1);
+ 			if (s->name && !strncmp(s->name, "Xeleport", 8)) {
+				printf("Blee, I'm overwriting source data\n");
+				exit(1);
+			}
+ 			if (s->name && !strncmp(s->name, "teleport", 8))
+ 				val = handle_teleport(s->name, min);
+
 			if (val != INT_MAX) {
 				new=min+val;
+				if (new<min) {
+					printf("underflow?\n");
+					exit(1);
+				}
 				if (debug_route)
 					printf("end %d len %d vs %d (0x%x,0x%x)\n",new,val,s->start->value,s->start->c.x, s->start->c.y);
 				if (new < s->start->value) {
@@ -2343,9 +2488,9 @@ rp_attr_get(void *priv_data, enum attr_type attr_type, struct attr *attr)
 		if (mr->str)
 			g_free(mr->str);
 		if (p->value != INT_MAX)
-			mr->str=g_strdup_printf("%d", p->value);
+			mr->str=g_strdup_printf("%d:%02d (%d:%02d)", (p->value/600/60), (p->value/600%60), (to_time_of_day(p->value)/60), (to_time_of_day(p->value)%60));
 		else
-			mr->str=g_strdup("-");
+			mr->str=g_strdup("unreachable");
 		attr->u.str = mr->str;
 		return 1;
 	case attr_street_item:
@@ -2698,16 +2843,6 @@ static struct map_methods route_graph_meth = {
 	NULL,
 	NULL,
 };
-
-void 
-route_toggle_routegraph_display(struct route *route)
-{
-	if (route->flags & RF_SHOWGRAPH) {
-		route->flags &= ~RF_SHOWGRAPH;
-	} else {
-		route->flags |= RF_SHOWGRAPH;
-	}
-}
 
 static struct map_priv *
 route_map_new_helper(struct map_methods *meth, struct attr **attrs, int graph)

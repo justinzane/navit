@@ -44,7 +44,7 @@
 #include <libpq-fe.h>
 #endif
 
-#define BUFFER_SIZE 1280
+#define BUFFER_SIZE 512000
 
 #if 1
 #define debug_tile(x) 0
@@ -404,7 +404,8 @@ struct country_table {
 	{752,"Sweden,Sverige,Konungariket Sverige,SE"},
 	{756,"Schweiz"}, 
 	{826,"United Kingdom,UK"},
-	{840,"USA"} 
+	{840,"USA"},
+	{999,"Unknown"},
 };
 
 static GHashTable *country_table_hash;
@@ -736,6 +737,7 @@ xml_get_attribute(char *xml, char *attribute, char *buffer, int buffer_size)
 		return 0;
 	if (i - pos > buffer_size) {
 		fprintf(stderr,"Buffer overflow %ld vs %d\n", (long)(i-pos), buffer_size);
+		exit(1);
 		return 0;
 	}
 	strncpy(buffer, pos, i-pos);
@@ -1430,6 +1432,8 @@ end_node(FILE *out)
 	item_bin_write(item_bin,out);
 	if (item_is_town(*item_bin) && attr_strings[attr_string_label]) {
 		char *tok,*buf=is_in_buffer;
+		if (!buf[0])
+			strcpy(is_in_buffer, "Unknown");
 		while ((tok=strtok(buf, ","))) {
 			while (*tok==' ')
 				tok++;
@@ -1603,7 +1607,7 @@ load_buffer(char *filename, struct buffer *b)
 static int
 phase1(FILE *in, FILE *out_ways, FILE *out_nodes, FILE *out_turn_restrictions)
 {
-	int size=4096;
+	int size=BUFFER_SIZE;
 	char buffer[size];
 	char *p;
 	sig_alrm(0);

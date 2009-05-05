@@ -220,7 +220,7 @@ search_list_town_destroy(struct search_list_town *this_)
 	g_free(this_);
 }
 
-static struct search_list_street *
+struct search_list_street *
 search_list_street_new(struct item *item)
 {
 	struct search_list_street *ret=g_new0(struct search_list_street, 1);

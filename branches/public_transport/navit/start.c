@@ -105,8 +105,8 @@ int main(int argc, char **argv)
 	config_file=NULL;
 	opterr=0;  //don't bomb out on errors.
 	if (argc > 1) {
-		/* DEVELOPPERS : don't forget to update the manpage if you modify theses options */
-		while((opt = getopt(argc, argv, ":hvc:d:")) != -1) {
+		/* DEVELOPERS : don't forget to update the manpage if you modify these options */
+		while((opt = getopt(argc, argv, ":hvc:d:T:D:")) != -1) {
 			switch(opt) {
 			case 'h':
 				print_usage();
@@ -123,6 +123,35 @@ int main(int argc, char **argv)
 			case 'd':
 				printf("TODO Verbose option is set to `%s'\n", optarg);
 				break;
+			case 'T':
+				{
+				extern int expected_arrival;
+				int time1, time2;
+				printf("Got time option: %s\n", optarg);
+				if (sscanf(optarg, "%d:%d", &time1, &time2)!=2) {
+					printf( "Sorry, invalid time '%s' specified.\n", optarg);
+					return 3;
+				}
+				expected_arrival = time1*60+time2;
+				break;
+				}
+			case 'D':
+				{
+				extern struct tm date;
+				extern int date_set;
+
+				date_set = 1;
+
+				printf("Got date option: %s\n", optarg);
+				if (sscanf(optarg, "%d.%d.%d", &date.tm_mday, &date.tm_mon, &date.tm_year) != 3)
+					printf("Invalid date option %s\n", optarg);
+				date.tm_mon--; date.tm_year-=1900;
+				date.tm_hour = 12; date.tm_min = 0; date.tm_sec = 0; date.tm_isdst = 0;
+				mktime(&date);
+				if (date.tm_wday==0) date.tm_wday=7;
+
+				break;
+				}
 			case ':':
 				fprintf(stderr, "navit: Error - Option `%c' needs a value\n", optopt);
 				print_usage();
