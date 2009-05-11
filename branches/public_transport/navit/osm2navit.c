@@ -554,10 +554,20 @@ struct attr_bin label_attr = {
 };
 char label_attr_buffer[BUFFER_SIZE];
 
+struct attr_bin opening_hours_attr = {
+	0, attr_opening_hours
+};
+char opening_hours_buffer[BUFFER_SIZE];
+
 struct attr_bin maxspeed_attr = {
 	0, attr_maxspeed
 };
 int maxspeed_attr_value;
+
+struct attr_bin travel_time_attr = {
+	0, attr_travel_time
+};
+int travel_time_attr_value;
 
 struct attr_bin town_name_attr = {
 	0, attr_town_name
@@ -602,6 +612,7 @@ enum attr_strings {
 	attr_string_street_name,
 	attr_string_house_number,
 	attr_string_label,
+	attr_string_opening_hours,
 	attr_string_last,
 };
 
@@ -817,6 +828,13 @@ add_tag(char *k, char *v)
 		}
 		level=5;
 	}
+	if (! strcmp(k,"travel_time")) {
+		travel_time_attr_value = atoi(v);
+		if (travel_time_attr_value) {
+			travel_time_attr.len = 2;
+		}
+		level=5;
+	}
 	if (! strcmp(k,"access")) {
 		flags[access_value(v)] |= AF_DANGEROUS_GOODS|AF_EMERGENCY_VEHICLES|AF_TRANSPORT_TRUCK|AF_DELIVERY_TRUCK|AF_PUBLIC_BUS|AF_TAXI|AF_HIGH_OCCUPANCY_CAR|AF_CAR|AF_MOTORCYCLE|AF_MOPED|AF_HORSE|AF_BIKE|AF_PEDESTRIAN;
 		level=5;
@@ -887,6 +905,12 @@ add_tag(char *k, char *v)
 		strcpy(label_attr_buffer, v);
 		pad_text_attr(&label_attr, label_attr_buffer);
 		attr_strings_save(attr_string_label, v);
+		level=5;
+	}
+	if (! strcmp(k,"opening_hours")) {
+		strcpy(opening_hours_buffer, v);
+		pad_text_attr(&opening_hours_attr, opening_hours_buffer);
+		attr_strings_save(attr_string_opening_hours, v);
 		level=5;
 	}
 	if (! strcmp(k,"addr:email")) {
@@ -1093,6 +1117,7 @@ add_node(int id, double lat, double lon)
 	nodeid=id;
 	item.type=type_point_unkn;
 	label_attr.len=0;
+	opening_hours_attr.len=0;
 	street_name_attr.len=0;
 	town_name_attr.len=0;
 	debug_attr.len=0;
@@ -1212,10 +1237,12 @@ add_way(int id)
 	attr_strings_clear();
 	item.type=type_street_unkn;
 	label_attr.len=0;
+	opening_hours_attr.len=0;
 	street_name_attr.len=0;
 	street_name_systematic_attr.len=0;
 	debug_attr.len=0;
 	maxspeed_attr.len=0;
+	travel_time_attr.len=0;
 	flags_attr.len=0;
 	flags_attr_value = 0;
 	memset(flags, 0, sizeof(flags));
@@ -1363,12 +1390,16 @@ end_way(FILE *out)
 	pad_text_attr(&debug_attr, debug_attr_buffer);
 	if (label_attr.len)
 		alen+=label_attr.len+1;
+	if (opening_hours_attr.len)
+		alen+=opening_hours_attr.len+1;
 	if (street_name_systematic_attr.len)
 		alen+=street_name_systematic_attr.len+1;
 	if (debug_attr.len)
 		alen+=debug_attr.len+1;
 	if (maxspeed_attr.len) 
 		alen+=maxspeed_attr.len+1;
+	if (travel_time_attr.len) 
+		alen+=travel_time_attr.len+1;
 	if (osmid_attr.len)
 		alen+=osmid_attr.len+1;
 	if (count)
@@ -1396,11 +1427,13 @@ end_way(FILE *out)
 		write_attr(out, &street_name_attr, label_attr_buffer);
 	} else
 		write_attr(out, &label_attr, label_attr_buffer);
+	write_attr(out, &opening_hours_attr, opening_hours_buffer);
 	write_attr(out, &street_name_systematic_attr, street_name_systematic_attr_buffer);
 	write_attr(out, &osmid_attr, &osmid_attr_value);
 	write_attr(out, &debug_attr, debug_attr_buffer);
 	write_attr(out, &flags_attr, &flags_attr_value);
 	write_attr(out, &maxspeed_attr, &maxspeed_attr_value);
+	write_attr(out, &travel_time_attr, &travel_time_attr_value);
 }
 
 static void

@@ -115,15 +115,17 @@ ATTR(route_mode)
 ATTR(maxspeed_handling)
 ATTR(flags_forward_mask)
 ATTR(flags_reverse_mask)
+ATTR(travel_time)
 
 ATTR2(0x00027500,type_rel_abs_begin)
-/* These attributes are int that can either hold relative		*
- * or absolute values. A relative value is indicated by 		*
- * adding 0x60000000.																				*
- *																													*
- * The range of valid absolute values is -0x40000000 to			*
- * 0x40000000, the range of relative values is from					*
- * -0x20000000 to 0x20000000.																*/
+/* These attributes are int that can either hold relative
+ * or absolute values. A relative value is indicated by 
+ * adding 0x60000000.					
+ *
+ * The range of valid absolute values is -0x40000000 to
+ * 0x40000000, the range of relative values is from
+ * -0x20000000 to 0x20000000. 
+ */
 ATTR(h)
 ATTR(w)
 ATTR(x)
@@ -309,3 +311,4 @@ ATTR(osm_nodeid)
 ATTR(osm_wayid)
 ATTR(osm_relationid)
 ATTR2(0x000cffff,type_int64_end)
+ATTR(opening_hours)

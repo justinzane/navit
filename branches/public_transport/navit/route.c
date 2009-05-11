@@ -137,6 +137,8 @@ struct route_graph_segment {
 	struct route_graph_point *start;			/**< Pointer to the point this segment starts at. */
 	struct route_graph_point *end;				/**< Pointer to the point this segment ends at. */
 	char *name;
+	char *opening_hours;
+	int travel_time;
 	struct route_segment_data data;				/**< The segment data */
 };
 
@@ -1096,6 +1098,16 @@ route_graph_add_segment(struct route_graph *this, struct route_graph_point *star
 		name=map_convert_string(item->map,attr.u.str);
 		s->name = strdup(name);
 	}
+	s->opening_hours=NULL;
+	if (item_attr_get(item, attr_opening_hours, &attr)) {
+		char *name;
+		name=map_convert_string(item->map,attr.u.str);
+		s->opening_hours = strdup(name);
+	}
+	s->travel_time=0;
+	if (item_attr_get(item, attr_maxspeed, &attr)) {
+		s->travel_time = attr.u.num;
+	}
 	s->data.len=len;
 	s->data.item=*item;
 	s->data.flags=flags;
@@ -1751,8 +1763,8 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 				printf("Blee, I'm overwriting source data\n");
 				exit(1);
 			}
- 			if (s->name && !strncmp(s->name, "teleport", 8))
- 				val = handle_teleport(s->name, min);
+ 			if (s->opening_hours && !strncmp(s->opening_hours, "teleport", 8))
+ 				val = handle_teleport(s->opening_hours, min);
 
 			if (val != INT_MAX) {
 				new=min+val;
