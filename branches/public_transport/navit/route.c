@@ -1105,7 +1105,7 @@ route_graph_add_segment(struct route_graph *this, struct route_graph_point *star
 		s->opening_hours = strdup(name);
 	}
 	s->travel_time=0;
-	if (item_attr_get(item, attr_maxspeed, &attr)) {
+	if (item_attr_get(item, attr_travel_time, &attr)) {
 		s->travel_time = attr.u.num;
 	}
 	s->data.len=len;
@@ -1468,9 +1468,10 @@ route_value_seg(struct vehicleprofile *profile, struct route_graph_point *from, 
 #endif
 	if ((over->flags & (dir >= 0 ? profile->flags_forward_mask : profile->flags_reverse_mask)) != profile->flags)
 		return INT_MAX;
-	if (s->travel_time)
+	if (s->travel_time) {
+		printf("Travel time is %d\n", s->travel_time);
 		res = 10*s->travel_time;
-	else
+	} else
 		res = route_time_seg(profile, over);
 	if (res < 0)
 		printf("cost is under 0\n");
