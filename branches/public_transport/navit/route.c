@@ -1459,15 +1459,19 @@ route_time_seg(struct vehicleprofile *profile, struct route_segment_data *over)
  */  
 
 static int
-route_value_seg(struct vehicleprofile *profile, struct route_graph_point *from, struct route_segment_data *over, int dir)
+route_value_seg(struct vehicleprofile *profile, struct route_graph_point *from, struct route_graph_segment *s, int dir)
 {
+	struct route_segment_data *over = &s->data;
 	int res;
 #if 0
 	dbg(0,"flags 0x%x mask 0x%x flags 0x%x\n", over->flags, dir >= 0 ? profile->flags_forward_mask : profile->flags_reverse_mask, profile->flags);
 #endif
 	if ((over->flags & (dir >= 0 ? profile->flags_forward_mask : profile->flags_reverse_mask)) != profile->flags)
 		return INT_MAX;
-	res = route_time_seg(profile, over);
+	if (s->travel_time)
+		res = 10*s->travel_time;
+	else
+		res = route_time_seg(profile, over);
 	if (res < 0)
 		printf("cost is under 0\n");
 	return res;
@@ -1666,6 +1670,86 @@ static int handle_teleport(char *name, int min)
 	return res-min;
 }
 
+static int handle_one_open(char *name, int min, int val)
+{
+	int new = INT_MAX;
+	int h1,m1;
+	char *cond;
+	char *times = strchr(name, ')');
+
+	printf("One_open: %s\n", name);
+	if (!times) {
+		printf("Open parse error :-(\n");
+		exit(1);
+	}
+	times += 2;
+
+	if (2 != sscanf(times, "%d:%d", &h1, &m1)) {
+		printf("opening_hours parse error :-(\n");
+		exit(1);
+	}
+
+	dprintf("  have teleport %d, time is %d (%d:%d), %s\n", h1*60+m1, to_time_of_day(val), to_time_of_day(val)/60, to_time_of_day(val)%60, name);
+	if ((h1*60+m1) > to_time_of_day(val))  {
+		dprintf("  Too late for teleport\n");
+		return INT_MAX;
+	}
+	if (date_set) {
+		cond = name+1;
+		char *end = strchr(cond, ')');
+		if (end) {
+			*end = 0;
+		}
+		if (exists(cond+1, &date) != 'Y') {
+			dprintf("  Not today\n");
+			return INT_MAX;
+		}
+	}
+
+	dprintf("  Going through: %s %d\n", name, new);
+	new = from_time_of_day(h1*60+m1);
+	if (new<min) {
+		/* This can validly happen with connections that cross midnight */
+		dprintf("  attempted to travel back in time\n");
+		return INT_MAX;
+	}
+
+	return new;
+}
+
+static int handle_opens(char *name, int min, int val)
+{
+	int min2, min3;
+	char *next;
+
+	next = strchr(name, ';');
+	min2 = handle_one_open(name, min, val);
+	if (!next) {
+		dprintf("no next\n");
+		return min2;
+	}
+	dprintf("have more %s\n", next+1);
+	min3 = handle_opens(next + 1, min, val);
+
+	if (min2 < min3)
+		return min2;
+	else
+		return min3;
+}
+
+static int handle_open(char *s, int min, int val)
+{
+	int res;
+	char *name = s;
+
+	res = handle_opens(name, min, val);
+	printf("best time is (%d:%d)\n", to_time_of_day(res)/60, to_time_of_day(res)%60);
+
+	if (res == INT_MAX)
+		return INT_MAX;
+	return res-min;
+}
+
 /**
  * @brief Calculates the routing costs for each point
  *
@@ -1692,14 +1776,14 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 		dbg(0,"no segment for destination found\n");
 		return;
 	}
-	val=route_value_seg(profile, NULL, &s->data, -1);
+	val=route_value_seg(profile, NULL, s, -1);
 	if (val != INT_MAX) {
 		val=val*(100-dst->percent)/100;
 		s->end->seg=s;
 		s->end->value=val;
 		s->end->el=fh_insertkey(heap, s->end->value, s->end);
 	}
-	val=route_value_seg(profile, NULL, &s->data, 1);
+	val=route_value_seg(profile, NULL, s, 1);
 	if (val != INT_MAX) {
 		val=val*dst->percent/100;
 		s->start->seg=s;
@@ -1720,7 +1804,7 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 		p_min->el=NULL; /* This point is permanently calculated now, we've taken it out of the heap */
 		s=p_min->start;
 		while (s) { /* Iterating all the segments leading away from our point to update the points at their ends */
-			val=route_value_seg(profile, p_min, &s->data, -1);
+			val=route_value_seg(profile, p_min, s, -1);
 #if 0
 			/* Forward arrow; we are not interested in those */
 			if (s->name && !strncmp(s->name, "teleport", 8))
@@ -1758,13 +1842,19 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 		}
 		s=p_min->end;
 		while (s) { /* Doing the same as above with the segments leading towards our point */
-			val=route_value_seg(profile, p_min, &s->data, 1);
+			val=route_value_seg(profile, p_min, s, 1);
  			if (s->name && !strncmp(s->name, "Xeleport", 8)) {
 				printf("Blee, I'm overwriting source data\n");
 				exit(1);
 			}
- 			if (s->opening_hours && !strncmp(s->opening_hours, "teleport", 8))
- 				val = handle_teleport(s->opening_hours, min);
+#if 0
+ 			if (s->opening_hours) {
+				if (!strncmp(s->opening_hours, "teleport", 8))
+					val = handle_teleport(s->opening_hours, min);
+				else
+					val = handle_open(s->opening_hours, min, val);
+			}
+#endif
 
 			if (val != INT_MAX) {
 				new=min+val;
@@ -1918,12 +2008,12 @@ route_path_new(struct route_graph *this, struct route_path *oldpath, struct rout
 		dbg(0,"no segment for position found\n");
 		return NULL;
 	}
-	val=route_value_seg(profile, NULL, &s->data, 1);
+	val=route_value_seg(profile, NULL, s, 1);
 	if (val != INT_MAX) {
 		val=val*(100-pos->percent)/100;
 		val1=s->end->value+val;
 	}
-	val=route_value_seg(profile, NULL, &s->data, -1);
+	val=route_value_seg(profile, NULL, s, -1);
 	if (val != INT_MAX) {
 		val=val*pos->percent/100;
 		val2=s->start->value+val;
