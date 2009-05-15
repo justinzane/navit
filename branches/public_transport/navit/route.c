@@ -1700,8 +1700,14 @@ static int handle_one_open(char *name, int min, int val)
 	}
 
 	dprintf("  have one_open %d (%d:%d -> %d:%d), time is %d (%d:%d)\n", h1*60+m1, h1, m1, h2, m2, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60);
-	//	if ((h1*60+m1) > to_time_of_day(min+val))  {
-	if ((h2*60+m2) > to_time_of_day(min))  {
+
+	if 	(((h1*60+m1) > to_time_of_day(min+val)) !=
+		 ((h2*60+m2) > to_time_of_day(min))) {
+		printf("Blee, new and old computation mismatch\n");
+	}
+
+	if ((h1*60+m1) > to_time_of_day(min+val))  {
+//	if ((h2*60+m2) > to_time_of_day(min))  {
 		dprintf("  Too late for teleport\n");
 		return INT_MAX;
 	}
