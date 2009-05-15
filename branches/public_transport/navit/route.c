@@ -1591,7 +1591,7 @@ from_time_of_day(int time_of_day)
 	return (expected_arrival-time_of_day)*600;
 }
 
-#define dprintf(a...)
+#define dprintf(a...) printf(a)
 static int handle_one_teleport(char *name, int min)
 {
 	int new = INT_MAX;
@@ -1622,8 +1622,8 @@ static int handle_one_teleport(char *name, int min)
 		}
 	}
 
-	dprintf("  Going through: %s %d\n", name, new);
 	new = from_time_of_day(h1*60+m1);
+	dprintf("  Going through: %s %d\n", name, new);
 	if (new<min) {
 		/* This can validly happen with connections that cross midnight */
 		dprintf("  attempted to travel back in time\n");
@@ -1674,41 +1674,53 @@ static int handle_teleport(char *name, int min)
 static int handle_one_open(char *name, int min, int val)
 {
 	int new = INT_MAX;
-	int h1,m1;
+	int h1,m1, h2,m2;
 	char *cond;
 	char *times = strchr(name, ')');
 
-	printf("One_open: %s\n", name);
+	//	dprintf("One_open: %s\n", name);
 	if (!times) {
 		printf("Open parse error :-(\n");
 		exit(1);
 	}
+	if (*name != '(') {
+		printf("Open parse error ( :-(\n");
+		exit(1);
+	}
+	if (*(times+1) != ' ') {
+		printf("Open another parse error ( :-(\n");
+		exit(1);
+	}
+
 	times += 2;
 
-	if (2 != sscanf(times, "%d:%d", &h1, &m1)) {
+	if (4 != sscanf(times, "%d:%d %d:%d", &h1, &m1, &h2, &m2)) {
 		printf("opening_hours parse error :-(\n");
 		exit(1);
 	}
 
-	dprintf("  have teleport %d, time is %d (%d:%d), %s\n", h1*60+m1, to_time_of_day(val), to_time_of_day(val)/60, to_time_of_day(val)%60, name);
-	if ((h1*60+m1) > to_time_of_day(val))  {
+	dprintf("  have one_open %d (%d:%d -> %d:%d), time is %d (%d:%d)\n", h1*60+m1, h1, m1, h2, m2, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60);
+	//	if ((h1*60+m1) > to_time_of_day(min+val))  {
+	if ((h2*60+m2) > to_time_of_day(min))  {
 		dprintf("  Too late for teleport\n");
 		return INT_MAX;
 	}
 	if (date_set) {
 		cond = name+1;
 		char *end = strchr(cond, ')');
-		if (end) {
-			*end = 0;
+		if (!end) {
+			printf("Missing end )\n");
+			exit(1);
 		}
-		if (exists(cond+1, &date) != 'Y') {
+		*end = 0;
+		if (exists(cond, &date) != 'Y') {
 			dprintf("  Not today\n");
 			return INT_MAX;
 		}
 	}
 
-	dprintf("  Going through: %s %d\n", name, new);
 	new = from_time_of_day(h1*60+m1);
+	dprintf("  Going through: %s %d\n", name, new);
 	if (new<min) {
 		/* This can validly happen with connections that cross midnight */
 		dprintf("  attempted to travel back in time\n");
@@ -1729,8 +1741,12 @@ static int handle_opens(char *name, int min, int val)
 		dprintf("no next\n");
 		return min2;
 	}
-	dprintf("have more %s\n", next+1);
-	min3 = handle_opens(next + 1, min, val);
+	//	dprintf("have more %s\n", next+1);
+	if (*(next+1) != ' ') {
+		dprintf("bad next\n");
+		exit(1);
+	}
+	min3 = handle_opens(next + 2, min, val);
 
 	if (min2 < min3)
 		return min2;
@@ -1744,10 +1760,19 @@ static int handle_open(char *s, int min, int val)
 	char *name = s;
 
 	res = handle_opens(name, min, val);
-	printf("best time is (%d:%d)\n", to_time_of_day(res)/60, to_time_of_day(res)%60);
+	if (res < 0) {
+		printf("blee2?\n");
+		exit(1);
+	}		
 
 	if (res == INT_MAX)
 		return INT_MAX;
+	printf("best time is (%d:%d)\n", to_time_of_day(res)/60, to_time_of_day(res)%60);
+
+	if ((res-min) > 200*60*60) {
+		printf("blee?\n");
+		exit(1);
+	}		
 	return res-min;
 }
 
@@ -1806,10 +1831,12 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 		s=p_min->start;
 		while (s) { /* Iterating all the segments leading away from our point to update the points at their ends */
 			val=route_value_seg(profile, p_min, s, -1);
-#if 0
+#if 1
 			/* Forward arrow; we are not interested in those */
 			if (s->name && !strncmp(s->name, "teleport", 8))
-				val = handle_teleport(s->name, min);
+				val = INT_MAX;
+			if (s->opening_hours)
+				val = INT_MAX;
 #endif
 			if (val != INT_MAX) {
 				new=min+val;
@@ -1848,14 +1875,19 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 				printf("Blee, I'm overwriting source data\n");
 				exit(1);
 			}
-#if 0
+			if (s->name && !strncmp(s->name, "teleport", 8))
+				val = handle_teleport(s->name, min);
+
  			if (s->opening_hours) {
 				if (!strncmp(s->opening_hours, "teleport", 8))
 					val = handle_teleport(s->opening_hours, min);
-				else
-					val = handle_open(s->opening_hours, min, val);
+				else {
+					if (val != INT_MAX) {
+						printf("%s\n", s->name);
+						val = handle_open(s->opening_hours, min, val);
+					}
+				}
 			}
-#endif
 
 			if (val != INT_MAX) {
 				new=min+val;
