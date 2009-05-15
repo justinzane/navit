@@ -1671,28 +1671,25 @@ static int handle_one_open(char *name, int min, int val)
 
 static int handle_opens(char *name, int min, int val)
 {
-	int min2, min3;
+	int new_min = INT_MAX, new;
 	char *next;
 
-	next = strchr(name, ';');
-	if (next)
-		*next = 0;
-	min2 = handle_one_open(name, min, val);
-	if (!next) {
-		dprintf("no next\n");
-		return min2;
+	while(1) {
+		next = strchr(name, ';');
+		if (next)
+			*next = 0;
+		new = handle_one_open(name, min, val);
+		if (new < new_min)
+			new_min = new;
+		if (!next)
+			break;
+		if (*(next+1) != ' ') {
+			dprintf("bad next\n");
+			exit(1);
+		}
+		name = next+2;
 	}
-	//	dprintf("have more %s\n", next+1);
-	if (*(next+1) != ' ') {
-		dprintf("bad next\n");
-		exit(1);
-	}
-	min3 = handle_opens(next + 2, min, val);
-
-	if (min2 < min3)
-		return min2;
-	else
-		return min3;
+	return new_min;
 }
 
 static int handle_open(char *s, int min, int val)
