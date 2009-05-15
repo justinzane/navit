@@ -1596,7 +1596,7 @@ from_time_of_day(int time_of_day)
 static int handle_one_open(char *name, int min, int val)
 {
 	int new = INT_MAX;
-	int h1,m1, h2,m2;
+	int h1,m1;
 	char *cond;
 	char *times = strchr(name, ')');
 
@@ -1616,20 +1616,14 @@ static int handle_one_open(char *name, int min, int val)
 
 	times += 2;
 
-	if (4 != sscanf(times, "%d:%d %d:%d", &h1, &m1, &h2, &m2)) {
+	if (2 != sscanf(times, "%d:%d", &h1, &m1)) {
 		printf("opening_hours parse error :-(\n");
 		exit(1);
 	}
 
-	dprintf("  have one_open %d (%d:%d -> %d:%d), time is %d (%d:%d)\n", h1*60+m1, h1, m1, h2, m2, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60);
-
-	if 	(((h1*60+m1) > to_time_of_day(min+val)) !=
-		 ((h2*60+m2) > to_time_of_day(min))) {
-		printf("Blee, new and old computation mismatch\n");
-	}
+	dprintf("  have one_open %d (%d:%d -> %d:%d), time is %d (%d:%d)\n", h1*60+m1, h1, m1, 0, 0, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60);
 
 	if ((h1*60+m1) > to_time_of_day(min+val))  {
-//	if ((h2*60+m2) > to_time_of_day(min))  {
 		dprintf("  Too late for teleport\n");
 		return INT_MAX;
 	}
