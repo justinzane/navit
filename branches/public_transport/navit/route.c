@@ -1592,12 +1592,40 @@ from_time_of_day(int time_of_day)
 
 #define dprintf(a...) 
 
+static int handle_one_time(char *times, int min, int val)
+{
+	int h1,m1;
+	int new = INT_MAX;
+
+	if (2 != sscanf(times, "%d:%d", &h1, &m1)) {
+		printf("opening_hours parse error :-(\n");
+		exit(1);
+	}
+
+	dprintf("  have one_open %d (%d:%d -> %d:%d), time is %d (%d:%d)\n", h1*60+m1, h1, m1, 0, 0, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60);
+
+	if ((h1*60+m1) > to_time_of_day(min+val))  {
+		dprintf("  Too late for teleport\n");
+		return INT_MAX;
+	}
+
+	new = from_time_of_day(h1*60+m1);
+	dprintf("  Going through: %s %d\n", name, new);
+	if (new<min) {
+		/* This can validly happen with connections that cross midnight */
+		dprintf("  attempted to travel back in time\n");
+		return INT_MAX;
+	}
+
+	return new;
+}
+
 static int handle_one_open(char *name, int min, int val)
 {
 	int new = INT_MAX;
-	int h1,m1;
 	char *cond;
 	char *times = strchr(name, ')');
+	int new_min = INT_MAX;
 
 	//	dprintf("One_open: %s\n", name);
 	if (!times) {
@@ -1628,27 +1656,14 @@ static int handle_one_open(char *name, int min, int val)
 	}
 
 	times += 2;
-	if (2 != sscanf(times, "%d:%d", &h1, &m1)) {
-		printf("opening_hours parse error :-(\n");
-		exit(1);
+	while (1) {
+		new = handle_one_time(times, min, val);
+		if (new < new_min)
+			new_min = new;
+		break;
 	}
 
-	dprintf("  have one_open %d (%d:%d -> %d:%d), time is %d (%d:%d)\n", h1*60+m1, h1, m1, 0, 0, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60);
-
-	if ((h1*60+m1) > to_time_of_day(min+val))  {
-		dprintf("  Too late for teleport\n");
-		return INT_MAX;
-	}
-
-	new = from_time_of_day(h1*60+m1);
-	dprintf("  Going through: %s %d\n", name, new);
-	if (new<min) {
-		/* This can validly happen with connections that cross midnight */
-		dprintf("  attempted to travel back in time\n");
-		return INT_MAX;
-	}
-
-	return new;
+	return new_min;
 }
 
 static int handle_opens(char *name, int min, int val)
