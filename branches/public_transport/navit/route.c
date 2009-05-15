@@ -1660,7 +1660,10 @@ static int handle_one_open(char *name, int min, int val)
 		new = handle_one_time(times, min, val);
 		if (new < new_min)
 			new_min = new;
-		break;
+		times = strchr(times, ' ');
+		if (!times)
+			break;
+		times+=1;
 	}
 
 	return new_min;
@@ -1672,6 +1675,8 @@ static int handle_opens(char *name, int min, int val)
 	char *next;
 
 	next = strchr(name, ';');
+	if (next)
+		*next = 0;
 	min2 = handle_one_open(name, min, val);
 	if (!next) {
 		dprintf("no next\n");
