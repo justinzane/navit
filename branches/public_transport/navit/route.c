@@ -1468,10 +1468,9 @@ route_value_seg(struct vehicleprofile *profile, struct route_graph_point *from, 
 #endif
 	if ((over->flags & (dir >= 0 ? profile->flags_forward_mask : profile->flags_reverse_mask)) != profile->flags)
 		return INT_MAX;
-	if (s->travel_time) {
-		printf("Travel time is %d\n", s->travel_time);
+	if (s->travel_time)
 		res = 10*s->travel_time;
-	} else
+	else
 		res = route_time_seg(profile, over);
 	if (res < 0)
 		printf("cost is under 0\n");
@@ -1591,7 +1590,7 @@ from_time_of_day(int time_of_day)
 	return (expected_arrival-time_of_day)*600;
 }
 
-#define dprintf(a...) printf(a)
+#define dprintf(a...) 
 
 static int handle_one_open(char *name, int min, int val)
 {
@@ -1614,19 +1613,6 @@ static int handle_one_open(char *name, int min, int val)
 		exit(1);
 	}
 
-	times += 2;
-
-	if (2 != sscanf(times, "%d:%d", &h1, &m1)) {
-		printf("opening_hours parse error :-(\n");
-		exit(1);
-	}
-
-	dprintf("  have one_open %d (%d:%d -> %d:%d), time is %d (%d:%d)\n", h1*60+m1, h1, m1, 0, 0, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60);
-
-	if ((h1*60+m1) > to_time_of_day(min+val))  {
-		dprintf("  Too late for teleport\n");
-		return INT_MAX;
-	}
 	if (date_set) {
 		cond = name+1;
 		char *end = strchr(cond, ')');
@@ -1639,6 +1625,19 @@ static int handle_one_open(char *name, int min, int val)
 			dprintf("  Not today\n");
 			return INT_MAX;
 		}
+	}
+
+	times += 2;
+	if (2 != sscanf(times, "%d:%d", &h1, &m1)) {
+		printf("opening_hours parse error :-(\n");
+		exit(1);
+	}
+
+	dprintf("  have one_open %d (%d:%d -> %d:%d), time is %d (%d:%d)\n", h1*60+m1, h1, m1, 0, 0, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60);
+
+	if ((h1*60+m1) > to_time_of_day(min+val))  {
+		dprintf("  Too late for teleport\n");
+		return INT_MAX;
 	}
 
 	new = from_time_of_day(h1*60+m1);
@@ -1689,7 +1688,7 @@ static int handle_open(char *s, int min, int val)
 
 	if (res == INT_MAX)
 		return INT_MAX;
-	printf("best time is (%d:%d)\n", to_time_of_day(res)/60, to_time_of_day(res)%60);
+	dprintf("best time is (%d:%d)\n", to_time_of_day(res)/60, to_time_of_day(res)%60);
 
 	if ((res-min) > 200*60*60) {
 		printf("blee?\n");
