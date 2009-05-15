@@ -1592,84 +1592,6 @@ from_time_of_day(int time_of_day)
 }
 
 #define dprintf(a...) printf(a)
-static int handle_one_teleport(char *name, int min)
-{
-	int new = INT_MAX;
-	int h1,m1, h2,m2;
-	char *cond;
-
-	if (4 != sscanf(name, "%d:%d %d:%d", &h1, &m1, &h2, &m2)) {
-		printf("Teleport parse error :-(\n");
-		exit(1);
-	}
-
-	dprintf("  have teleport %d, time is %d (%d:%d), %s\n", h2*60+m2, to_time_of_day(min), to_time_of_day(min)/60, to_time_of_day(min)%60, name);
-	if ((h2*60+m2) > to_time_of_day(min))  {
-		dprintf("  Too late for teleport\n");
-		return INT_MAX;
-	}
-	if (date_set) {
-		cond = strchr(name, '!');
-		if (cond) {
-			char *end = strchr(cond, '#');
-			if (end) {
-				*end = 0;
-			}
-			if (exists(cond+1, &date) != 'Y') {
-				dprintf("  Not today\n");
-				return INT_MAX;
-			}
-		}
-	}
-
-	new = from_time_of_day(h1*60+m1);
-	dprintf("  Going through: %s %d\n", name, new);
-	if (new<min) {
-		/* This can validly happen with connections that cross midnight */
-		dprintf("  attempted to travel back in time\n");
-		return INT_MAX;
-	}
-
-	return new;
-}
-
-static int handle_teleports(char *name, int min)
-{
-	int min2, min3;
-	char *next;
-
-	next = strchr(name, '@');
-	min2 = handle_one_teleport(name, min);
-	if (!next) {
-		dprintf("no next\n");
-		return min2;
-	}
-	dprintf("have more %s\n", next+1);
-	min3 = handle_teleports(next + 1, min);
-
-	if (min2 < min3)
-		return min2;
-	else
-		return min3;
-}
-
-
-static int handle_teleport(char *name, int min)
-{
-	int res;
-	if (!name || strncmp(name, "teleport", 8)) {
-		printf("handle_teleport called on non-teleport?\n");
-		exit(1);
-	}
-	*name = 'X';
-	printf("Handling teleport: %s\n", name );
-	res = handle_teleports(name + 9, min);
-	printf("best time is (%d:%d)\n", to_time_of_day(res)/60, to_time_of_day(res)%60);
-
-	if (res == INT_MAX)
-		return INT_MAX;
-	return res-min;
-}
 
 static int handle_one_open(char *name, int min, int val)
 {
@@ -1837,13 +1759,11 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 		s=p_min->start;
 		while (s) { /* Iterating all the segments leading away from our point to update the points at their ends */
 			val=route_value_seg(profile, p_min, s, -1);
-#if 1
+
 			/* Forward arrow; we are not interested in those */
-			if (s->name && !strncmp(s->name, "teleport", 8))
-				val = INT_MAX;
 			if (s->opening_hours)
 				val = INT_MAX;
-#endif
+
 			if (val != INT_MAX) {
 				new=min+val;
 				if (new<min) {
@@ -1881,17 +1801,11 @@ route_graph_flood(struct route_graph *this, struct route_info *dst, struct vehic
 				printf("Blee, I'm overwriting source data\n");
 				exit(1);
 			}
-			if (s->name && !strncmp(s->name, "teleport", 8))
-				val = handle_teleport(s->name, min);
 
  			if (s->opening_hours) {
-				if (!strncmp(s->opening_hours, "teleport", 8))
-					val = handle_teleport(s->opening_hours, min);
-				else {
-					if (val != INT_MAX) {
-						printf("%s\n", s->name);
-						val = handle_open(s->opening_hours, min, val);
-					}
+				if (val != INT_MAX) {
+					dprintf("%s\n", s->name);
+					val = handle_open(s->opening_hours, min, val);
 				}
 			}
 
