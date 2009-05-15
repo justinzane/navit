@@ -1575,7 +1575,7 @@ route_graph_get_segment(struct route_graph *graph, struct street_data *sd)
 }
 
 int expected_arrival = 15*60 + 45;
-struct tm date;
+time_t date;
 int date_set;
 
 static int
@@ -1649,7 +1649,7 @@ static int handle_one_open(char *name, int min, int val)
 			exit(1);
 		}
 		*end = 0;
-		if (exists(cond, &date) != 'Y') {
+		if (exists_fast(cond, date) != 'Y') {
 			dprintf("  Not today\n");
 			return INT_MAX;
 		}

@@ -137,18 +137,18 @@ int main(int argc, char **argv)
 				}
 			case 'D':
 				{
-				extern struct tm date;
+				extern time_t date;
+				struct tm date_tmp;
 				extern int date_set;
 
 				date_set = 1;
 
 				printf("Got date option: %s\n", optarg);
-				if (sscanf(optarg, "%d.%d.%d", &date.tm_mday, &date.tm_mon, &date.tm_year) != 3)
+				if (sscanf(optarg, "%d.%d.%d", &date_tmp.tm_mday, &date_tmp.tm_mon, &date_tmp.tm_year) != 3)
 					printf("Invalid date option %s\n", optarg);
-				date.tm_mon--; date.tm_year-=1900;
-				date.tm_hour = 12; date.tm_min = 0; date.tm_sec = 0; date.tm_isdst = 0;
-				mktime(&date);
-				if (date.tm_wday==0) date.tm_wday=7;
+				date_tmp.tm_mon--; date_tmp.tm_year-=1900;
+				date_tmp.tm_hour = 12; date_tmp.tm_min = 0; date_tmp.tm_sec = 0; date_tmp.tm_isdst = 0;
+				date = mktime(&date_tmp);
 
 				break;
 				}
