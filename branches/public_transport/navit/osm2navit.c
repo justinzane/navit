@@ -404,8 +404,7 @@ struct country_table {
 	{752,"Sweden,Sverige,Konungariket Sverige,SE"},
 	{756,"Schweiz"}, 
 	{826,"United Kingdom,UK"},
-	{840,"USA"},
-	{999,"Unknown"},
+	{840,"USA"} 
 };
 
 static GHashTable *country_table_hash;
@@ -1465,8 +1464,6 @@ end_node(FILE *out)
 	item_bin_write(item_bin,out);
 	if (item_is_town(*item_bin) && attr_strings[attr_string_label]) {
 		char *tok,*buf=is_in_buffer;
-		if (!buf[0])
-			strcpy(is_in_buffer, "Unknown");
 		while ((tok=strtok(buf, ","))) {
 			while (*tok==' ')
 				tok++;
