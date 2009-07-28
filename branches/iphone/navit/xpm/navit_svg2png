@@ -1,0 +1,68 @@
+#! /bin/bash
+
+function svgtopng
+{
+	case $svgtopng in
+	*ksvgtopng|*ksvgtopng4)
+		$svgtopng $*
+		;;
+	*rsvg-convert)
+		$svgtopng --width=$1 --height=$2 --output $4 $3
+		;;
+	*inkscape)
+		$svgtopng --without-gui --export-width=$1 --export-height=$2 --export-png=$4 $3
+		;;
+	*convert)
+		$svgtopng $3 -resize $1x$2 $4
+		;; 
+	esac
+}
+
+ulimit -t 5
+svgtopng=$1
+png=$2
+if [[ "$png" = *_[1-9]*_[1-9]*.png ]]; 
+then
+        svg=${png%_*_*.png};
+	h=${png##*_}
+	w=${png%_$h}
+	h=${h%.png}
+	w=${w##*_}
+else
+	svg=${png%.png}
+fi
+if [ ! -f $svg.svg -a ! -f $svg.svgz ]
+then
+	svg="$SRCDIR/$svg"
+fi
+if [ -f $png -a ! -f $svg.svg ]
+then
+	touch $png
+else
+	if [ -f $svg.svg ]
+	then
+		if [ -z "$w" ]
+		then
+			w=$(grep 'width="[0-9pxt.]*"' $svg.svg | head -n 1 | sed -e 's/.*width="//' -e 's/[pxt]*".*//')
+		fi
+		if [ -z "$h" ]
+		then
+			h=$(grep 'height="[0-9pxt.]*"' $svg.svg | head -n 1 | sed -e 's/.*height="//' -e 's/[pxt]*".*//')
+		fi
+		svgtopng $w $h $svg.svg $png
+	elif [ -f $svg.svgz ]
+	then
+		gzip -dc <$svg.svgz >$svg.svg
+		if [ -z "$w" ]
+		then
+			w=$(grep 'width="[0-9pxt.]*"' $svg.svg | head -n 1 | sed -e 's/.*width="//' -e 's/[pxt]*".*//')
+		fi
+		if [ -z "$h" ]
+		then
+			h=$(grep 'height="[0-9pxt.]*"' $svg.svg | head -n 1 | sed -e 's/.*height="//' -e 's/[pxt]*".*//')
+		fi
+		svgtopng $w $h $svg.svg $png
+		rm -f $svg.svg
+	fi
+fi
+exit 0

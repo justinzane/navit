@@ -1,0 +1,12 @@
+modulebindingdir=$(pkglibdir)/binding
+modulemapdir=$(pkglibdir)/map
+modulefontdir=$(pkglibdir)/font
+modulegraphicsdir=$(pkglibdir)/graphics
+moduleguidir=$(pkglibdir)/gui
+modulespeechdir=$(pkglibdir)/speech
+moduleosddir=$(pkglibdir)/osd
+modulevehicledir=$(pkglibdir)/vehicle
+pkgdocdir=$(pkgdatadir)
+xpmdir=$(pkgdatadir)/xpm
+fontsdir=$(pkgdatadir)/fonts
+mapsdir=$(pkgdatadir)/maps
