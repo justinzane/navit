@@ -218,6 +218,7 @@ struct gui_priv {
 	int spacing;
 	int font_size;
 	int fullscreen;
+	int fullscreen_lock;
 	struct graphics_font *font;
 	int icon_xs, icon_s, icon_l;
 	int pressed;
@@ -2937,16 +2938,19 @@ gui_internal_cmd_display(struct gui_priv *this, struct widget *wm, void *data)
 		gui_internal_button_new_with_callback(this, _("Layout"),
 			image_new_l(this, "gui_display"), gravity_center|orientation_vertical,
 			gui_internal_cmd_layout, NULL));
-	if (this->fullscreen) {
-		gui_internal_widget_append(w,
-			gui_internal_button_new_with_callback(this, _("Window Mode"),
-				image_new_l(this, "gui_leave_fullscreen"), gravity_center|orientation_vertical,
-				gui_internal_cmd_fullscreen, NULL));
-	} else {
-		gui_internal_widget_append(w,
-			gui_internal_button_new_with_callback(this, _("Fullscreen"),
-				image_new_l(this, "gui_fullscreen"), gravity_center|orientation_vertical,
-				gui_internal_cmd_fullscreen, NULL));
+
+	if(!this->fullscreen_lock) {
+		if (this->fullscreen) {
+			gui_internal_widget_append(w,
+					gui_internal_button_new_with_callback(this, _("Window Mode"),
+						image_new_l(this, "gui_leave_fullscreen"), gravity_center|orientation_vertical,
+						gui_internal_cmd_fullscreen, NULL));
+		} else {
+			gui_internal_widget_append(w,
+					gui_internal_button_new_with_callback(this, _("Fullscreen"),
+						image_new_l(this, "gui_fullscreen"), gravity_center|orientation_vertical,
+						gui_internal_cmd_fullscreen, NULL));
+		}
 	}
 	trans=navit_get_trans(this->nav);
 	if (transform_get_pitch(trans)) {

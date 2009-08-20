@@ -164,6 +164,7 @@ ATTR(district_id) /* fixme? */
 ATTR(drag_bitmap)
 ATTR(use_mousewheel)
 ATTR(fullscreen)
+ATTR(fullscreen_lock)
 ATTR(position_magnetic_direction)
 ATTR(use_overlay)
 ATTR(night_mode)
