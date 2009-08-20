@@ -30,7 +30,12 @@ extern int debug_level;
 #define dbg_str2(x) #x
 #define dbg_str1(x) dbg_str2(x)
 #define dbg_module dbg_str1(MODULE)
+
+#ifndef NO_DEBUG
 #define dbg(level,fmt...) ({ if (debug_level >= level) debug_printf(level,dbg_module,strlen(dbg_module),__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__),1,fmt); })
+#else
+#define dbg(level,fmt,...) 
+#endif
 #define dbg_assert(expr) ((expr) ? (void) 0 : debug_assert_fail(dbg_module,strlen(dbg_module),__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__),__FILE__,__LINE__,dbg_str1(expr)))
 
 /* prototypes */
