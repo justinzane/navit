@@ -613,8 +613,6 @@ osd_nav_status_draw(struct osd_nav_status *this,  struct navit *navit,
 static void
 osd_nav_status_init(struct osd_nav_status *this, struct navit *nav)
 {
-	struct attr cb_attr;
-	struct route * route;
 	osd_set_std_graphic(nav, &this->osd_item, (struct osd_priv *)this);
 	navit_add_callback(nav, callback_new_attr_1(callback_cast(osd_nav_status_draw), attr_status, this));
 	osd_nav_status_draw(this, nav, NULL);
@@ -658,7 +656,7 @@ osd_nav_status_new(struct navit *nav, struct osd_methods *meth,
 		this->icon_src = g_strdup(array[0]);
 		file_wordexp_destroy(we);
 	} else
-		this->icon_src = graphics_icon_path("gui_maps_32_32.png", NULL);
+		this->icon_src = graphics_icon_path("gui_maps_32_32.png");
 
 	navit_add_callback(nav, callback_new_attr_1(callback_cast(osd_nav_status_init), attr_navit, this));
 	return (struct osd_priv *) this;
@@ -973,13 +971,13 @@ osd_text_draw(struct osd_text *this, struct navit *navit, struct vehicle *v)
 					value[len] = '\0';
 				}
 				else if (!strcmp(subkey,"status")) {
-					struct attr mode_attr;
 					char * str_tmp;
-					if(str_tmp = navit_get_status_string(navit)) {
+					if((str_tmp = navit_get_status_string(navit))) {
 						value = g_strdup(str_tmp);
 						graphics_overlay_disable(this->osd_item.gr, 0);
 					} else {
 						graphics_overlay_disable(this->osd_item.gr, 1);
+
 					}
 				}
 			}
