@@ -138,6 +138,7 @@ struct navit {
 	struct vehicleprofile *vehicleprofile;
 	GList *vehicleprofiles;
 	int pitch;
+	int follow_cursor;
 };
 
 struct gui *main_loop_gui;
@@ -320,6 +321,15 @@ update_transformation(struct transformation *tr, struct point *old, struct point
 	transform_set_center(tr, &c);
 }
 
+static void
+navit_set_timeout(struct navit *this_)
+{
+	struct attr follow;
+	follow.type=attr_follow;
+	follow.u.num=this_->center_timeout;
+	navit_set_attr(this_, &follow);
+}
+
 int
 navit_handle_button(struct navit *this_, int pressed, int button, struct point *p, struct callback *popup_callback)
 {
@@ -342,7 +352,7 @@ navit_handle_button(struct navit *this_, int pressed, int button, struct point *
 				this_->button_timeout=event_add_timeout(500, 0, popup_callback);
 		}
 		if (button == 2)
-			navit_set_center_screen(this_, p);
+			navit_set_center_screen(this_, p, 1);
 		if (button == 3)
 			popup(this_, button, p);
 		if (button == 4 && this_->use_mousewheel) {
@@ -354,18 +364,13 @@ navit_handle_button(struct navit *this_, int pressed, int button, struct point *
 			navit_zoom_out(this_, 2, p);
 		}
 	} else {
-		struct attr follow;
-		follow.type=attr_follow;
-		follow.u.num=this_->center_timeout;
 
 		this_->button_pressed=0;
 		if (this_->button_timeout) {
 			event_remove_timeout(this_->button_timeout);
 			this_->button_timeout=NULL;
 			if (! this_->moved && ! transform_within_border(this_->trans, p, border)) {
-				if (!this_->zoomed) 
-					navit_set_attr(this_, &follow);
-				navit_set_center_screen(this_, p);
+				navit_set_center_screen(this_, p, !this_->zoomed);
 			}
 		}
 		if (this_->motion_timeout) {
@@ -384,7 +389,7 @@ navit_handle_button(struct navit *this_, int pressed, int button, struct point *
 			graphics_draw_drag(this_->gra, NULL);
 			graphics_overlay_disable(this_->gra, 0);
 			if (!this_->zoomed) 
-				navit_set_attr(this_, &follow);
+				navit_set_timeout(this_);
 			navit_draw(this_);
 		} else
 			return 1;
@@ -641,6 +646,7 @@ navit_new(struct attr *parent, struct attr **attrs)
 	this_->autozoom_secs = 10;
 	this_->autozoom_min = 7;
 	this_->autozoom_active = 0;
+	this_->follow_cursor = 1;
 
 	this_->trans = transform_new();
 	transform_from_geo(pro, &g, &co);
@@ -891,6 +897,7 @@ navit_get_center_file(gboolean create)
 static void
 navit_set_center_from_file(struct navit *this_, char *file)
 {
+#ifndef HAVE_API_ANDROID
 	FILE *f;
 	char *line = NULL;
 
@@ -910,6 +917,7 @@ navit_set_center_from_file(struct navit *this_, char *file)
 		free(line);
 	}
 	return;
+#endif
 }
  
 static void
@@ -1432,6 +1440,7 @@ navit_cmd_zoom_to_route(struct navit *this)
 	navit_zoom_to_route(this, 0);
 }
 
+
 /**
  * Change the current zoom level
  *
@@ -1440,7 +1449,7 @@ navit_cmd_zoom_to_route(struct navit *this)
  * @returns nothing
  */
 void
-navit_set_center(struct navit *this_, struct pcoord *center)
+navit_set_center(struct navit *this_, struct pcoord *center, int set_timeout)
 {
 	struct coord *c=transform_center(this_->trans);
 	struct coord c1,c2;
@@ -1454,12 +1463,14 @@ navit_set_center(struct navit *this_, struct pcoord *center)
 		c2.y = center->y;
 	}
 	*c=c2;
+	if (set_timeout) 
+		navit_set_timeout(this_);
 	if (this_->ready == 3)
 		navit_draw(this_);
 }
 
 static void
-navit_set_center_coord_screen(struct navit *this_, struct coord *c, struct point *p)
+navit_set_center_coord_screen(struct navit *this_, struct coord *c, struct point *p, int set_timeout)
 {
 	int width, height;
 	struct point po;
@@ -1468,6 +1479,8 @@ navit_set_center_coord_screen(struct navit *this_, struct coord *c, struct point
 	po.x=width/2;
 	po.y=height/2;
 	update_transformation(this_->trans, &po, p, NULL);
+	if (set_timeout)
+		navit_set_timeout(this_);
 }
 
 static int
@@ -1475,10 +1488,25 @@ navit_get_cursor_pnt(struct navit *this_, struct point *p, int *dir)
 {
 	int width, height;
 	struct navit_vehicle *nv=this_->vehicle;
+
+        float offset;               // Cursor offset from the center of the screen (percent).
+        float min_offset = 0.;      // Percent offset at min_offset_speed.
+        float max_offset = 30.;     // Percent offset at max_offset_speed.
+        int min_offset_speed = 2;   // Speed in km/h
+        int max_offset_speed = 50;  // Speed ini km/h
+        // Calculate cursor offset from the center of the screen, upon speed.
+        if (nv->speed <= min_offset_speed) {
+            offset = min_offset;
+        } else if (nv->speed > max_offset_speed) {
+            offset = max_offset;
+        } else {
+            offset = (max_offset - min_offset) / (max_offset_speed - min_offset_speed) * (nv->speed - min_offset_speed);
+        }
+
 	transform_get_size(this_->trans, &width, &height);
 	if (this_->orientation == -1) {
 		p->x=50*width/100;
-		p->y=80*height/100;
+		p->y=(50 + offset)*height/100;
 		if (dir)
 			*dir=nv->dir;
 	} else {
@@ -1489,8 +1517,8 @@ navit_get_cursor_pnt(struct navit *this_, struct point *p, int *dir)
 			mdir=nv->dir-this_->orientation;
 		}
 
-		p->x=(50 - 30.*sin(M_PI*mdir/180.))*width/100;
-		p->y=(50 + 30.*cos(M_PI*mdir/180.))*height/100;
+		p->x=(50 - offset*sin(M_PI*mdir/180.))*width/100;
+		p->y=(50 + offset*cos(M_PI*mdir/180.))*height/100;
 		if (dir)
 			*dir=this_->orientation;
 	}
@@ -1505,7 +1533,7 @@ navit_set_center_cursor(struct navit *this_)
 	struct navit_vehicle *nv=this_->vehicle;
 	navit_get_cursor_pnt(this_, &pn, &dir);
 	transform_set_yaw(this_->trans, dir);
-	navit_set_center_coord_screen(this_, &nv->coord, &pn);
+	navit_set_center_coord_screen(this_, &nv->coord, &pn, 0);
 	navit_autozoom(this_, &nv->coord, nv->speed, 0);
 	if (this_->ready == 3)
 		navit_draw_async(this_, 1);
@@ -1518,7 +1546,7 @@ navit_cmd_set_center_cursor(struct navit *this_)
 }
 
 void
-navit_set_center_screen(struct navit *this_, struct point *p)
+navit_set_center_screen(struct navit *this_, struct point *p, int set_timeout)
 {
 	struct coord c;
 	struct pcoord pc;
@@ -1526,7 +1554,7 @@ navit_set_center_screen(struct navit *this_, struct point *p)
 	pc.x = c.x;
 	pc.y = c.y;
 	pc.pro = transform_get_projection(this_->trans);
-	navit_set_center(this_, &pc);
+	navit_set_center(this_, &pc, set_timeout);
 }
 
 #if 0
@@ -1666,6 +1694,10 @@ navit_set_attr_do(struct navit *this_, struct attr *attr, int init)
 		break;
 	case attr_message:
 		navit_add_message(this_, attr->u.str);
+		break;
+	case attr_follow_cursor:
+		attr_updated=(this_->follow_cursor != !!attr->u.num);
+		this_->follow_cursor=!!attr->u.num;
 		break;
 	default:
 		return 0;
@@ -1826,6 +1858,9 @@ navit_get_attr(struct navit *this_, enum attr_type type, struct attr *attr, stru
 		break;
 	case attr_autozoom_active:
 		attr->u.num=this_->autozoom_active;
+		break;
+	case attr_follow_cursor:
+		attr->u.num=this_->follow_cursor;
 		break;
 	default:
 		return 0;
@@ -2046,7 +2081,7 @@ navit_vehicle_update(struct navit *this_, struct navit_vehicle *nv)
 		gui_disable_suspend(this_->gui);
 
 	transform(this_->trans, pro, &nv->coord, &cursor_pnt, 1, 0, 0, NULL);
-	if (this_->button_pressed != 1 && nv->follow_curr <= nv->follow && 
+	if (this_->button_pressed != 1 && this_->follow_cursor && nv->follow_curr <= nv->follow && 
 		(nv->follow_curr == 1 || !transform_within_border(this_->trans, &cursor_pnt, border)))
 		navit_set_center_cursor(this_);
 	else

@@ -15,17 +15,24 @@ if BUILD_SAMPLEMAP
   BUILT_SOURCES += osm2navit$(EXEEXT)
 endif
 
-bin_PROGRAMS = navit osm2navit
+if SUPPORT_ANDROID
+  lib_LTLIBRARIES        = libnavit.la
+  libnavit_la_LDFLAGS = -module -avoid-version @MODULE_LDFLAGS@ -Wl,--no-undefined
+  libnavit_la_LIBADD = @NAVIT_LIBS@ @WORDEXP_LIBS@ @ZLIB_LIBS@ @INTLLIBS@ -Lfib-1.1 -lfib -llog
+
+else
+  bin_PROGRAMS = navit osm2navit
+  noinst_LTLIBRARIES        = libnavit.la
+endif
 
 pkgdata_DATA = navit.xml
 
-EXTRA_DIST = navit.xml 
+EXTRA_DIST = navit_shipped.xml navit.dtd
 
-noinst_LTLIBRARIES        = libnavit.la
 libnavit_la_SOURCES = announcement.c atom.c attr.c cache.c callback.c command.c compass.c coord.c country.c cursor.c data_window.c debug.c \
 	event.c event_glib.h file.c graphics.c gui.c item.c layout.c log.c main.c map.c \
 	linguistics.c mapset.c maptype.c menu.c messages.c navit.c navigation.c osd.c param.c phrase.c plugin.c popup.c \
-	profile.c projection.c roadprofile.c route.c search.c speech.c transform.c track.c \
+	profile.c projection.c roadprofile.c route.c search.c speech.c start_real.c transform.c track.c \
 	util.c vehicle.c vehicleprofile.c xmlconfig.c announcement.h atom.h attr.h attr_def.h cache.h callback.h color.h command.h compass.h coord.h country.h \
 	cursor.h data.h data_window.h data_window_int.h debug.h destination.h draw_info.h endianess.h event.h \
 	file.h graphics.h gtkext.h gui.h item.h item_def.h keys.h log.h layer.h layout.h linguistics.h main.h map-share.h map.h\
@@ -34,12 +41,46 @@ libnavit_la_SOURCES = announcement.c atom.c attr.c cache.c callback.c command.c 
 	transform.h track.h util.h vehicle.h vehicleprofile.h window.h xmlconfig.h zipfile.h \
 	navit_nls.h
 
+comma=,
+XSLTS=@XSLTS@
+navit.xml: navit_shipped.xml  $(foreach xslt, $(subst $(comma), ,$(XSLTS)), $(addsuffix .xslt,$(addprefix xslt/,$(xslt))))
+	cp $< navit.xml.tmp
+	cp $< navit.xml.new
+	if [ "$(builddir)" != "$(srcdir)" ]; then cp $(srcdir)/navit.dtd $(builddir)/navit.dtd; fi
+	for i in $^; do if [ "$${i%.xslt}" != "$$i" ]; then echo "Applying $$i" ; saxon -snone navit.xml.tmp $$i >navit.xml.new || exit ; fi ; done
+	mv navit.xml.new navit.xml
+	
+
+if SUPPORT_ANDROID
+  libnavit_la_SOURCES += android.c
+  navit_SOURCES =
+  navit_LDADD =
+  osm2navit_SOURCES =
+  osm2navit_LDADD =
+
+android/build.xml: android/AndroidManifest.xml
+	if [ "$(builddir)" != "$(srcdir)" ]; then cp -rp $(srcdir)/android $(builddir)/android; fi
+	android update project -t 3 -p android
+
+apk: all android/build.xml navit.xml
+	mkdir -p android/libs/armeabi
+	cp .libs/*.so */*/.libs/*.so android/libs/armeabi
+	for i in $(shell cd $(srcdir)/xpm && echo *.xpm); do convert $(srcdir)/xpm/$$i android/res/drawable/$${i%.xpm}.png; done 
+	for i in $(shell cd $(srcdir)/xpm && echo *.png); do cp $(srcdir)/xpm/$$i android/res/drawable/$$( echo $$i | tr "[A-Z]" "[a-z]") ; done
+	if [ "$(builddir)" != "$(srcdir)" ]; then for i in $(shell cd $(builddir)/xpm && echo *.png); do cp $(builddir)/xpm/$$i android/res/drawable/$$( echo $$i | tr "[A-Z]" "[a-z]") ; done ; fi
+	mkdir -p android/res/raw
+	for i in $(shell cd ../po && echo *.mo); do cp ../po/$$i android/res/raw/$$( echo $$i | tr "[A-Z]" "[a-z]") ; done
+	cp navit.xml android/res/raw
+	cd android && ant debug
+
+else
 navit_SOURCES = start.c
-navit_LDADD = libnavit.la @NAVIT_LIBS@ @ZLIB_LIBS@ @INTLLIBS@ -Lfib-1.1 -lfib
+navit_LDADD = libnavit.la @NAVIT_LIBS@ @WORDEXP_LIBS@ @ZLIB_LIBS@ @INTLLIBS@ -Lfib-1.1 -lfib
 
 osm2navit_CPPFLAGS = $(AM_CPPFLAGS) @ZLIB_CFLAGS@ @POSTGRESQL_CFLAGS@
 osm2navit_SOURCES = osm2navit.c
 osm2navit_LDADD = libnavit.la @NAVIT_LIBS@ @ZLIB_LIBS@ @POSTGRESQL_LIBS@ @INTLLIBS@
+endif
 
 if EVENT_GLIB
   libnavit_la_SOURCES += event_glib.c

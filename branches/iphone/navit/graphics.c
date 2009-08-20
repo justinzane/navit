@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "config.h"
 #include "debug.h"
 #include "string.h"
 #include "draw_info.h"
@@ -50,7 +51,6 @@
 #include "file.h"
 #include "event.h"
 
-static char *navit_sharedir;
 
 //##############################################################################################################
 //# Description: 
@@ -206,7 +206,6 @@ void graphics_init(struct graphics *this_)
 	graphics_gc_set_background(this_->gc[2], &(struct color) { 0xffff, 0xffff, 0xffff, 0xffff });
 	graphics_gc_set_foreground(this_->gc[2], &(struct color) { 0x0000, 0x0000, 0x0000, 0xffff });
 	graphics_background_gc(this_, this_->gc[0]);
-	navit_sharedir = getenv("NAVIT_SHAREDIR");
 }
 
 /**
@@ -1000,8 +999,13 @@ static int
 int_sqrt(unsigned int n)
 {
 	unsigned int h, p= 0, q= 1, r= n;
-	while ( q <= n )
+	while ( q <= n ) {
 		q <<= 2;
+                if(q == 0) { 
+                        return (int) sqrtf( (float) n ); /* use float sqrt if we reach q MAX */ 
+                } 
+        } 
+
 	while ( q != 1 ) {
 		q >>= 2;
 		h = p + q;
@@ -1395,6 +1399,24 @@ get_font(struct graphics *gra, int size)
 	return gra->font[size];
 }
 
+char *
+graphics_icon_path(char *icon)
+{
+	static char *navit_sharedir;
+	dbg(1,"enter %s\n",icon);
+	if (icon[0] == '/')
+		return g_strdup(icon);
+	else {
+#ifdef HAVE_API_ANDROID
+		return g_strdup_printf("res/drawable/%s", icon);
+#else
+		if (! navit_sharedir)
+			navit_sharedir = getenv("NAVIT_SHAREDIR");
+		return g_strdup_printf("%s/xpm/%s", navit_sharedir, icon);
+#endif
+	}
+}
+
 
 static void
 displayitem_draw(struct displayitem *di, void *dummy, struct display_context *dc)
@@ -1407,7 +1429,7 @@ displayitem_draw(struct displayitem *di, void *dummy, struct display_context *dc
 	struct element *e=dc->e;
 	struct graphics_image *img=dc->img;
 	struct point p;
-	char path[PATH_MAX];
+	char *path;
 
 	di->displayed=1;
 	if (! gc) {
@@ -1498,11 +1520,9 @@ displayitem_draw(struct displayitem *di, void *dummy, struct display_context *dc
 	case element_icon:
 		if (count) {
 			if (!img) {
-				if (e->u.icon.src[0] == '/')
-					strcpy(path,e->u.icon.src);
-				else
-					sprintf(path,"%s/xpm/%s", navit_sharedir, e->u.icon.src);
+				path=graphics_icon_path(e->u.icon.src);	
 				img=graphics_image_new_scaled_rotated(gra, path, e->u.icon.width, e->u.icon.height, e->u.icon.rotation);
+				g_free(path);
 				if (img)
 					dc->img=img;
 				else
@@ -1572,7 +1592,7 @@ graphics_draw_itemgra(struct graphics *gra, struct itemgra *itm, struct transfor
 #endif
 	struct graphics_gc *gc = NULL;
 	struct graphics_image *img;
-	char path[PATH_MAX];
+	char *path;
 	es=itm->elements;
 	c.x=0;
 	c.y=0;
@@ -1620,11 +1640,9 @@ graphics_draw_itemgra(struct graphics *gra, struct itemgra *itm, struct transfor
 			# endif
 			break;
 		case element_icon:
-			if (e->u.icon.src[0] == '/') 
-				strcpy(path,e->u.icon.src);
-			else
-				sprintf(path,"%s/xpm/%s", navit_sharedir, e->u.icon.src);
+			path=graphics_icon_path(e->u.icon.src);	
 			img=graphics_image_new_scaled_rotated(gra, path, e->u.icon.width, e->u.icon.height, e->u.icon.rotation);
+			g_free(path);
 			if (! img)
 				dbg(0,"failed to load icon '%s'\n", e->u.icon.src);
 			else {
@@ -1697,6 +1715,7 @@ do_draw(struct displaylist *displaylist, int cancel)
 	struct coord ca[max];
 	struct attr attr;
 
+	profile(0,NULL);
 	while (!cancel) {
 		if (!displaylist->msh) 
 			displaylist->msh=mapset_open(displaylist->ms);
@@ -1738,10 +1757,12 @@ do_draw(struct displaylist *displaylist, int cancel)
 		displaylist->sel=NULL;
 		displaylist->m=NULL;
 	}
+	profile(1,"process_selection\n");
 	event_remove_idle(displaylist->idle_ev);
 	displaylist->idle_ev=NULL;
 	displaylist->busy=0;
 	graphics_process_selection(displaylist->dc.gra, displaylist);
+	profile(1,"draw\n");
 	if (! cancel) 
 		graphics_displaylist_draw(displaylist->dc.gra, displaylist, displaylist->dc.trans, displaylist->layout, 1);
 	map_rect_destroy(displaylist->mr);
@@ -1751,7 +1772,9 @@ do_draw(struct displaylist *displaylist, int cancel)
 	displaylist->sel=NULL;
 	displaylist->m=NULL;
 	displaylist->msh=NULL;
+	profile(1,"callback\n");
 	callback_call_1(displaylist->cb, cancel);
+	profile(0,"end\n");
 }
 
 /**

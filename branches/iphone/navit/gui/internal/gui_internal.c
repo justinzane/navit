@@ -65,6 +65,7 @@
 #include "navigation.h"
 #include "gui_internal.h"
 #include "command.h"
+#include "util.h"
 
 struct menu_data {
 	struct widget *search_list;
@@ -188,7 +189,7 @@ const int SMALL_PROFILE=2;
  */
 static struct gui_config_settings config_profiles[]={
       {545,32,48,96,10}
-    , {545,32,48,96,5}
+    , {300,32,48,64,3}
       ,{200,16,32,48,2}
 };
 
@@ -383,38 +384,44 @@ image_new_scaled(struct gui_priv *this, char *name, int w, int h)
 {
 	struct graphics_image *ret=NULL;
 	char *full_name=NULL;
+	char *full_path=NULL;
 	int i;
 
 	for (i = 1 ; i < 6 ; i++) {
 		full_name=NULL;
 		switch (i) {
 		case 3:
-			full_name=g_strdup_printf("%s/xpm/%s.svg", getenv("NAVIT_SHAREDIR"), name);
+			full_name=g_strdup_printf("%s.svg", name);
 			break;
 		case 2:
-			full_name=g_strdup_printf("%s/xpm/%s.svgz", getenv("NAVIT_SHAREDIR"), name);
+			full_name=g_strdup_printf("%s.svgz", name);
 			break;
 		case 1:
 			if (w != -1 && h != -1) {
-				full_name=g_strdup_printf("%s/xpm/%s_%d_%d.png", getenv("NAVIT_SHAREDIR"), name, w, h);
+				full_name=g_strdup_printf("%s_%d_%d.png", name, w, h);
 			}
 			break;
 		case 4:
-			full_name=g_strdup_printf("%s/xpm/%s.png", getenv("NAVIT_SHAREDIR"), name);
+			full_name=g_strdup_printf("%s.png", name);
 			break;
 		case 5:
-			full_name=g_strdup_printf("%s/xpm/%s.xpm", getenv("NAVIT_SHAREDIR"), name);
+			full_name=g_strdup_printf("%s.xpm", name);
 			break;
 		}
 		dbg(1,"trying '%s'\n", full_name);
 		if (! full_name)
 			continue;
+#if 0
+		/* needs to be checked in the driver */
 		if (!file_exists(full_name)) {
 			g_free(full_name);
 			continue;
 		}
-		ret=graphics_image_new_scaled(this->gra, full_name, w, h);
+#endif
+		full_path=graphics_icon_path(full_name);
+		ret=graphics_image_new_scaled(this->gra, full_path, w, h);
 		dbg(1,"ret=%p\n", ret);
+		g_free(full_path);
 		g_free(full_name);
 		if (ret)
 			return ret;
@@ -877,9 +884,7 @@ static void gui_internal_box_pack(struct gui_priv *this, struct widget *w)
 	if (!cols)
 		cols=this->cols;
 	if (!cols) {
-		 height=navit_get_height(this->nav);
-		 width=navit_get_width(this->nav);
-		 if ( (height/width) > 1.0 )
+		 if ( this->root.w > this->root.h )
 			 cols=3;
 		 else
 			 cols=2;
@@ -1177,7 +1182,7 @@ static void gui_internal_widget_destroy(struct gui_priv *this, struct widget *w)
 static void
 gui_internal_widget_render(struct gui_priv *this, struct widget *w)
 {
-	if(w->p.x > navit_get_width(this->nav) || w->p.y > navit_get_height(this->nav))
+	if(w->p.x > this->root.w || w->p.y > this->root.h)
 		return;
 
 	switch (w->type) {
@@ -1970,7 +1975,7 @@ gui_internal_cmd_view_on_map(struct gui_priv *this, struct widget *wm, void *dat
 		graphics_clear_selection(this->gra, NULL);
 		graphics_add_selection(this->gra, &w->item, NULL);
 	}
-	navit_set_center(this->nav, &w->c);
+	navit_set_center(this->nav, &w->c, 1);
 	gui_internal_prune_menu(this, NULL);
 }
 
@@ -2522,7 +2527,7 @@ gui_internal_keyboard_key_data(struct gui_priv *this, struct widget *wkbd, char 
 	wk->background=this->background;
 	wk->bl=w/2;
 	wk->br=0;
-	wk->bt=h/2;
+	wk->bt=h/3;
 	wk->bb=0;
 	return wk;
 }
@@ -2544,7 +2549,7 @@ gui_internal_keyboard_do(struct gui_priv *this, struct widget *wkbdb, int mode)
 {
 	struct widget *wkbd,*wk;
 	struct menu_data *md=gui_internal_menu_data(this);
-	int i, max_w=navit_get_width(this->nav), max_h=navit_get_height(this->nav);
+	int i, max_w=this->root.w, max_h=this->root.h;
 	int render=0;
 
 	if (wkbdb) {
@@ -2647,7 +2652,7 @@ gui_internal_keyboard_do(struct gui_priv *this, struct widget *wkbdb, int mode)
 		KEY("ä"); KEY("ë"); KEY("ï"); KEY("ö"); KEY("ü"); KEY("æ"); KEY("ø"); KEY("å");
 		KEY("á"); KEY("é"); KEY("í"); KEY("ó"); KEY("ú"); KEY("š"); KEY("č"); KEY("ž");
 		KEY("à"); KEY("è"); KEY("ì"); KEY("ò"); KEY("ù"); KEY("ś"); KEY("ć"); KEY("ź");
-		KEY("â"); KEY("ê"); KEY("î"); KEY("ô"); KEY("û"); SPACER();
+		KEY("â"); KEY("ê"); KEY("î"); KEY("ô"); KEY("û"); KEY("ß");
 
 		wk=gui_internal_keyboard_key_data(this, wkbd, "a",gui_internal_keyboard_change,wkbdb,NULL,max_w,max_h);
 		wk->datai=mode-24;
@@ -2755,9 +2760,15 @@ gui_internal_search(struct gui_priv *this, char *what, char *type, int flags)
 		wnext=gui_internal_image_new(this, image_new_xs(this, "gui_select_town"));
 		wnext->func=gui_internal_search_town;
 	} else if (!strcmp(type,"Town")) {
-		if (this->country_iso2)
+		if (this->country_iso2) {
+#if HAVE_API_ANDROID
+			char country_iso2[strlen(this->country_iso2)+1];
+			strtolower(country_iso2, this->country_iso2);
+			country=g_strdup_printf("country_%s", country_iso2);
+#else
 			country=g_strdup_printf("country_%s", this->country_iso2);
-		else
+#endif
+		} else
 			country=strdup("gui_select_country");
 		gui_internal_widget_append(we, wb=gui_internal_image_new(this, image_new_xs(this, country)));
 		wb->state |= STATE_SENSITIVE;
@@ -3332,7 +3343,7 @@ gui_internal_cmd_rules(struct gui_priv *this, struct widget *wm, void *data)
 			&on, &off));
 	on.u.num=1;
 	off.u.num=0;
-	on.type=off.type=attr_cursor;
+	on.type=off.type=attr_follow_cursor;
 	gui_internal_widget_append(w,
 		gui_internal_button_navit_attr_new(this, _("Map follows Vehicle"), gravity_left_center|orientation_horizontal|flags_fill,
 			&on, &off));
@@ -3565,9 +3576,9 @@ static void gui_internal_button(void *data, int pressed, int button, struct poin
 	if (!this->root.children || this->ignore_button) {
 		this->ignore_button=0;
 		// check whether the position of the mouse changed during press/release OR if it is the scrollwheel
-		if (!navit_handle_button(this->nav, pressed, button, p, NULL) || button >=4) // Maybe there's a better way to do this
+		if (!navit_handle_button(this->nav, pressed, button, p, NULL))
 			return;
-		if (this->menu_on_map_click)
+		if (this->menu_on_map_click && button == 1)
 			gui_internal_cmd_menu(this, p, 0);
 		return;
 	}
@@ -3724,22 +3735,22 @@ static void gui_internal_keypress(void *data, char *key)
 		case NAVIT_KEY_UP:
 			p.x=w/2;
 			p.y=0;
-			navit_set_center_screen(this->nav, &p);
+			navit_set_center_screen(this->nav, &p, 1);
 			break;
 		case NAVIT_KEY_DOWN:
 			p.x=w/2;
 			p.y=h;
-			navit_set_center_screen(this->nav, &p);
+			navit_set_center_screen(this->nav, &p, 1);
 			break;
 		case NAVIT_KEY_LEFT:
 			p.x=0;
 			p.y=h/2;
-			navit_set_center_screen(this->nav, &p);
+			navit_set_center_screen(this->nav, &p, 1);
 			break;
 		case NAVIT_KEY_RIGHT:
 			p.x=w;
 			p.y=h/2;
-			navit_set_center_screen(this->nav, &p);
+			navit_set_center_screen(this->nav, &p, 1);
 			break;
 		case NAVIT_KEY_ZOOM_IN:
 			navit_zoom_in(this->nav, 2, NULL);
@@ -3748,6 +3759,7 @@ static void gui_internal_keypress(void *data, char *key)
 			navit_zoom_out(this->nav, 2, NULL);
 			break;
 		case NAVIT_KEY_RETURN:
+		case NAVIT_KEY_MENU:
 			gui_internal_cmd_menu(this, NULL, 0);
 			break;
 		}
@@ -3766,6 +3778,8 @@ static void gui_internal_keypress(void *data, char *key)
 		break;
 	case NAVIT_KEY_DOWN:
 		gui_internal_keynav_highlight_next(this,0,1);
+		break;
+	case NAVIT_KEY_BACK:
 		break;
 	case NAVIT_KEY_RETURN:
 		if (this->highlighted && this->highlighted_menu == g_list_last(this->root.children)->data)
