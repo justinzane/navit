@@ -755,7 +755,7 @@ AM_CONDITIONAL(VEHICLE_IPHONE, test "x${vehicle_iphone}" = "xyes")
 if test "x${vehicle_iphone}" = "xyes"
 then
 	IPHONE_LIBS=-Wl,-framework,CoreLocation
-	NAVIT_CFLAGS="$NAVIT_CFLAGS -DCACHE_SIZE=1048576"
+	NAVIT_CFLAGS="$NAVIT_CFLAGS -DNO_DEBUG -DCACHE_SIZE=1048576"
 fi
 AC_SUBST(IPHONE_CFLAGS)
 AC_SUBST(IPHONE_LIBS)

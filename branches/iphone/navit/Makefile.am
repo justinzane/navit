@@ -88,7 +88,8 @@ endif
 
 if !PLUGINS
   navit_SOURCES += builtin.c
-  navit_LDADD += $(wildcard $(top_builddir)/navit/*/*/*.la)
+  #linking against .la seems to not work on opentoolchain
+  navit_LDADD += $(wildcard $(top_builddir)/navit/*/*/*/.libs/*.o) $(wildcard $(top_builddir)/navit/*/*/.libs/*.o) @FREETYPE2_LIBS@ @FONTCONFIG_LIBS@ @SDL_LIBS@ @SDL_IMAGE_LIBS@ @NAVIT_LIBS@ @IPHONE_LIBS@ @LIBGARMIN_LIBS@
   osm2navit_SOURCES += support-builtin.c
   osm2navit_LDADD += $(wildcard $(top_builddir)/navit/support/*/*.la)
 endif
