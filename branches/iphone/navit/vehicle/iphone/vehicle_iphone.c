@@ -43,6 +43,7 @@ struct vehicle_priv {
 	double config_speed;
 	double speed;
 	double direction;
+	double radius;
 	struct callback *timer_callback;
 	struct event_timeout *timer;
 	char str_time[200];
@@ -72,6 +73,11 @@ vehicle_iphone_position_attr_get(struct vehicle_priv *priv,
 	case attr_position_time_iso8601:
 		attr->u.str = priv->str_time;
 		break;
+	case attr_position_radius:
+		attr->u.numd = &priv->radius;
+		break;
+	case attr_position_nmea:
+		return 0;
 	default:
 		return 0;
 	}
@@ -97,7 +103,14 @@ struct vehicle_methods vehicle_iphone_methods = {
 };
 
 void
-vehicle_iphone_update(void *arg, double lat, double lng, double dir, double spd, char * str_time)
+vehicle_iphone_update(void *arg, 
+	double lat,
+	double lng,
+	double dir,
+	double spd,
+	char * str_time,
+	double radius
+	)
 {
 	struct vehicle_priv * priv = arg;
 	priv->geo.lat = lat;
@@ -105,6 +118,8 @@ vehicle_iphone_update(void *arg, double lat, double lng, double dir, double spd,
 	if(dir > 0) priv->direction = dir;
 	if(spd > 0) priv->speed = spd*3.6;
 	strcpy(priv->str_time, str_time);
+	priv->radius = radius;
+
 	dbg(0,"position_get lat:%f lng:%f (spd:%f dir:%f time:%s)\n", priv->geo.lat, priv->geo.lng, priv->speed, priv->direction, priv->str_time);
 	callback_list_call_0(priv->cbl);
 }

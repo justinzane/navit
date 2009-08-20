@@ -27,10 +27,10 @@
 corelocation *locationcontroller = NULL;
 
 /** C update procedure */
-void corelocation_update(double lat, double lng, double dir, double spd, char * str_time) {
+void corelocation_update(double lat, double lng, double dir, double spd, char * str_time, double radius) {
 	FT_LOCATION_CB pf_cb = locationcontroller->pf_cb;
 	void * pv_arg = locationcontroller->pv_arg;
-	if(pf_cb) pf_cb(pv_arg, lat, lng, dir, spd, str_time);
+	if(pf_cb) pf_cb(pv_arg, lat, lng, dir, spd, str_time, radius);
 }
 
 /** C init procedure */
@@ -83,7 +83,7 @@ fromLocation:(CLLocation *)oldLocation
 	NSLog(@"New Location: %@", [newLocation description]);
 	NSString *newDateString = [self.dateFormatter stringFromDate:newLocation.timestamp];
 	const char* cString = [newDateString cStringUsingEncoding:NSASCIIStringEncoding]; 
-	//const char* cString = "toto";
+
 	if(self.pf_cb) {
 		self.pf_cb(
 				self.pv_arg,
@@ -91,7 +91,8 @@ fromLocation:(CLLocation *)oldLocation
 				(double) newLocation.coordinate.longitude,
 				(double) newLocation.course,
 				(double) newLocation.speed,
-				cString
+				cString,
+				(double) newLocation.horizontalAccuracy
 			  );
 	}
 }
