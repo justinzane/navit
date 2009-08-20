@@ -220,6 +220,7 @@ struct route {
 	int destination_distance;	/**< Distance to the destination at which the destination is considered "reached" */
 	struct vehicleprofile *vehicleprofile; /**< Routing preferences */
 	int route_status;		/**< Route Status */
+	struct navit *navit;		/**< Pointer to parent */
 };
 
 /**
@@ -395,6 +396,7 @@ route_new(struct attr *parent, struct attr **attrs)
 		this->destination_distance = 50; // Default value
 	}
 	this->cbl2=callback_list_new();
+	this->navit=parent->u.navit;
 
 	return this;
 }
@@ -621,6 +623,7 @@ route_path_update_done(struct route *this, int new_graph)
 {
 	struct route_path *oldpath=this->path2;
 	struct attr route_status;
+	dbg(1,"enter\n");
 	route_status.type=attr_route_status;
 	if (this->path2 && this->path2->in_use) {
 		this->path2->update_required=1+new_graph;
@@ -629,7 +632,16 @@ route_path_update_done(struct route *this, int new_graph)
 	route_status.u.num=route_status_building_path;
 	route_set_attr(this, &route_status);
 
+	if(new_graph) {
+		navit_set_status(this->navit, 1);
+	}
+
 	this->path2=route_path_new(this->graph, oldpath, this->pos, this->dst, this->vehicleprofile);
+	
+	if(new_graph) {
+		navit_set_status(this->navit, 0);
+	}
+
 	route_path_destroy(oldpath);
 	if (this->path2) {
 		if (!new_graph && this->path2->updated)
@@ -2202,6 +2214,7 @@ static void
 route_graph_update_done(struct route *this, struct callback *cb)
 {
 	route_graph_flood(this->graph, this->dst, this->vehicleprofile, cb);
+	navit_set_status(this->navit, 0);
 }
 
 /**
@@ -2217,6 +2230,7 @@ route_graph_update(struct route *this, struct callback *cb, int async)
 {
 	struct attr route_status;
 
+	navit_set_status(this->navit, 1);
 	route_status.type=attr_route_status;
 	route_graph_destroy(this->graph);
 	callback_destroy(this->route_graph_done_cb);

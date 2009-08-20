@@ -1460,7 +1460,7 @@ draw_mode(struct graphics_priv *gr, enum draw_mode_num mode)
                 for(i = 0; i < OVERLAY_MAX; i++)
                 {
                     ov = gr->overlay_array[i];
-                    if(ov)
+                    if(ov && ov->overlay_enable)
                     {
                         rect.x = ov->overlay_x;
                         rect.y = ov->overlay_y;

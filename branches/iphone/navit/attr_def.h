@@ -120,6 +120,7 @@ ATTR(house_number_left_interpolation)
 ATTR(house_number_right_interpolation)
 ATTR(delay)
 ATTR(lag)
+ATTR(status)
 
 ATTR2(0x00027500,type_rel_abs_begin)
 /* These attributes are int that can either hold relative		*

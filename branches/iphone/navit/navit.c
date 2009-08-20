@@ -138,6 +138,7 @@ struct navit {
 	struct vehicleprofile *vehicleprofile;
 	GList *vehicleprofiles;
 	int pitch;
+	int status;
 	int follow_cursor;
 };
 
@@ -649,6 +650,7 @@ navit_new(struct attr *parent, struct attr **attrs)
 	this_->follow_cursor = 1;
 
 	this_->trans = transform_new();
+	this_->status = 0;
 	transform_from_geo(pro, &g, &co);
 	center.x=co.x;
 	center.y=co.y;
@@ -1571,6 +1573,7 @@ static int
 navit_set_attr_do(struct navit *this_, struct attr *attr, int init)
 {
 	int dir=0, orient_old=0, attr_updated=0;
+	int do_redraw = 0;
 	struct coord co;
 	long zoom;
 	GList *l;
@@ -1695,6 +1698,11 @@ navit_set_attr_do(struct navit *this_, struct attr *attr, int init)
 	case attr_message:
 		navit_add_message(this_, attr->u.str);
 		break;
+	case attr_status:
+		attr_updated=(this_->status != attr->u.num);
+		this_->status = attr->u.num;
+		do_redraw = 1;
+		break;
 	case attr_follow_cursor:
 		attr_updated=(this_->follow_cursor != !!attr->u.num);
 		this_->follow_cursor=!!attr->u.num;
@@ -1706,6 +1714,8 @@ navit_set_attr_do(struct navit *this_, struct attr *attr, int init)
 		callback_list_call_attr_2(this_->attr_cbl, attr->type, this_, attr);
 		if (attr->type == attr_osd_configuration)
 			graphics_draw_mode(this_->gra, draw_mode_end);
+		if (do_redraw)
+			navit_draw(this_);
 	}
 	return 1;
 }
@@ -1858,6 +1868,9 @@ navit_get_attr(struct navit *this_, enum attr_type type, struct attr *attr, stru
 		break;
 	case attr_autozoom_active:
 		attr->u.num=this_->autozoom_active;
+		break;
+	case attr_status:
+		attr->u.num=this_->status;
 		break;
 	case attr_follow_cursor:
 		attr->u.num=this_->follow_cursor;
@@ -2117,6 +2130,34 @@ navit_set_position(struct navit *this_, struct pcoord *c)
 	}
 	if (this_->ready == 3)
 		navit_draw(this_);
+}
+
+void
+navit_set_status(struct navit *this_, int mode)
+{
+	struct attr status;
+	status.u.num = mode;
+	status.type = attr_status;
+	navit_set_attr(this_, &status);
+}
+
+int
+navit_get_status(struct navit *this_)
+{
+	return this_->status;
+}
+
+char *
+navit_get_status_string(struct navit *this_)
+{
+	switch(navit_get_status(this_)) {
+		case 1:
+			return "Routing engine is running\\nPlease wait";
+		case 2:
+			return "Not on track\\nPlease wait";
+		default :
+			return NULL;
+	}
 }
 
 static int

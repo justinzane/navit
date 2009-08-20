@@ -568,6 +568,103 @@ osd_nav_toggle_announcer_new(struct navit *nav, struct osd_methods *meth, struct
 	return (struct osd_priv *) this;
 }
 
+struct osd_nav_status {
+	struct osd_item osd_item;
+	char *icon_src;
+	int icon_h, icon_w, active;
+	int status;
+};
+
+static void
+osd_nav_status_draw(struct osd_nav_status *this,  struct navit *navit,
+		       struct vehicle *v)
+{
+	int do_draw = 0, status;
+	struct point p;
+	struct graphics_image *gr_image;
+	char *image;
+	dbg(1,"enter\n");
+	
+	status = navit_get_status(navit);
+
+	if(status) do_draw = 1;
+
+	if (do_draw) {
+		osd_std_draw(&this->osd_item);
+		if (this->active) {
+			dbg(2,"%s",this->icon_src);
+			image = g_strdup_printf(this->icon_src, status);
+			gr_image = graphics_image_new_scaled(this->osd_item.gr, image, this->icon_w, this->icon_h);
+			if (gr_image) {
+				p.x = (this->osd_item.w - gr_image->width) / 2;
+				p.y = (this->osd_item.h - gr_image->height) / 2;
+				graphics_draw_image(this->osd_item.gr, this->osd_item.  graphic_fg_white, &p, gr_image);
+				graphics_image_free(this->osd_item.gr, gr_image);
+			}
+			g_free(image);
+		}
+		graphics_overlay_disable(this->osd_item.gr, 0);
+		graphics_draw_mode(this->osd_item.gr, draw_mode_end);
+	} else {
+		graphics_overlay_disable(this->osd_item.gr, 1);
+	}
+}
+
+static void
+osd_nav_status_init(struct osd_nav_status *this, struct navit *nav)
+{
+	struct attr cb_attr;
+	struct route * route;
+	osd_set_std_graphic(nav, &this->osd_item, (struct osd_priv *)this);
+	navit_add_callback(nav, callback_new_attr_1(callback_cast(osd_nav_status_draw), attr_status, this));
+	osd_nav_status_draw(this, nav, NULL);
+}
+
+static struct osd_priv *
+osd_nav_status_new(struct navit *nav, struct osd_methods *meth,
+		      struct attr **attrs)
+{
+	struct osd_nav_status *this = g_new0(struct osd_nav_status, 1);
+	struct attr *attr;
+
+	this->osd_item.p.x = 20;
+	this->osd_item.p.y = -80;
+	this->osd_item.w = 60;
+	this->osd_item.navit = nav;
+	this->osd_item.h = 40;
+	this->osd_item.font_size = 300;
+	this->osd_item.meth.draw = osd_draw_cast(osd_nav_status_draw);
+	osd_set_std_attr(attrs, &this->osd_item, 2);
+
+	this->icon_w = -1;
+	this->icon_h = -1;
+	this->active = -1;
+	this->status =0;
+
+	attr = attr_search(attrs, NULL, attr_icon_w);
+	if (attr)
+		this->icon_w = attr->u.num;
+
+	attr = attr_search(attrs, NULL, attr_icon_h);
+	if (attr)
+		this->icon_h = attr->u.num;
+
+	attr = attr_search(attrs, NULL, attr_icon_src);
+	if (attr) {
+		struct file_wordexp *we;
+		char **array;
+		we = file_wordexp_new(attr->u.str);
+		array = file_wordexp_get_array(we);
+		this->icon_src = g_strdup(array[0]);
+		file_wordexp_destroy(we);
+	} else
+		this->icon_src = graphics_icon_path("gui_maps_32_32.png", NULL);
+
+	navit_add_callback(nav, callback_new_attr_1(callback_cast(osd_nav_status_init), attr_navit, this));
+	return (struct osd_priv *) this;
+}
+
+
 struct osd_speed_warner {
 	struct osd_item item;
 	struct graphics_gc *red;
@@ -875,6 +972,16 @@ osd_text_draw(struct osd_text *this, struct navit *navit, struct vehicle *v)
 
 					value[len] = '\0';
 				}
+				else if (!strcmp(subkey,"status")) {
+					struct attr mode_attr;
+					char * str_tmp;
+					if(str_tmp = navit_get_status_string(navit)) {
+						value = g_strdup(str_tmp);
+						graphics_overlay_disable(this->osd_item.gr, 0);
+					} else {
+						graphics_overlay_disable(this->osd_item.gr, 1);
+					}
+				}
 			}
 		}
 		*start='\0';
@@ -963,6 +1070,7 @@ osd_text_init(struct osd_text *this, struct navit *nav)
 
 	osd_set_std_graphic(nav, &this->osd_item, (struct osd_priv *)this);
 	navit_add_callback(nav, callback_new_attr_1(callback_cast(osd_text_draw), attr_position_coord_geo, this));
+	navit_add_callback(nav, callback_new_attr_1(callback_cast(osd_text_draw), attr_status, this));
 	osd_text_draw(this, nav, NULL);
 
 }
@@ -1231,4 +1339,5 @@ plugin_init(void)
     	plugin_register_osd_type("text", osd_text_new);
     	plugin_register_osd_type("gps_status", osd_gps_status_new);
     	plugin_register_osd_type("volume", osd_volume_new);
+    	plugin_register_osd_type("navigation_status", osd_nav_status_new);
 }

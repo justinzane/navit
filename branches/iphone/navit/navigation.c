@@ -1713,9 +1713,12 @@ navigation_update(struct navigation *this_, struct route *route, struct attr *at
 				break;
 			}
 			dbg(1,"not on track\n");
+			navit_set_status(this_->navit, 2);
 		}
 		navigation_itm_new(this_, ritem);
 	}
+	navit_set_status(this_->navit, 0);
+
 	dbg(2,"turn_around=%d\n", this_->turn_around);
 	if (first) 
 		navigation_destroy_itms_cmds(this_, NULL);
